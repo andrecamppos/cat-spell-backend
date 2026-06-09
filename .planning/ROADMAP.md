@@ -24,6 +24,8 @@
 **Goal:** Deliver a runnable Spring Boot application with PostgreSQL, Flyway migrations, and complete JWT authentication (register, login, refresh).
 **Mode:** mvp
 **Requirements:** AUTH-01, AUTH-02, AUTH-03
+**Plans:** 3 (01-scaffold+auth [W1], 02-refresh-tokens [W2], 03-error-handling [W2])
+**Planning Status:** ✅ Complete (2025-06-09)
 **Success Criteria:**
 1. Spring Boot app starts and connects to PostgreSQL (Docker Compose for local dev)
 2. User can register with email and password via REST endpoint
