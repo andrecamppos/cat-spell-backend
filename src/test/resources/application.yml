@@ -20,6 +20,7 @@ spring:
 jwt:
   secret: dGVzdC1zZWNyZXQtdGhhdC1pcy1sb25nLWVub3VnaC1mb3ItaHM1MTItYWxnb3JpdGhtLW11c3QtYmUtYXQtbGVhc3QtNjQtYnl0ZXM=
   access-token-expiry: 3600000
+  refresh-token-expiry-days: 30
 
 server:
   port: 0

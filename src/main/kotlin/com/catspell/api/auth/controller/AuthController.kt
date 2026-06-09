@@ -2,6 +2,7 @@ package com.catspell.api.auth.controller
 
 import com.catspell.api.auth.model.AuthResponse
 import com.catspell.api.auth.model.LoginRequest
+import com.catspell.api.auth.model.RefreshRequest
 import com.catspell.api.auth.model.RegisterRequest
 import com.catspell.api.auth.service.AuthService
 import jakarta.validation.Valid
@@ -25,6 +26,12 @@ class AuthController(
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
         val response = authService.login(request)
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/refresh")
+    fun refresh(@Valid @RequestBody request: RefreshRequest): ResponseEntity<AuthResponse> {
+        val response = authService.refreshToken(request)
         return ResponseEntity.ok(response)
     }
 
