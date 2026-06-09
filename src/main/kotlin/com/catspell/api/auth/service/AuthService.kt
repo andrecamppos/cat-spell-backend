@@ -58,7 +58,7 @@ class AuthService(
         )
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = [ResponseStatusException::class])
     fun refreshToken(request: RefreshRequest): AuthResponse {
         val storedToken = refreshTokenRepository.findByToken(request.refreshToken)
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token")
