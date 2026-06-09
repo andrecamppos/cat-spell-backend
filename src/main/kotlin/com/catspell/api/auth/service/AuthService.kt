@@ -1,13 +1,14 @@
 package com.catspell.api.auth.service
 
 import com.catspell.api.auth.model.*
+import com.catspell.api.common.exception.DuplicateEmailException
+import com.catspell.api.common.exception.InvalidCredentialsException
+import com.catspell.api.common.exception.InvalidTokenException
 import com.catspell.api.common.security.JwtService
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -23,7 +24,7 @@ class AuthService(
 
     fun register(request: RegisterRequest): AuthResponse {
         if (userRepository.existsByEmail(request.email)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Email already registered")
+            throw DuplicateEmailException()
         }
 
         val user = User(
@@ -43,10 +44,10 @@ class AuthService(
 
     fun login(request: LoginRequest): AuthResponse {
         val user = userRepository.findByEmail(request.email)
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials")
+            ?: throw InvalidCredentialsException()
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials")
+            throw InvalidCredentialsException()
         }
 
         val accessToken = jwtService.generateAccessToken(user.id!!, user.email)
@@ -58,18 +59,18 @@ class AuthService(
         )
     }
 
-    @Transactional(noRollbackFor = [ResponseStatusException::class])
+    @Transactional(noRollbackFor = [InvalidTokenException::class])
     fun refreshToken(request: RefreshRequest): AuthResponse {
         val storedToken = refreshTokenRepository.findByToken(request.refreshToken)
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token")
+            ?: throw InvalidTokenException()
 
         if (storedToken.revoked) {
             revokeAllUserTokens(storedToken.user)
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token reuse detected")
+            throw InvalidTokenException("Token reuse detected")
         }
 
         if (storedToken.expiresAt.isBefore(Instant.now())) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token")
+            throw InvalidTokenException()
         }
 
         val newRefreshTokenString = createRefreshToken(storedToken.user)
