@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/catspell}
+    username: ${DATABASE_USERNAME:catspell}
+    password: ${DATABASE_PASSWORD:catspell}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    problemdetail:
+      enabled: true
+
+jwt:
+  secret: ${JWT_SECRET:default-dev-secret-change-me-in-production-must-be-at-least-64-bytes-long-for-hs512}
+  access-token-expiry: 3600000
+
+server:
+  port: 8080

@@ -1,1 +1,15 @@
 .windsurf
+
+# Gradle
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+
+# Environment
+.env
+
+# Logs
+*.log
