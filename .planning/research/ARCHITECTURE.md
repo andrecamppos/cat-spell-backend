@@ -242,7 +242,7 @@ data class CatProfileResponse(
 
 ## Sources
 
-- Spring Boot 3.x official documentation
+- Spring Boot 4.x official documentation
 - Spring WebSocket + STOMP documentation
 - Hibernate Spatial + PostGIS integration guides
 - Dating app architecture case studies (public engineering blogs)
