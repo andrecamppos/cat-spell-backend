@@ -7,6 +7,7 @@ out/
 
 # IDE
 .idea/
+.vscode
 
 # Environment
 .env

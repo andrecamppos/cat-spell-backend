@@ -3,25 +3,34 @@ package com.catspell.api.common.exception
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ProblemDetail
+import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 @RestControllerAdvice
-class GlobalExceptionHandler {
+class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
+    override fun handleMethodArgumentNotValid(
+        ex: MethodArgumentNotValidException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any>? {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed")
         problem.title = "Validation Error"
         problem.setProperty("violations", ex.bindingResult.fieldErrors.map {
             mapOf("field" to it.field, "message" to it.defaultMessage)
         })
-        return problem
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
 
     @ExceptionHandler(ConstraintViolationException::class)
@@ -62,11 +71,15 @@ class GlobalExceptionHandler {
         return problem
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleMessageNotReadable(ex: HttpMessageNotReadableException): ProblemDetail {
+    override fun handleHttpMessageNotReadable(
+        ex: HttpMessageNotReadableException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest
+    ): ResponseEntity<Any>? {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Malformed or missing request body")
         problem.title = "Bad Request"
-        return problem
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
 
     @ExceptionHandler(Exception::class)

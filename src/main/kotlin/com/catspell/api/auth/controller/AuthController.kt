@@ -38,6 +38,7 @@ class AuthController(
     @GetMapping("/me")
     fun me(): ResponseEntity<Map<String, String>> {
         val authentication = SecurityContextHolder.getContext().authentication
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val userId = authentication.principal as String
         return ResponseEntity.ok(mapOf("userId" to userId))
     }

@@ -29,7 +29,7 @@ class AuthService(
 
         val user = User(
             email = request.email,
-            passwordHash = passwordEncoder.encode(request.password)
+            passwordHash = passwordEncoder.encode(request.password)!!
         )
         val savedUser = userRepository.save(user)
 

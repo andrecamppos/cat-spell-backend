@@ -10,14 +10,14 @@
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Kotlin | 2.0.x | Primary language | User requirement. Concise, null-safe, excellent Spring Boot interop |
-| Spring Boot | 3.3.x | Application framework | Mature, batteries-included for REST + WebSocket + Security + Data |
-| PostgreSQL | 16.x | Primary database | User requirement. PostGIS for geolocation, JSONB for flexible profile data |
+| Kotlin | 2.4.x | Primary language | User requirement. Concise, null-safe, excellent Spring Boot interop |
+| Spring Boot | 4.0.x | Application framework | Mature, batteries-included for REST + WebSocket + Security + Data |
+| PostgreSQL | 18.x | Primary database | User requirement. PostGIS for geolocation, JSONB for flexible profile data |
 | Spring Data JPA / Hibernate | 6.x | ORM / data access | Standard for Spring Boot + PostgreSQL. Kotlin-friendly with `spring-data-jpa` |
-| Spring Security | 6.3.x | Auth & authorization | JWT support via `spring-security-oauth2-resource-server`, battle-tested |
+| Spring Security | 7.1.x | Auth & authorization | JWT support via `spring-security-oauth2-resource-server`, battle-tested |
 | Spring WebSocket + STOMP | — | Real-time chat | Built into Spring Boot, STOMP protocol gives message routing and subscriptions |
 | Flyway | 10.x | Database migrations | Schema versioning, integrates natively with Spring Boot |
-| Gradle (Kotlin DSL) | 8.x | Build tool | Standard for Kotlin projects, better than Maven for Kotlin builds |
+| Gradle (Kotlin DSL) | 9.x | Build tool | Standard for Kotlin projects, better than Maven for Kotlin builds |
 
 ### Supporting Libraries
 

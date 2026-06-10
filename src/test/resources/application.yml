@@ -10,11 +10,8 @@ spring:
     open-in-view: false
   flyway:
     enabled: false
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
   mvc:
-    problemdetail:
+    problemdetails:
       enabled: true
 
 jwt:
