@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can register with email and password
-- [ ] **AUTH-02**: User can log in and receive JWT access token
-- [ ] **AUTH-03**: User can refresh expired access token using refresh token
+- [x] **AUTH-01**: User can register with email and password — Phase 1 ✓
+- [x] **AUTH-02**: User can log in and receive JWT access token — Phase 1 ✓
+- [x] **AUTH-03**: User can refresh expired access token using refresh token — Phase 1 ✓
 
 ### User Profiles
 
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | ✅ Validated |
+| AUTH-02 | Phase 1 | ✅ Validated |
+| AUTH-03 | Phase 1 | ✅ Validated |
 | PROF-01 | Phase 2 | Pending |
 | PROF-02 | Phase 2 | Pending |
 | PROF-03 | Phase 2 | Pending |
@@ -134,4 +134,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-06-09*
-*Last updated: 2025-06-09 after initial definition*
+*Last updated: 2025-06-10 after Phase 1 verification*

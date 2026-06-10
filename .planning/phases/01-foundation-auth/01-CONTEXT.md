@@ -78,7 +78,7 @@ No specific requirements — open to standard approaches. Stack research recomme
 - jjwt 0.12.x for JWT creation/validation
 - Spring Security for auth filters
 - Flyway for database migrations
-- Docker Compose with PostgreSQL for local dev
+- Podman with PostgreSQL for local dev (`podman compose`)
 - Don't use Kotlin data classes for JPA entities (use kotlin-jpa plugin)
 
 </specifics>

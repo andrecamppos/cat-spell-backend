@@ -10,14 +10,14 @@
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Kotlin | 2.0.x | Primary language | User requirement. Concise, null-safe, excellent Spring Boot interop |
-| Spring Boot | 3.3.x | Application framework | Mature, batteries-included for REST + WebSocket + Security + Data |
-| PostgreSQL | 16.x | Primary database | User requirement. PostGIS for geolocation, JSONB for flexible profile data |
+| Kotlin | 2.4.x | Primary language | User requirement. Concise, null-safe, excellent Spring Boot interop |
+| Spring Boot | 4.0.x | Application framework | Mature, batteries-included for REST + WebSocket + Security + Data |
+| PostgreSQL | 18.x | Primary database | User requirement. PostGIS for geolocation, JSONB for flexible profile data |
 | Spring Data JPA / Hibernate | 6.x | ORM / data access | Standard for Spring Boot + PostgreSQL. Kotlin-friendly with `spring-data-jpa` |
-| Spring Security | 6.3.x | Auth & authorization | JWT support via `spring-security-oauth2-resource-server`, battle-tested |
+| Spring Security | 7.1.x | Auth & authorization | JWT support via `spring-security-oauth2-resource-server`, battle-tested |
 | Spring WebSocket + STOMP | — | Real-time chat | Built into Spring Boot, STOMP protocol gives message routing and subscriptions |
 | Flyway | 10.x | Database migrations | Schema versioning, integrates natively with Spring Boot |
-| Gradle (Kotlin DSL) | 8.x | Build tool | Standard for Kotlin projects, better than Maven for Kotlin builds |
+| Gradle (Kotlin DSL) | 9.x | Build tool | Standard for Kotlin projects, better than Maven for Kotlin builds |
 
 ### Supporting Libraries
 
@@ -37,7 +37,7 @@
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Docker Compose | Local dev environment | PostgreSQL + PostGIS + MinIO containers |
+| Podman | Local dev environment | PostgreSQL + PostGIS + MinIO containers via `podman compose` |
 | MinIO | S3-compatible local storage | Drop-in S3 replacement for dev, same API |
 | ktlint | Code formatting | Kotlin linting, integrates with Gradle |
 | Detekt | Static analysis | Kotlin code quality checks |
@@ -103,9 +103,9 @@
 
 | Package A | Compatible With | Notes |
 |-----------|-----------------|-------|
-| Spring Boot 3.3.x | Java 17+ / Kotlin 2.0.x | Requires Jakarta EE 10 namespace |
+| Spring Boot 4.0.x | Java 21+ / Kotlin 2.4.x | Requires Jakarta EE 11 namespace |
 | Hibernate Spatial 6.x | PostGIS 3.x | Must add `hibernate-spatial` dependency explicitly |
-| Flyway 10.x | Spring Boot 3.3.x | Use `flyway-database-postgresql` module |
+| Flyway 10.x | Spring Boot 4.0.x | Use `flyway-database-postgresql` module |
 | jjwt 0.12.x | Java 17+ | Breaking changes from 0.11.x — use builder API |
 
 ## Sources
@@ -113,7 +113,7 @@
 - Spring Boot official documentation — verified dependency versions
 - Hibernate Spatial docs — PostGIS integration patterns
 - AWS SDK for Kotlin docs — S3 client configuration
-- Kotlin language docs — Kotlin 2.0 compatibility
+- Kotlin language docs — Kotlin 2.4 compatibility
 
 ---
 *Stack research for: dating app backend (Kotlin/Spring Boot)*

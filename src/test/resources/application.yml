@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:catspell;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  flyway:
+    enabled: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+jwt:
+  secret: dGVzdC1zZWNyZXQtdGhhdC1pcy1sb25nLWVub3VnaC1mb3ItaHM1MTItYWxnb3JpdGhtLW11c3QtYmUtYXQtbGVhc3QtNjQtYnl0ZXM=
+  access-token-expiry: 3600000
+  refresh-token-expiry-days: 30
+
+server:
+  port: 0

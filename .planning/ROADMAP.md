@@ -26,8 +26,9 @@
 **Requirements:** AUTH-01, AUTH-02, AUTH-03
 **Plans:** 3 (01-scaffold+auth [W1], 02-refresh-tokens [W2], 03-error-handling [W2])
 **Planning Status:** ✅ Complete (2025-06-09)
+**Execution Status:** ✅ Complete (2025-06-09) — 3/3 plans done, 26 tests passing
 **Success Criteria:**
-1. Spring Boot app starts and connects to PostgreSQL (Docker Compose for local dev)
+1. Spring Boot app starts and connects to PostgreSQL (Podman for local dev)
 2. User can register with email and password via REST endpoint
 3. User can log in and receive a JWT access token and refresh token
 4. User can refresh an expired access token using a valid refresh token
