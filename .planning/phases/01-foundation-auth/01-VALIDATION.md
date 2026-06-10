@@ -59,7 +59,7 @@ created: 2025-06-09
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Docker Compose PostgreSQL starts and app connects | AUTH-01 | Infrastructure startup | Run `docker compose up -d`, then `./gradlew bootRun`, verify app starts without errors |
+| Podman PostgreSQL starts and app connects | AUTH-01 | Infrastructure startup | Run `podman compose up -d`, then `./gradlew bootRun`, verify app starts without errors |
 
 ---
 

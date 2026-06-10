@@ -54,7 +54,7 @@ src/main/kotlin/com/catspell/api/
 - Naming: `V1__create_users_table.sql`, `V2__create_refresh_tokens_table.sql`
 - Set `spring.jpa.hibernate.ddl-auto=validate` — Flyway owns schema, Hibernate validates
 
-**Docker Compose for local dev:**
+**Podman for local dev (`podman compose`):**
 ```yaml
 services:
   postgres:

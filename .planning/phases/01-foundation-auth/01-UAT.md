@@ -4,7 +4,7 @@ phase: 01-foundation-auth
 source: 01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md
 started: 2025-06-10T15:16:00Z
 updated: 2025-06-10T15:22:00Z
-verification_method: integration-test-suite (./gradlew clean test — Docker unavailable on host)
+verification_method: integration-test-suite (./gradlew clean test — Podman for local dev)
 ---
 
 ## Current Test

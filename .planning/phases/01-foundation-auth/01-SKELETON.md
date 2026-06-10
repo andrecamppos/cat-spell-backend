@@ -15,7 +15,7 @@ A new user can register with email and password, receive JWT tokens, log in, and
 | Build tool | Gradle 8.x (Kotlin DSL) | Standard for Kotlin projects, better Kotlin support than Maven |
 | Data layer | PostgreSQL 16 + Spring Data JPA / Hibernate 6 + Flyway 10 | User requirement; relational model fits user/cat/match data; Flyway for versioned migrations |
 | Auth | JWT access tokens (jjwt 0.12.x) + rotating DB-stored refresh tokens | Stateless API auth for mobile clients; rotation detects token theft |
-| Local dev | Docker Compose (PostgreSQL) | Reproducible local environment, matches production DB |
+| Local dev | Podman (PostgreSQL) | Reproducible local environment, matches production DB via `podman compose` |
 | Package structure | Domain-first vertical slices (`com.catspell.api.{domain}.*`) | Per user decision D-01; each domain owns controller/service/model sub-packages |
 | Directory layout | `auth/controller/`, `auth/service/`, `auth/model/` + `common/config/`, `common/security/`, `common/exception/` | Per user decisions D-02, D-03, D-04 |
 
@@ -25,7 +25,7 @@ A new user can register with email and password, receive JWT tokens, log in, and
 - [x] Routing — `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
 - [x] Database — user registration (write), credential lookup (read), refresh token CRUD
 - [ ] ~~UI — N/A (backend-only project, no frontend)~~
-- [x] Deployment — Docker Compose for PostgreSQL + `./gradlew bootRun` documented
+- [x] Deployment — Podman for PostgreSQL (`podman compose`) + `./gradlew bootRun` documented
 
 ## Out of Scope (Deferred to Later Slices)
 

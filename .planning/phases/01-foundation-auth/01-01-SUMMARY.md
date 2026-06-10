@@ -10,12 +10,12 @@ completed: 2025-06-09T15:50:00Z
 
 ## What Was Built
 
-Spring Boot 3.3.6 + Kotlin 2.0.21 project with PostgreSQL (Docker Compose), Flyway migrations, JWT authentication (register + login), and integration tests. Full stack works end-to-end.
+Spring Boot 3.3.6 + Kotlin 2.0.21 project with PostgreSQL (Podman), Flyway migrations, JWT authentication (register + login), and integration tests. Full stack works end-to-end.
 
 ## Key Files Created
 
 - `build.gradle.kts` — Gradle Kotlin DSL with all dependencies (Spring Boot, Security, JPA, Flyway, jjwt 0.12.6)
-- `docker-compose.yml` — PostgreSQL 16-alpine container
+- `docker-compose.yml` — PostgreSQL 16-alpine container (run via `podman compose`)
 - `src/main/resources/db/migration/V1__create_users_table.sql` — Users table DDL
 - `src/main/kotlin/com/catspell/api/auth/controller/AuthController.kt` — POST /register, POST /login, GET /me
 - `src/main/kotlin/com/catspell/api/auth/service/AuthService.kt` — Registration and login logic
@@ -29,7 +29,7 @@ Spring Boot 3.3.6 + Kotlin 2.0.21 project with PostgreSQL (Docker Compose), Flyw
 ## Deviations
 
 - **Java 17 instead of 21**: Host machine only has JDK 17 installed. Spring Boot 3.3.x supports Java 17+, so no functional impact.
-- **H2 instead of Testcontainers**: Docker not available on host. Tests use H2 in PostgreSQL compatibility mode with `ddl-auto: create-drop` (Flyway disabled in tests).
+- **H2 instead of Testcontainers**: Podman not wired for Testcontainers at build time. Tests use H2 in PostgreSQL compatibility mode with `ddl-auto: create-drop` (Flyway disabled in tests).
 - **GlobalExceptionHandler created early**: Minimal version created in this plan (instead of Plan 03) to handle `ResponseStatusException` properly and avoid Spring Security error forwarding issues.
 - **Refresh token placeholder**: `AuthResponse.refreshToken` returns empty string; real implementation in Plan 01-02.
 

@@ -92,7 +92,7 @@ src/main/kotlin/com/catspell/
 src/main/resources/
 ├── db/migration/            # Flyway SQL migrations
 ├── application.yml          # Main config
-└── application-dev.yml      # Dev profile (Docker Compose)
+└── application-dev.yml      # Dev profile (Podman)
 
 src/test/kotlin/com/catspell/
 ├── auth/                    # Auth tests

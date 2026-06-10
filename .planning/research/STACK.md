@@ -37,7 +37,7 @@
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Docker Compose | Local dev environment | PostgreSQL + PostGIS + MinIO containers |
+| Podman | Local dev environment | PostgreSQL + PostGIS + MinIO containers via `podman compose` |
 | MinIO | S3-compatible local storage | Drop-in S3 replacement for dev, same API |
 | ktlint | Code formatting | Kotlin linting, integrates with Gradle |
 | Detekt | Static analysis | Kotlin code quality checks |
