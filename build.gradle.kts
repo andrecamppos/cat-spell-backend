@@ -43,17 +43,31 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.hibernate.orm:hibernate-spatial")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.h2database:h2")
+    testImplementation("org.testcontainers:postgresql:1.20.6")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.6")
     testImplementation("io.mockk:mockk:1.13.11")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+    if (System.getenv("DOCKER_HOST") == null) {
+        try {
+            val process = ProcessBuilder("podman", "machine", "inspect", "--format", "{{.ConnectionInfo.PodmanSocket.Path}}")
+                .redirectErrorStream(true).start()
+            val socket = process.inputStream.bufferedReader().readText().trim()
+            if (process.waitFor() == 0 && socket.isNotEmpty()) {
+                environment("DOCKER_HOST", "unix://$socket")
+            }
+        } catch (_: Exception) { }
+    }
 }
 
 allOpen {

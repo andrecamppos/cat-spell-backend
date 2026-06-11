@@ -10,10 +10,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import com.catspell.api.BaseIntegrationTest
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthIntegrationTest {
+class AuthIntegrationTest : BaseIntegrationTest() {
 
     @Autowired
     lateinit var mockMvc: MockMvc
