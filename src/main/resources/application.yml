@@ -15,7 +15,7 @@ spring:
       enabled: true
 
 jwt:
-  secret: ${JWT_SECRET:default-dev-secret-change-me-in-production-must-be-at-least-64-bytes-long-for-hs512}
+  secret: ${JWT_SECRET:ZGVmYXVsdC1kZXYtc2VjcmV0LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uLW11c3QtYmUtYXQtbGVhc3QtNjQtYnl0ZXMtbG9uZy1mb3ItaHM1MTI=}
   access-token-expiry: 3600000
   refresh-token-expiry-days: 30
 
