@@ -82,6 +82,20 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
 
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid argument")
+        problem.title = "Bad Request"
+        return problem
+    }
+
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalState(ex: IllegalStateException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Invalid state")
+        problem.title = "Conflict"
+        return problem
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ProblemDetail {
         log.error("Unexpected error", ex)
