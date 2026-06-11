@@ -200,6 +200,45 @@ class ProfileIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `create profile invalid gender returns bad request`() {
+        val token = registerAndGetToken("invalid-gender@example.com")
+        val body = createProfileBody(gender = "OTHER")
+        mockMvc.perform(
+            post("/api/profile")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `update profile partial only changes provided fields`() {
+        val token = registerAndGetToken("partial-update@example.com")
+        mockMvc.perform(
+            post("/api/profile")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createProfileBody()))
+        )
+
+        val updateBody = mapOf("bio" to "Only bio changed")
+        mockMvc.perform(
+            put("/api/profile")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateBody))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.bio").value("Only bio changed"))
+            .andExpect(jsonPath("$.displayName").value("Test User"))
+            .andExpect(jsonPath("$.gender").value("MALE"))
+            .andExpect(jsonPath("$.ageMin").value(18))
+            .andExpect(jsonPath("$.ageMax").value(30))
+            .andExpect(jsonPath("$.maxDistanceKm").value(50))
+    }
+
+    @Test
     fun `create profile bio too long returns bad request`() {
         val token = registerAndGetToken("long-bio@example.com")
         val body = createProfileBody(bio = "a".repeat(1001))

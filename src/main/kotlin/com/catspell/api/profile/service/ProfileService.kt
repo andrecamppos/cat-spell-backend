@@ -32,6 +32,8 @@ class ProfileService(
 
         validateAge(request.dateOfBirth)
         validateAgeRange(request.ageMin, request.ageMax)
+        validateGender(request.gender)
+        validateGenderPreference(request.genderPreference)
 
         val profile = UserProfile(
             user = user,
@@ -103,6 +105,23 @@ class ProfileService(
         if (ageMin > ageMax) {
             throw IllegalArgumentException("ageMin must be less than or equal to ageMax")
         }
+    }
+
+    private fun validateGender(gender: String) {
+        if (gender !in VALID_GENDERS) {
+            throw IllegalArgumentException("Gender must be one of: $VALID_GENDERS")
+        }
+    }
+
+    private fun validateGenderPreference(genderPreference: String) {
+        if (genderPreference !in VALID_GENDER_PREFERENCES) {
+            throw IllegalArgumentException("Gender preference must be one of: $VALID_GENDER_PREFERENCES")
+        }
+    }
+
+    companion object {
+        private val VALID_GENDERS = setOf("MALE", "FEMALE")
+        private val VALID_GENDER_PREFERENCES = setOf("MALE", "FEMALE", "EVERYONE")
     }
 
     fun checkCompleteness(userId: UUID): CompletenessResponse {
