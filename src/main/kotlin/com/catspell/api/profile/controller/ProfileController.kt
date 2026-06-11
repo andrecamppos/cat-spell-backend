@@ -1,5 +1,6 @@
 package com.catspell.api.profile.controller
 
+import com.catspell.api.profile.model.CompletenessResponse
 import com.catspell.api.profile.model.CreateProfileRequest
 import com.catspell.api.profile.model.ProfileResponse
 import com.catspell.api.profile.model.UpdateLocationRequest
@@ -43,6 +44,13 @@ class ProfileController(
     fun updateLocation(@Valid @RequestBody request: UpdateLocationRequest): ResponseEntity<ProfileResponse> {
         val userId = extractUserId()
         val response = profileService.updateLocation(userId, request)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/completeness")
+    fun checkCompleteness(): ResponseEntity<CompletenessResponse> {
+        val userId = extractUserId()
+        val response = profileService.checkCompleteness(userId)
         return ResponseEntity.ok(response)
     }
 

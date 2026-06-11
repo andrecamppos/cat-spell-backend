@@ -82,6 +82,20 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
 
+    @ExceptionHandler(PhotoLimitExceededException::class)
+    fun handlePhotoLimitExceeded(ex: PhotoLimitExceededException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Maximum 6 photos allowed")
+        problem.title = "Bad Request"
+        return problem
+    }
+
+    @ExceptionHandler(InvalidPhotoTypeException::class)
+    fun handleInvalidPhotoType(ex: InvalidPhotoTypeException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Only JPEG and PNG photos are allowed")
+        problem.title = "Bad Request"
+        return problem
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid argument")

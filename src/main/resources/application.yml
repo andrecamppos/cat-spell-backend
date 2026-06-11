@@ -19,5 +19,13 @@ jwt:
   access-token-expiry: 3600000
   refresh-token-expiry-days: 30
 
+storage:
+  s3:
+    endpoint: ${S3_ENDPOINT:http://localhost:9000}
+    region: ${S3_REGION:us-east-1}
+    bucket: ${S3_BUCKET:catspell-photos}
+    access-key: ${S3_ACCESS_KEY:catspell}
+    secret-key: ${S3_SECRET_KEY:catspell123}
+
 server:
   port: 8080

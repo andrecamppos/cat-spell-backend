@@ -44,6 +44,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.hibernate.orm:hibernate-spatial")
+    implementation("software.amazon.awssdk:s3:2.25.60")
+    implementation("net.coobird:thumbnailator:0.4.20")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
