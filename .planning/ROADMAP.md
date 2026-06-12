@@ -54,7 +54,8 @@
 **Goal:** Deliver the cat profile system — users can create, manage, and showcase their cats with photos.
 **Mode:** mvp
 **Requirements:** CAT-01, CAT-02, CAT-03, CAT-04, CAT-05
-**Status:** 📋 Planned (2 plans)
+**Planning Status:** ✅ Complete (2026-06-12)
+**Execution Status:** ✅ Complete (2026-06-12) — 2/2 plans done, 82 tests passing
 **Success Criteria:**
 1. User can create a cat profile with name, age, and breed
 2. User can upload photos for a cat profile via S3 presigned URLs
@@ -63,7 +64,7 @@
 5. User can have multiple cat profiles linked to their account
 **Plans:**
 - Wave 1: 03-01 Cat Profile CRUD + Schema (CAT-01, CAT-03, CAT-04, CAT-05)
-- Wave 2: 03-02 Cat Photo Management + Cascade Deletion (CAT-02) — depends on 03-01
+- Wave 2: 03-02 Cat Photo Management + Cascade Deletion (CAT-02, CAT-06, CAT-07, CAT-08) — depends on 03-01
 
 ### Phase 4: Discovery & Matching
 **Goal:** Deliver the cat-first discovery feed with geolocation filtering, swipe actions, seen-profile tracking, and mutual match detection.
