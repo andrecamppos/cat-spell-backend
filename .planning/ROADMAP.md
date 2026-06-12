@@ -11,7 +11,7 @@
 |---|-------|------|--------------|-------|
 | 1 | Foundation & Auth | Runnable Spring Boot app with JWT auth | AUTH-01, AUTH-02, AUTH-03 | — |
 | 2 | User Profiles & Photos | Complete user identity with photos and location | PROF-01, PROF-02, PROF-03, PROF-04, PROF-05 | — |
-| 3 | Cat Profiles | Cat identity system — the core data model | CAT-01, CAT-02, CAT-03, CAT-04, CAT-05 | — |
+| 3 | Cat Profiles | Cat identity system — the core data model | CAT-01, CAT-02, CAT-03, CAT-04, CAT-05 | 2 |
 | 4 | Discovery & Matching | Cat-first feed, swipe actions, geo filtering, mutual matching | DISC-01, DISC-02, DISC-03, DISC-04, DISC-05, DISC-06, DISC-07 | — |
 | 5 | Real-Time Chat | WebSocket messaging between matched users | CHAT-01, CHAT-02, CHAT-03 | — |
 | 6 | API Polish & Integration Tests | Production-ready API with docs, validation, and test coverage | — | — |
@@ -54,12 +54,16 @@
 **Goal:** Deliver the cat profile system — users can create, manage, and showcase their cats with photos.
 **Mode:** mvp
 **Requirements:** CAT-01, CAT-02, CAT-03, CAT-04, CAT-05
+**Status:** 📋 Planned (2 plans)
 **Success Criteria:**
 1. User can create a cat profile with name, age, and breed
 2. User can upload photos for a cat profile via S3 presigned URLs
 3. User can edit a cat profile's details
 4. User can delete a cat profile
 5. User can have multiple cat profiles linked to their account
+**Plans:**
+- Wave 1: 03-01 Cat Profile CRUD + Schema (CAT-01, CAT-03, CAT-04, CAT-05)
+- Wave 2: 03-02 Cat Photo Management + Cascade Deletion (CAT-02) — depends on 03-01
 
 ### Phase 4: Discovery & Matching
 **Goal:** Deliver the cat-first discovery feed with geolocation filtering, swipe actions, seen-profile tracking, and mutual match detection.
