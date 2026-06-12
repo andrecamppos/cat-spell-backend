@@ -38,12 +38,17 @@
 **Goal:** Deliver user profile management with photo uploads to S3-compatible storage and GPS location storage.
 **Mode:** mvp
 **Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05
+**Status:** 📋 Planned (2 plans)
 **Success Criteria:**
 1. User can create a profile with display name, bio, and dating preferences
 2. User can edit their own profile fields
 3. User can upload photos via S3 presigned URLs (MinIO for local dev)
 4. User can delete their own photos
 5. User can set and update GPS coordinates on their profile
+**Plans:**
+- Wave 1: 02-01 Profile CRUD + Location (PROF-01, PROF-02, PROF-05)
+- Wave 2: 02-02 Photo Management + Completeness (PROF-03, PROF-04) — depends on 02-01
+**Cross-cutting:** Test infra migrated H2→Testcontainers in 02-01; PostGIS installed in 02-01
 
 ### Phase 3: Cat Profiles
 **Goal:** Deliver the cat profile system — users can create, manage, and showcase their cats with photos.
