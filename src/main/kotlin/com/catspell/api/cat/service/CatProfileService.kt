@@ -4,6 +4,7 @@ import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.*
 import com.catspell.api.common.exception.CatLimitExceededException
 import com.catspell.api.common.exception.ResourceNotFoundException
+import com.catspell.api.profile.service.StorageService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -12,7 +13,9 @@ import java.util.UUID
 @Service
 class CatProfileService(
     private val catProfileRepository: CatProfileRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val catPhotoRepository: CatPhotoRepository,
+    private val storageService: StorageService
 ) {
 
     companion object {
@@ -71,6 +74,15 @@ class CatProfileService(
     fun deleteCatProfile(userId: UUID, catId: UUID) {
         val catProfile = catProfileRepository.findByIdAndUserId(catId, userId)
             ?: throw ResourceNotFoundException("Cat profile not found")
+
+        val photos = catPhotoRepository.findByCatProfileId(catId)
+        photos.forEach { photo ->
+            storageService.deleteObject(photo.s3Key)
+            photo.thumbnailS3Key?.let { storageService.deleteObject(it) }
+        }
+        catPhotoRepository.deleteAll(photos)
+        catPhotoRepository.flush()
+
         catProfileRepository.delete(catProfile)
     }
 
