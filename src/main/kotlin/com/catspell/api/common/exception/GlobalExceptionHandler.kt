@@ -96,6 +96,13 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(CatLimitExceededException::class)
+    fun handleCatLimitExceeded(ex: CatLimitExceededException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Maximum 5 cats allowed")
+        problem.title = "Conflict"
+        return problem
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid argument")

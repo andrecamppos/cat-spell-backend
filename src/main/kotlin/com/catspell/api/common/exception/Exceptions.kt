@@ -11,3 +11,5 @@ class ResourceNotFoundException(message: String) : RuntimeException(message)
 class PhotoLimitExceededException(message: String = "Maximum 6 photos allowed") : RuntimeException(message)
 
 class InvalidPhotoTypeException(message: String = "Only JPEG and PNG photos are allowed") : RuntimeException(message)
+
+class CatLimitExceededException(message: String = "Maximum 5 cats allowed") : RuntimeException(message)
