@@ -1,5 +1,6 @@
 package com.catspell.api.chat.controller
 
+import com.catspell.api.chat.model.ConversationListResponse
 import com.catspell.api.chat.model.MessagePageResponse
 import com.catspell.api.chat.service.ChatService
 import org.springframework.http.ResponseEntity
@@ -13,6 +14,20 @@ import java.util.UUID
 class ConversationController(
     private val chatService: ChatService
 ) {
+
+    @GetMapping
+    fun getConversations(): ResponseEntity<ConversationListResponse> {
+        val userId = extractUserId()
+        val response = chatService.getConversations(userId)
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/{id}/read")
+    fun markRead(@PathVariable id: UUID): ResponseEntity<Void> {
+        val userId = extractUserId()
+        chatService.markRead(userId, id)
+        return ResponseEntity.noContent().build()
+    }
 
     @GetMapping("/{id}/messages")
     fun getMessages(
