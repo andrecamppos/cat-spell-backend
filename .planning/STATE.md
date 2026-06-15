@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 3 shipped — PR #3"
+status: planning
 stopped_at: Phase 4 context gathered
-last_updated: "2026-06-14T21:39:41.711Z"
+last_updated: "2026-06-15T11:19:07.036Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 50
+  completed_phases: 4
+  total_plans: 9
+  completed_plans: 9
+  percent: 67
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2025-06-09)
 
 **Core value:** Cat-first discovery — users fall for the cat first, then meet the person.
-**Current focus:** Phase 04 — Discovery & Matching
+**Current focus:** Phase 04 — discovery-matching
 
 ## Current Phase
 
-**Phase:** 4
+**Phase:** 5
 **Name:** Discovery & Matching
-**Status:** Phase 3 shipped — PR #3
+**Status:** Ready to plan
 
 ## Previous Phase
 
