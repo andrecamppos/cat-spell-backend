@@ -15,3 +15,11 @@ class InvalidPhotoTypeException(message: String = "Only JPEG and PNG photos are 
 class CatLimitExceededException(message: String = "Maximum 5 cats allowed") : RuntimeException(message)
 
 class CatPhotoLimitExceededException(message: String = "Maximum 10 photos per cat allowed") : RuntimeException(message)
+
+class LocationRequiredException(message: String = "Location required for discovery") : RuntimeException(message)
+
+class ProfileIncompleteException(message: String = "Complete your profile to use discovery") : RuntimeException(message)
+
+class DuplicateSwipeException(message: String = "Already swiped on this cat") : RuntimeException(message)
+
+class SelfSwipeException(message: String = "Cannot swipe on your own cat") : RuntimeException(message)

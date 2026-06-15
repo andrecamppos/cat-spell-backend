@@ -31,13 +31,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Discovery & Matching
 
-- [ ] **DISC-01**: User can browse a discovery feed showing cat profiles (cat-first reveal)
-- [ ] **DISC-02**: User can view a cat's owner profile by tapping into the cat detail view
-- [ ] **DISC-03**: User can like or pass on a cat profile in the feed
-- [ ] **DISC-04**: Discovery feed filters by configurable distance radius using GPS geolocation
-- [ ] **DISC-05**: Feed excludes previously seen (liked or passed) profiles
-- [ ] **DISC-06**: Mutual match is detected when both users like each other's cats
-- [ ] **DISC-07**: User can view their list of matches
+- [x] **DISC-01**: User can browse a discovery feed showing cat profiles (cat-first reveal)
+- [x] **DISC-02**: User can view a cat's owner profile by tapping into the cat detail view
+- [x] **DISC-03**: User can like or pass on a cat profile in the feed
+- [x] **DISC-04**: Discovery feed filters by configurable distance radius using GPS geolocation
+- [x] **DISC-05**: Feed excludes previously seen (liked or passed) profiles
+- [x] **DISC-06**: Mutual match is detected when both users like each other's cats
+- [x] **DISC-07**: User can view their list of matches
 
 ### Chat
 
@@ -116,18 +116,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAT-03 | Phase 3 | Pending |
 | CAT-04 | Phase 3 | Pending |
 | CAT-05 | Phase 3 | Pending |
-| DISC-01 | Phase 4 | Pending |
-| DISC-02 | Phase 4 | Pending |
-| DISC-03 | Phase 4 | Pending |
-| DISC-04 | Phase 4 | Pending |
-| DISC-05 | Phase 4 | Pending |
-| DISC-06 | Phase 4 | Pending |
-| DISC-07 | Phase 4 | Pending |
+| DISC-01 | Phase 4 | Complete |
+| DISC-02 | Phase 4 | Complete |
+| DISC-03 | Phase 4 | Complete |
+| DISC-04 | Phase 4 | Complete |
+| DISC-05 | Phase 4 | Complete |
+| DISC-06 | Phase 4 | Complete |
+| DISC-07 | Phase 4 | Complete |
 | CHAT-01 | Phase 5 | Pending |
 | CHAT-02 | Phase 5 | Pending |
 | CHAT-03 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 23 total
 - Mapped to phases: 23
 - Unmapped: 0 ✓

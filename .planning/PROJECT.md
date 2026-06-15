@@ -12,21 +12,18 @@ Cat-first discovery — users fall for the cat first, then meet the person. The 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Email/password authentication with JWT tokens — Phase 1
+- [x] User profiles (bio, photos, preferences) — Phase 2
+- [x] GPS geolocation storage and distance-based filtering with configurable radius — Phase 2
+- [x] S3-compatible photo upload and storage — Phase 2
+- [x] Cat profiles (name, age, breed, photos) — Phase 3
+- [x] Cat-first swipe feed (serves cat profiles, owner profile accessible from detail view) — Phase 4
+- [x] Mutual match detection (both users like each other's cats) — Phase 4
 
 ### Active
 
-- [ ] Email/password authentication with JWT tokens
-- [ ] User profiles (bio, photos, preferences)
-- [ ] Cat profiles (name, age, breed, photos, personality traits)
-- [ ] Multi-cat households with primary/featured cat selection
-- [ ] Cat-first swipe feed (serves cat profiles, owner profile accessible from detail view)
-- [ ] Cat-influenced matching algorithm (cat compatibility + lifestyle signals)
-- [ ] GPS geolocation storage and distance-based filtering with configurable radius
-- [ ] Mutual match detection (both users like each other's cats)
 - [ ] Real-time WebSocket chat for matched users
-- [ ] S3-compatible photo upload and storage
-- [ ] REST API for mobile app consumption
+- [ ] REST API polish, OpenAPI docs, rate limiting, health checks
 
 ### Out of Scope
 
