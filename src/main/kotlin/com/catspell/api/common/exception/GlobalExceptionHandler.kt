@@ -110,6 +110,34 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(LocationRequiredException::class)
+    fun handleLocationRequired(ex: LocationRequiredException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Location required for discovery")
+        problem.title = "Bad Request"
+        return problem
+    }
+
+    @ExceptionHandler(ProfileIncompleteException::class)
+    fun handleProfileIncomplete(ex: ProfileIncompleteException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Complete your profile to use discovery")
+        problem.title = "Bad Request"
+        return problem
+    }
+
+    @ExceptionHandler(DuplicateSwipeException::class)
+    fun handleDuplicateSwipe(ex: DuplicateSwipeException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Already swiped on this cat")
+        problem.title = "Conflict"
+        return problem
+    }
+
+    @ExceptionHandler(SelfSwipeException::class)
+    fun handleSelfSwipe(ex: SelfSwipeException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Cannot swipe on your own cat")
+        problem.title = "Bad Request"
+        return problem
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid argument")
