@@ -46,6 +46,37 @@ See: .planning/PROJECT.md (updated 2025-06-09)
 **Name:** Discovery & Matching
 **Status:** ✅ Complete
 
+### Plans Completed
+
+- 04-01: Discovery Feed + Swipe + Match Detection (Wave 1) — DISC-01, DISC-03, DISC-04, DISC-05, DISC-06
+- 04-02: Owner Profile Detail + Match List (Wave 2) — DISC-02, DISC-07
+
+### Test Summary
+
+- 34 new discovery/matching integration tests (20 in Discovery+Swipe, 14 in Owner+Match)
+- Discovery feed: cat-first data, excludes own cats, distance filter, excludes swiped, gender/age prefs, pagination
+- Swipe: LIKE, PASS, mutual match detection, duplicate (409), self-swipe (400)
+- Owner profile: cat-to-owner reveal, calculated age, photos, all cats, auth
+- Match list: other-user resolution, photos+cats summary, auth enforcement
+
+## Phase 3
+
+**Phase:** 3
+**Name:** Cat Profiles
+**Status:** ✅ Complete
+
+### Plans Completed
+
+- 03-01: Cat Profile CRUD + Schema (Wave 1) — CAT-01, CAT-03, CAT-04, CAT-05
+- 03-02: Cat Photo Management + Cascade Deletion (Wave 2) — CAT-02
+
+### Test Summary
+
+- 26 new cat profile/photo integration tests (12 profile, 11 photo, 3 cascade deletion)
+- Profile: create, list, get, update, delete, 5-cat limit, validation, ownership
+- Photos: presigned URL upload, confirm+thumbnail, delete, reorder, list, 10-photo limit, ownership chain
+- Cascade: delete cat with photos cleans DB rows + S3 objects
+
 ## Phase 2
 
 **Phase:** 2
