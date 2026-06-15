@@ -29,4 +29,6 @@ interface MessageRepository : JpaRepository<Message, UUID> {
     ): List<Message>
 
     fun findTopByConversationIdOrderByCreatedAtDesc(conversationId: UUID): Message?
+
+    fun countByConversationIdAndSenderIdNot(conversationId: UUID, senderId: UUID): Long
 }

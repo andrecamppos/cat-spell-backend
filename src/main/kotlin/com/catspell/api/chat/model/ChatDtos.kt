@@ -34,3 +34,22 @@ data class MessagePageResponse(
     val nextCursor: Instant?,
     val hasMore: Boolean
 )
+
+data class ConversationResponse(
+    val conversationId: UUID,
+    val matchId: UUID,
+    val otherUser: com.catspell.api.match.model.MatchUserSummary,
+    val otherUserCats: List<com.catspell.api.match.model.MatchCatSummary>,
+    val lastMessage: LastMessagePreview?,
+    val unreadCount: Int
+)
+
+data class LastMessagePreview(
+    val content: String,
+    val sentAt: Instant,
+    val sentByMe: Boolean
+)
+
+data class ConversationListResponse(
+    val conversations: List<ConversationResponse>
+)
