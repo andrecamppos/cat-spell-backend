@@ -295,6 +295,35 @@ class MatchIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `match list sorted by matchedAt descending`() {
+        val (tokenA, catIdA, _) = setupCompleteUser("match-sort-a@example.com", "SortA", "FEMALE", catName = "SortCatA")
+        val (tokenB, catIdB, _) = setupCompleteUser("match-sort-b@example.com", "SortB", "MALE", catName = "SortCatB")
+        val (tokenC, catIdC, _) = setupCompleteUser("match-sort-c@example.com", "SortC", "MALE", catName = "SortCatC")
+
+        // Match A-B first
+        createMutualMatch(tokenA, catIdA, tokenB, catIdB)
+        // Small delay to ensure different matchedAt timestamps
+        Thread.sleep(50)
+        // Match A-C second (newer)
+        createMutualMatch(tokenA, catIdA, tokenC, catIdC)
+
+        val result = mockMvc.perform(
+            get("/api/matches")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val matches = json["matches"]
+        assert(matches.size() >= 2) { "Should have at least 2 matches" }
+
+        // Newest match (SortC) should be first
+        val firstMatchOther = matches[0]["otherUser"]["displayName"].asText()
+        val secondMatchOther = matches[1]["otherUser"]["displayName"].asText()
+        assert(firstMatchOther == "SortC") { "Newest match (SortC) should be first, got $firstMatchOther" }
+        assert(secondMatchOther == "SortB") { "Older match (SortB) should be second, got $secondMatchOther" }
+    }
+
+    @Test
     fun `match list correctly resolves other user from both sides`() {
         val (tokenA, catIdA, _) = setupCompleteUser("match-resolve-a@example.com", "ResolveA", "FEMALE", catName = "ResolveCatA")
         val (tokenB, catIdB, _) = setupCompleteUser("match-resolve-b@example.com", "ResolveB", "MALE", catName = "ResolveCatB")

@@ -292,6 +292,57 @@ class SwipeMatchIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `match is created only once per user pair when liking multiple cats`() {
+        val (tokenA, catIdA, _) = setupCompleteUser("swipe-idempotent-a@example.com", "IdempA", "FEMALE", catName = "CatIdempA")
+        val tokenB = registerAndGetToken("swipe-idempotent-b@example.com")
+        createProfile(tokenB, "IdempB", "MALE")
+        setLocation(tokenB)
+        addUserPhoto(tokenB)
+        val catIdB1 = createCat(tokenB, "CatIdempB1")
+        addCatPhoto(tokenB, catIdB1)
+        val catIdB2 = createCat(tokenB, "CatIdempB2")
+        addCatPhoto(tokenB, catIdB2)
+
+        // A likes B's first cat, B likes A's cat → match
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("catId" to catIdB1, "action" to "LIKE")))
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenB")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("catId" to catIdA, "action" to "LIKE")))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.matched").value(true))
+
+        // A likes B's second cat — should NOT create a second match
+        val secondSwipe = mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("catId" to catIdB2, "action" to "LIKE")))
+        ).andExpect(status().isOk).andReturn()
+
+        // Match list should contain exactly 1 match between A and B
+        val result = mockMvc.perform(
+            get("/api/matches")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val matches = json["matches"]
+        val matchesWithB = (0 until matches.size())
+            .map { matches[it] }
+            .filter { it["otherUser"]["displayName"].asText() == "IdempB" }
+        assert(matchesWithB.size == 1) { "Should have exactly 1 match with IdempB, got ${matchesWithB.size}" }
+    }
+
+    @Test
     fun `LIKE then PASS from other side does not create match`() {
         val (tokenA, catIdA, _) = setupCompleteUser("swipe-norecip-a@example.com", "NoRecipA", "FEMALE", catName = "CatNR_A")
         val (tokenB, catIdB, _) = setupCompleteUser("swipe-norecip-b@example.com", "NoRecipB", "MALE", catName = "CatNR_B")

@@ -396,6 +396,49 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `feed pagination returns different cats on second page using cursor`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-page-a@example.com", "PageA", "FEMALE", lat = 40.7128, lng = -74.0060)
+        // Create multiple users with cats to fill two pages
+        for (i in 1..5) {
+            setupCompleteUser("disc-page-other$i@example.com", "PageUser$i", "MALE", lat = 40.7128 + (i * 0.001), lng = -74.0060, catName = "PageCat$i")
+        }
+
+        // First page with small pageSize
+        val firstResult = mockMvc.perform(
+            get("/api/discovery/feed")
+                .param("pageSize", "2")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val firstJson = objectMapper.readTree(firstResult.response.contentAsString)
+        val firstCats = firstJson["cats"]
+        assert(firstCats.size() == 2) { "First page should have 2 cats, got ${firstCats.size()}" }
+
+        val cursor = firstJson["cursor"]
+        assert(cursor != null && !cursor.isNull) { "Cursor should be present for pagination" }
+        assert(cursor["hasMore"].asBoolean()) { "hasMore should be true when more cats exist" }
+
+        // Second page using cursor — service expects comma-separated "seed,offset" Base64 encoded
+        val cursorString = "${cursor["seed"].asDouble()},${cursor["offset"].asInt()}"
+        val encodedCursor = java.util.Base64.getEncoder().encodeToString(cursorString.toByteArray())
+        val secondResult = mockMvc.perform(
+            get("/api/discovery/feed")
+                .param("pageSize", "2")
+                .param("cursor", encodedCursor)
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val secondJson = objectMapper.readTree(secondResult.response.contentAsString)
+        val secondCats = secondJson["cats"]
+        assert(secondCats.size() > 0) { "Second page should have cats" }
+
+        // Cats on second page should differ from first page
+        val firstIds = (0 until firstCats.size()).map { firstCats[it]["catId"].asText() }.toSet()
+        val secondIds = (0 until secondCats.size()).map { secondCats[it]["catId"].asText() }.toSet()
+        assert(firstIds.intersect(secondIds).isEmpty()) { "Second page should not contain same cats as first page" }
+    }
+
+    @Test
     fun `feed requires authentication`() {
         mockMvc.perform(get("/api/discovery/feed"))
             .andExpect(status().isUnauthorized)
