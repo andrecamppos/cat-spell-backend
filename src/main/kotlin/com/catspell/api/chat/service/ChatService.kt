@@ -219,6 +219,38 @@ class ChatService(
         conversationParticipantRepository.save(participant)
     }
 
+    @Transactional
+    fun deliverUnreadMessages(userId: UUID): Int {
+        val participations = conversationParticipantRepository.findByUserId(userId)
+        val conversationIds = participations.mapNotNull { it.conversation.id }
+        if (conversationIds.isEmpty()) return 0
+
+        val undelivered = messageRepository.findByConversationIdInAndDeliveredFalseAndSenderIdNotOrderByCreatedAtAsc(
+            conversationIds, userId
+        )
+
+        for (msg in undelivered) {
+            val senderProfile = userProfileRepository.findByUserId(msg.sender.id!!)
+            val senderName = senderProfile?.displayName ?: "Unknown"
+
+            messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/notifications",
+                ChatNotification(
+                    conversationId = msg.conversation.id!!,
+                    messageId = msg.id!!,
+                    senderName = senderName,
+                    preview = msg.content.take(100)
+                )
+            )
+
+            msg.delivered = true
+            messageRepository.save(msg)
+        }
+
+        return undelivered.size
+    }
+
     private fun getOtherUserId(conversation: Conversation, currentUserId: UUID): UUID {
         val match = conversation.match
         return if (match.user1.id == currentUserId) match.user2.id!! else match.user1.id!!
