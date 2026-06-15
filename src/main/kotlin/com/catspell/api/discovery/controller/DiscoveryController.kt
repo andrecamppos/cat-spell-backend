@@ -1,6 +1,7 @@
 package com.catspell.api.discovery.controller
 
 import com.catspell.api.discovery.model.FeedResponse
+import com.catspell.api.discovery.model.OwnerProfileResponse
 import com.catspell.api.discovery.model.SwipeRequest
 import com.catspell.api.discovery.model.SwipeResponse
 import com.catspell.api.discovery.service.DiscoveryService
@@ -23,6 +24,13 @@ class DiscoveryController(
     ): ResponseEntity<FeedResponse> {
         val userId = extractUserId()
         val response = discoveryService.getFeed(userId, cursor, pageSize)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/cats/{catId}/owner")
+    fun getOwnerProfile(@PathVariable catId: UUID): ResponseEntity<OwnerProfileResponse> {
+        val userId = extractUserId()
+        val response = discoveryService.getOwnerProfile(userId, catId)
         return ResponseEntity.ok(response)
     }
 

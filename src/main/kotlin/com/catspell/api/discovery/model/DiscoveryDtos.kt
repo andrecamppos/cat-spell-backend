@@ -48,3 +48,26 @@ data class FeedRequest(
     val cursor: String? = null,
     val pageSize: Int = 20
 )
+
+data class OwnerProfileResponse(
+    val userId: UUID,
+    val displayName: String,
+    val bio: String?,
+    val age: Int,
+    val gender: String,
+    val photos: List<OwnerPhotoResponse>,
+    val cats: List<OwnerCatSummary>
+)
+
+data class OwnerPhotoResponse(
+    val s3Key: String,
+    val thumbnailS3Key: String?
+)
+
+data class OwnerCatSummary(
+    val id: UUID,
+    val name: String,
+    val age: Int,
+    val breed: String?,
+    val photoThumbnail: String?
+)
