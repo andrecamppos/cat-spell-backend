@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 05 planned"
-stopped_at: Phase 5 plans ready for execution
-last_updated: "2026-06-15"
+status: idle
+stopped_at: Phase 5 complete
+last_updated: "2026-06-15T22:42:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 9
-  percent: 67
+  completed_plans: 11
+  percent: 83
 ---
 
 # Project State
@@ -20,31 +20,31 @@ progress:
 See: .planning/PROJECT.md (updated 2025-06-09)
 
 **Core value:** Cat-first discovery — users fall for the cat first, then meet the person.
-**Current focus:** Phase 05 — real-time-chat
+**Current focus:** Phase 06 — API Polish & Integration Tests (next)
 
 ## Current Phase
 
 **Phase:** 5
 **Name:** Real-Time Chat
-**Status:** Planned (2 plans, 12 tasks)
-
-## Previous Phase
-
-**Phase:** 3
-**Name:** Cat Profiles
 **Status:** ✅ Complete
 
 ### Plans Completed
 
-- 03-01: Cat Profile CRUD + Schema (Wave 1) — CAT-01, CAT-03, CAT-04, CAT-05
-- 03-02: Cat Photo Management + Cascade Deletion (Wave 2) — CAT-02, CAT-06, CAT-07, CAT-08
+- 05-01: Core WebSocket Chat + Message History (Wave 1) — CHAT-01, CHAT-02
+- 05-02: Conversation List + Unread Counts + Offline Delivery (Wave 2) — CHAT-03
 
 ### Test Summary
 
-- 82 integration tests passing (28 new)
-- Cat profiles: CRUD, ownership validation, 5-cat limit, validation, auth
-- Cat photos: presigned upload, confirm+thumbnail, delete, reorder, list, ownership, 10-photo limit
-- Cascade deletion: S3 cleanup on cat profile delete, multi-photo cascade
+- 19 new chat integration tests (9 in ChatIntegrationTest, 10 in ConversationListIntegrationTest)
+- WebSocket STOMP: send/receive, lazy conversation creation, JWT auth, subscription auth
+- Conversation list: user/cat info, last message preview, unread count, sort order
+- Mark read, offline delivery, auth enforcement
+
+## Previous Phase
+
+**Phase:** 4
+**Name:** Discovery & Matching
+**Status:** ✅ Complete
 
 ## Phase 2
 
@@ -84,14 +84,14 @@ See: .planning/PROJECT.md (updated 2025-06-09)
 | 2 | User Profiles & Photos | ✅ Complete |
 | 3 | Cat Profiles | ✅ Complete |
 | 4 | Discovery & Matching | ✅ Complete |
-| 5 | Real-Time Chat | ◐ Planned |
+| 5 | Real-Time Chat | ✅ Complete |
 | 6 | API Polish & Integration Tests | ○ Not Started |
 
 ## Session Continuity
 
 Last session: 2026-06-15
-Stopped at: Phase 5 plans ready for execution
-Resume file: .planning/phases/05-real-time-chat/05-01-PLAN.md
+Stopped at: Phase 5 complete — all CHAT requirements fulfilled
+Resume file: .planning/ROADMAP.md (Phase 6 next)
 
 ---
-*Last updated: 2026-06-15 after Phase 5 planning complete*
+*Last updated: 2026-06-15 after Phase 5 execution complete*
