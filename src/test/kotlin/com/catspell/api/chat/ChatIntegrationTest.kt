@@ -292,12 +292,20 @@ class ChatIntegrationTest : BaseIntegrationTest() {
         val stompHeaders = StompHeaders()
         stompHeaders.destination = "/app/chat.send"
 
-        val errorFuture = CompletableFuture<Throwable?>()
         // Send with a non-existent matchId
         sessionA.send(stompHeaders, mapOf("matchId" to UUID.randomUUID().toString(), "content" to "Should fail"))
 
         Thread.sleep(1000)
         sessionA.disconnect()
+
+        // Verify no conversation was created — conversation list should be empty
+        mockMvc.perform(
+            get("/api/conversations")
+                .header("Authorization", "Bearer $tokenA")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.conversations").isArray)
+            .andExpect(jsonPath("$.conversations").isEmpty)
     }
 
     @Test
@@ -344,12 +352,28 @@ class ChatIntegrationTest : BaseIntegrationTest() {
         Thread.sleep(1000)
         sessionA.disconnect()
 
-        // Find conversation ID by querying messages indirectly
-        // We need to find the conversation. Let's use the match endpoint then try conversations
-        // Since we sent messages with matchId, a conversation was created.
-        // We can find it by looking at the database through our API
-        // For now, let's test the REST endpoint by getting conversations first
-        // We'll verify message history in a more complete test after Plan 05-02 adds the conversation list endpoint
+        // Get conversation ID from conversation list
+        val listResult = mockMvc.perform(
+            get("/api/conversations")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+        val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
+
+        // Fetch message history and verify newest-first order
+        val histResult = mockMvc.perform(
+            get("/api/conversations/$convId/messages")
+                .header("Authorization", "Bearer $tokenA")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.messages").isArray)
+            .andExpect(jsonPath("$.messages.length()").value(5))
+            .andExpect(jsonPath("$.hasMore").value(false))
+            .andReturn()
+
+        // Verify newest first: Message 5 should be first, Message 1 last
+        val messages = objectMapper.readTree(histResult.response.contentAsString)["messages"]
+        assert(messages[0]["content"].asText() == "Message 5") { "First message should be 'Message 5', got '${messages[0]["content"].asText()}'" }
+        assert(messages[4]["content"].asText() == "Message 1") { "Last message should be 'Message 1', got '${messages[4]["content"].asText()}'" }
     }
 
     @Test
@@ -370,6 +394,37 @@ class ChatIntegrationTest : BaseIntegrationTest() {
         }
         Thread.sleep(2000)
         sessionA.disconnect()
+
+        // Get conversation ID from conversation list
+        val listResult = mockMvc.perform(
+            get("/api/conversations")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+        val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
+
+        // Page 1: should return 30 messages with hasMore=true
+        val page1Result = mockMvc.perform(
+            get("/api/conversations/$convId/messages")
+                .header("Authorization", "Bearer $tokenA")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.messages.length()").value(30))
+            .andExpect(jsonPath("$.hasMore").value(true))
+            .andExpect(jsonPath("$.nextCursor").exists())
+            .andReturn()
+
+        val page1Json = objectMapper.readTree(page1Result.response.contentAsString)
+        val nextCursor = page1Json["nextCursor"].asText()
+
+        // Page 2: use cursor to fetch remaining 5 messages
+        mockMvc.perform(
+            get("/api/conversations/$convId/messages")
+                .param("cursor", nextCursor)
+                .header("Authorization", "Bearer $tokenA")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.messages.length()").value(5))
+            .andExpect(jsonPath("$.hasMore").value(false))
     }
 
     @Test
