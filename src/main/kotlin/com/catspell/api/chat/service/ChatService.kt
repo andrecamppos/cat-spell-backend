@@ -1,10 +1,15 @@
 package com.catspell.api.chat.service
 
 import com.catspell.api.auth.model.UserRepository
+import com.catspell.api.cat.model.CatPhotoRepository
+import com.catspell.api.cat.model.CatProfileRepository
 import com.catspell.api.chat.model.*
 import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.match.model.Match
+import com.catspell.api.match.model.MatchCatSummary
 import com.catspell.api.match.model.MatchRepository
+import com.catspell.api.match.model.MatchUserSummary
+import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.simp.SimpMessagingTemplate
@@ -21,6 +26,9 @@ class ChatService(
     private val matchRepository: MatchRepository,
     private val userRepository: UserRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val userPhotoRepository: UserPhotoRepository,
+    private val catProfileRepository: CatProfileRepository,
+    private val catPhotoRepository: CatPhotoRepository,
     private val messagingTemplate: SimpMessagingTemplate
 ) {
 
@@ -145,6 +153,70 @@ class ChatService(
         )
 
         return conversation
+    }
+
+    @Transactional(readOnly = true)
+    fun getConversations(userId: UUID): ConversationListResponse {
+        val conversations = conversationRepository.findConversationsByUserId(userId)
+
+        val responses = conversations.map { conv ->
+            val otherId = getOtherUserId(conv, userId)
+
+            val otherProfile = userProfileRepository.findByUserId(otherId)
+            val otherPhotoThumbnail = userPhotoRepository.findByUserIdOrderByDisplayOrderAsc(otherId)
+                .firstOrNull { it.status == "ACTIVE" }
+                ?.thumbnailS3Key
+
+            val otherCats = catProfileRepository.findByUserId(otherId).map { cp ->
+                val catPhoto = catPhotoRepository.findByCatProfileIdOrderByDisplayOrderAsc(cp.id!!)
+                    .firstOrNull { it.status == "ACTIVE" }
+                MatchCatSummary(
+                    name = cp.name,
+                    photoThumbnail = catPhoto?.thumbnailS3Key
+                )
+            }
+
+            val lastMsg = messageRepository.findTopByConversationIdOrderByCreatedAtDesc(conv.id!!)
+            val lastMessagePreview = lastMsg?.let {
+                LastMessagePreview(
+                    content = it.content.take(100),
+                    sentAt = it.createdAt,
+                    sentByMe = it.sender.id == userId
+                )
+            }
+
+            val participant = conversationParticipantRepository.findByConversationIdAndUserId(conv.id!!, userId)
+            val unreadCount = if (participant?.lastReadAt != null) {
+                messageRepository.countByConversationIdAndSenderIdNotAndCreatedAtAfter(
+                    conv.id!!, userId, participant.lastReadAt!!
+                ).toInt()
+            } else {
+                messageRepository.countByConversationIdAndSenderIdNot(conv.id!!, userId).toInt()
+            }
+
+            ConversationResponse(
+                conversationId = conv.id!!,
+                matchId = conv.match.id!!,
+                otherUser = MatchUserSummary(
+                    userId = otherId,
+                    displayName = otherProfile?.displayName ?: "Unknown",
+                    photoThumbnail = otherPhotoThumbnail
+                ),
+                otherUserCats = otherCats,
+                lastMessage = lastMessagePreview,
+                unreadCount = unreadCount
+            )
+        }
+
+        return ConversationListResponse(conversations = responses)
+    }
+
+    @Transactional
+    fun markRead(userId: UUID, conversationId: UUID) {
+        val participant = conversationParticipantRepository.findByConversationIdAndUserId(conversationId, userId)
+            ?: throw ResourceNotFoundException("Not a participant of this conversation")
+        participant.lastReadAt = Instant.now()
+        conversationParticipantRepository.save(participant)
     }
 
     private fun getOtherUserId(conversation: Conversation, currentUserId: UUID): UUID {
