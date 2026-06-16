@@ -1,9 +1,9 @@
 ---
 phase: 6
 slug: api-polish-integration-tests
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-06-16
 ---
 
@@ -38,11 +38,11 @@ created: 2026-06-16
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 06-01-01 | 01 | 1 | D-01,D-02,D-03,D-04 | integration | `./gradlew test --tests "*OpenApiIntegrationTest"` | ❌ W0 | ⬜ pending |
-| 06-01-02 | 01 | 1 | D-05,D-06,D-07,D-08 | integration | `./gradlew test --tests "*RateLimitIntegrationTest"` | ❌ W0 | ⬜ pending |
-| 06-01-03 | 01 | 1 | D-09,D-10,D-11 | integration | `./gradlew test --tests "*HealthEndpointIntegrationTest"` | ❌ W0 | ⬜ pending |
-| 06-02-01 | 02 | 2 | D-12 | integration | `./gradlew test` | ✅ existing | ⬜ pending |
-| 06-02-02 | 02 | 2 | D-13 | integration | `./gradlew test --tests "*RateLimit* *Health* *OpenApi*"` | ❌ W0 | ⬜ pending |
+| 06-01-01 | 01 | 1 | D-01,D-02,D-03,D-04 | integration | `./gradlew test --tests "*OpenApiIntegrationTest"` | ✅ 6 tests | ✅ green |
+| 06-01-02 | 01 | 1 | D-05,D-06,D-07,D-08 | integration | `./gradlew test --tests "*RateLimitIntegrationTest"` | ✅ 8 tests | ✅ green |
+| 06-01-03 | 01 | 1 | D-09,D-10,D-11 | integration | `./gradlew test --tests "*HealthEndpointIntegrationTest"` | ✅ 6 tests | ✅ green |
+| 06-02-01 | 02 | 2 | D-12 | integration | `./gradlew test` | ✅ existing | ✅ green |
+| 06-02-02 | 02 | 2 | D-13 | integration | `./gradlew test --tests "*RateLimit* *Health* *OpenApi*"` | ✅ 20 tests | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -65,11 +65,25 @@ created: 2026-06-16
 
 ## Validation Sign-Off
 
-- [ ] All tasks have automated verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have automated verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ✅ approved
+
+---
+
+## Validation Audit 2026-06-16
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 2 |
+| Resolved | 2 |
+| Escalated | 0 |
+
+**Gaps resolved:**
+- D-02 (PARTIAL → COVERED): Added `should have all five API groups` test to `OpenApiIntegrationTest` — verifies all 5 grouped API endpoints return valid specs
+- D-05 (PARTIAL → COVERED): Added `should not rate limit non-auth endpoints` test to `RateLimitIntegrationTest` — verifies 15 requests to `/actuator/health` are not throttled
