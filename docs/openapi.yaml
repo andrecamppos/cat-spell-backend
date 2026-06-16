@@ -1,0 +1,1474 @@
+openapi: 3.1.0
+info:
+  title: Cat Spell API
+  version: 1.0.0
+  description: |
+    Cat-first dating app backend API.
+
+    Users register, build a profile, add their cats, discover nearby cats via
+    a geolocation-based feed, swipe to match, and chat in real time.
+
+    ## Authentication
+    All endpoints (except those tagged **public**) require a Bearer JWT in the
+    `Authorization` header. Obtain tokens via `/api/auth/register` or
+    `/api/auth/login`, and rotate them via `/api/auth/refresh`.
+
+    ## Real-time Chat
+    Chat messages are sent and received over **STOMP-over-WebSocket** at
+    `ws://<host>/ws`. See the [WebSocket](#section/WebSocket) section for
+    connection details.
+  contact:
+    name: Cat Spell Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registration, login, and token management
+  - name: Profile
+    description: User profile CRUD and location
+  - name: Photos
+    description: User photo uploads and management
+  - name: Cats
+    description: Cat profile CRUD
+  - name: Cat Photos
+    description: Cat photo uploads and management
+  - name: Discovery
+    description: Geolocation feed, owner profiles, and swiping
+  - name: Matches
+    description: Match listing
+  - name: Conversations
+    description: Chat conversations and message history
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ─── Auth ────────────────────────────────────────────────────────────
+  /api/auth/register:
+    post:
+      operationId: register
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: Log in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/auth/refresh:
+    post:
+      operationId: refreshToken
+      tags: [Auth]
+      summary: Rotate refresh token for a new token pair
+      description: |
+        Issues a new access + refresh token pair and invalidates the previous
+        refresh token. If a previously-used (replayed) token is submitted, **all**
+        tokens for the user are revoked.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Tokens rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Expired, invalid, or reused refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/auth/me:
+    get:
+      operationId: getMe
+      tags: [Auth]
+      summary: Get the authenticated user's ID
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId]
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+
+  # ─── Profile ─────────────────────────────────────────────────────────
+  /api/profile:
+    post:
+      operationId: createProfile
+      tags: [Profile]
+      summary: Create user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Profile already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    get:
+      operationId: getProfile
+      tags: [Profile]
+      summary: Get current user's profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    put:
+      operationId: updateProfile
+      tags: [Profile]
+      summary: Update profile (partial)
+      description: Only include fields you want to change.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/profile/location:
+    put:
+      operationId: updateLocation
+      tags: [Profile]
+      summary: Update user geolocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+      responses:
+        '200':
+          description: Updated profile with location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/profile/completeness:
+    get:
+      operationId: checkCompleteness
+      tags: [Profile]
+      summary: Check if profile is complete for discovery
+      responses:
+        '200':
+          description: Completeness status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompletenessResponse'
+
+  # ─── User Photos ─────────────────────────────────────────────────────
+  /api/profile/photos:
+    get:
+      operationId: listPhotos
+      tags: [Photos]
+      summary: List all active photos in display order
+      responses:
+        '200':
+          description: Photo list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PhotoResponse'
+
+  /api/profile/photos/upload-url:
+    post:
+      operationId: requestPhotoUploadUrl
+      tags: [Photos]
+      summary: Get a presigned S3 upload URL
+      description: |
+        Returns a presigned PUT URL. The mobile client should upload the image
+        directly to S3 using that URL, then call the confirm endpoint.
+        Maximum **6 photos** per user. Allowed types: `image/jpeg`, `image/png`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Invalid content type or photo limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/profile/photos/{photoId}/confirm:
+    post:
+      operationId: confirmPhotoUpload
+      tags: [Photos]
+      summary: Confirm a photo upload
+      description: |
+        Server verifies the S3 object exists, generates a 200×200 thumbnail,
+        and marks the photo as `ACTIVE`.
+      parameters:
+        - $ref: '#/components/parameters/photoId'
+      responses:
+        '200':
+          description: Confirmed photo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmUploadResponse'
+        '404':
+          description: Photo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/profile/photos/{photoId}:
+    delete:
+      operationId: deletePhoto
+      tags: [Photos]
+      summary: Delete a photo
+      description: Removes the photo from S3 and reorders remaining photos.
+      parameters:
+        - $ref: '#/components/parameters/photoId'
+      responses:
+        '204':
+          description: Deleted
+
+  /api/profile/photos/reorder:
+    put:
+      operationId: reorderPhotos
+      tags: [Photos]
+      summary: Reorder photos
+      description: Must include **all** active photo IDs in the desired order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+      responses:
+        '200':
+          description: Reordered
+
+  # ─── Cat Profiles ────────────────────────────────────────────────────
+  /api/cats:
+    post:
+      operationId: createCat
+      tags: [Cats]
+      summary: Create a cat profile (max 5 per user)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCatProfileRequest'
+      responses:
+        '201':
+          description: Cat created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatProfileResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Cat limit reached (max 5)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    get:
+      operationId: listCats
+      tags: [Cats]
+      summary: List all cat profiles for the current user
+      responses:
+        '200':
+          description: Cat list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatProfileResponse'
+
+  /api/cats/{catId}:
+    get:
+      operationId: getCat
+      tags: [Cats]
+      summary: Get a specific cat profile
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      responses:
+        '200':
+          description: Cat profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatProfileResponse'
+        '404':
+          description: Cat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    put:
+      operationId: updateCat
+      tags: [Cats]
+      summary: Update a cat profile (partial)
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCatProfileRequest'
+      responses:
+        '200':
+          description: Updated cat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatProfileResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      operationId: deleteCat
+      tags: [Cats]
+      summary: Delete a cat profile
+      description: Cascades to all cat photos (S3 objects and DB records).
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      responses:
+        '204':
+          description: Deleted
+
+  # ─── Cat Photos ──────────────────────────────────────────────────────
+  /api/cats/{catId}/photos:
+    get:
+      operationId: listCatPhotos
+      tags: [Cat Photos]
+      summary: List all active photos for a cat
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      responses:
+        '200':
+          description: Cat photo list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatPhotoResponse'
+
+  /api/cats/{catId}/photos/upload-url:
+    post:
+      operationId: requestCatPhotoUploadUrl
+      tags: [Cat Photos]
+      summary: Get a presigned upload URL for a cat photo (max 10 per cat)
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatUploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatUploadUrlResponse'
+        '400':
+          description: Invalid content type or cat photo limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/cats/{catId}/photos/{catPhotoId}/confirm:
+    post:
+      operationId: confirmCatPhotoUpload
+      tags: [Cat Photos]
+      summary: Confirm a cat photo upload
+      parameters:
+        - $ref: '#/components/parameters/catId'
+        - $ref: '#/components/parameters/catPhotoId'
+      responses:
+        '200':
+          description: Confirmed cat photo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatConfirmUploadResponse'
+
+  /api/cats/{catId}/photos/{catPhotoId}:
+    delete:
+      operationId: deleteCatPhoto
+      tags: [Cat Photos]
+      summary: Delete a cat photo
+      parameters:
+        - $ref: '#/components/parameters/catId'
+        - $ref: '#/components/parameters/catPhotoId'
+      responses:
+        '204':
+          description: Deleted
+
+  /api/cats/{catId}/photos/reorder:
+    put:
+      operationId: reorderCatPhotos
+      tags: [Cat Photos]
+      summary: Reorder cat photos
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatReorderRequest'
+      responses:
+        '200':
+          description: Reordered
+
+  # ─── Discovery ───────────────────────────────────────────────────────
+  /api/discovery/feed:
+    get:
+      operationId: getFeed
+      tags: [Discovery]
+      summary: Get the discovery feed of nearby cats
+      description: |
+        Returns cats within the user's `maxDistanceKm`, excluding the user's
+        own cats and already-swiped cats. Randomised per session, cursor-paginated.
+      parameters:
+        - name: cursor
+          in: query
+          description: Base64-encoded pagination cursor from a previous response
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: Number of items per page (1–50)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: Discovery feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedResponse'
+        '400':
+          description: Location required or profile incomplete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/discovery/cats/{catId}/owner:
+    get:
+      operationId: getOwnerProfile
+      tags: [Discovery]
+      summary: Get the full owner profile for a cat in the feed
+      parameters:
+        - $ref: '#/components/parameters/catId'
+      responses:
+        '200':
+          description: Owner profile with photos and cats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerProfileResponse'
+        '404':
+          description: Cat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/discovery/swipe:
+    post:
+      operationId: swipe
+      tags: [Discovery]
+      summary: Swipe on a cat (LIKE or PASS)
+      description: |
+        Records a swipe action. When both users have liked each other's cats,
+        `matched` is `true` and `matchId` contains the new match ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwipeRequest'
+      responses:
+        '200':
+          description: Swipe recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwipeResponse'
+        '400':
+          description: Cannot swipe on own cat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Cat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Already swiped on this cat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  # ─── Matches ─────────────────────────────────────────────────────────
+  /api/matches:
+    get:
+      operationId: getMatches
+      tags: [Matches]
+      summary: List all matches for the current user
+      responses:
+        '200':
+          description: Match list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchListResponse'
+
+  # ─── Conversations ───────────────────────────────────────────────────
+  /api/conversations:
+    get:
+      operationId: getConversations
+      tags: [Conversations]
+      summary: List conversations with unread counts
+      responses:
+        '200':
+          description: Conversation list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+
+  /api/conversations/{conversationId}/read:
+    post:
+      operationId: markConversationRead
+      tags: [Conversations]
+      summary: Mark a conversation as read
+      parameters:
+        - $ref: '#/components/parameters/conversationId'
+      responses:
+        '204':
+          description: Marked as read
+
+  /api/conversations/{conversationId}/messages:
+    get:
+      operationId: getMessages
+      tags: [Conversations]
+      summary: Get message history (newest first, cursor-paginated)
+      parameters:
+        - $ref: '#/components/parameters/conversationId'
+        - name: cursor
+          in: query
+          description: ISO-8601 timestamp cursor for pagination
+          schema:
+            type: string
+            format: date-time
+        - name: size
+          in: query
+          description: Number of messages per page
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Message page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagePageResponse'
+
+# ─── Components ──────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS512-signed access token from `/api/auth/register` or `/api/auth/login`
+
+  parameters:
+    photoId:
+      name: photoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    catId:
+      name: catId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    catPhotoId:
+      name: catPhotoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    conversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ProblemDetail'
+              - type: object
+                properties:
+                  violations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+
+  schemas:
+    # ── Auth ──────────────────────────────────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          format: uuid
+
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken]
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token (HS512, 1h expiry)
+        refreshToken:
+          type: string
+          format: uuid
+          description: Single-use refresh token (30-day expiry)
+
+    # ── Profile ───────────────────────────────────────────────────────
+    CreateProfileRequest:
+      type: object
+      required: [displayName, dateOfBirth, gender, genderPreference, ageMin, ageMax, maxDistanceKm]
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        bio:
+          type: string
+          maxLength: 1000
+        dateOfBirth:
+          type: string
+          format: date
+          description: Must be ≥18 years ago
+        gender:
+          $ref: '#/components/schemas/Gender'
+        genderPreference:
+          $ref: '#/components/schemas/GenderPreference'
+        ageMin:
+          type: integer
+          minimum: 18
+          maximum: 99
+        ageMax:
+          type: integer
+          minimum: 18
+          maximum: 99
+        maxDistanceKm:
+          type: integer
+          minimum: 1
+
+    UpdateProfileRequest:
+      type: object
+      description: Partial update — only include fields to change
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        bio:
+          type: string
+          maxLength: 1000
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+        genderPreference:
+          $ref: '#/components/schemas/GenderPreference'
+        ageMin:
+          type: integer
+          minimum: 18
+          maximum: 99
+        ageMax:
+          type: integer
+          minimum: 18
+          maximum: 99
+        maxDistanceKm:
+          type: integer
+          minimum: 1
+
+    UpdateLocationRequest:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    ProfileResponse:
+      type: object
+      required: [displayName, dateOfBirth, gender, genderPreference, ageMin, ageMax, maxDistanceKm]
+      properties:
+        displayName:
+          type: string
+        bio:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+        genderPreference:
+          $ref: '#/components/schemas/GenderPreference'
+        ageMin:
+          type: integer
+        ageMax:
+          type: integer
+        maxDistanceKm:
+          type: integer
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    CompletenessResponse:
+      type: object
+      required: [isComplete, missingFields]
+      properties:
+        isComplete:
+          type: boolean
+        missingFields:
+          type: array
+          items:
+            type: string
+
+    # ── Photos ────────────────────────────────────────────────────────
+    UploadUrlRequest:
+      type: object
+      required: [contentType, fileName]
+      properties:
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png]
+        fileName:
+          type: string
+          description: Original file name from the device
+
+    UploadUrlResponse:
+      type: object
+      required: [photoId, uploadUrl, s3Key]
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+          format: uri
+          description: Presigned S3 PUT URL — upload the image bytes here
+        s3Key:
+          type: string
+
+    ConfirmUploadResponse:
+      type: object
+      required: [photoId, s3Key, thumbnailS3Key, displayOrder, status]
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        s3Key:
+          type: string
+        thumbnailS3Key:
+          type: string
+        displayOrder:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE]
+
+    ReorderRequest:
+      type: object
+      required: [photoIds]
+      properties:
+        photoIds:
+          type: array
+          description: All active photo IDs in the desired display order
+          items:
+            type: string
+            format: uuid
+
+    PhotoResponse:
+      type: object
+      required: [id, s3Key, displayOrder, contentType, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        s3Key:
+          type: string
+        thumbnailS3Key:
+          type: string
+        displayOrder:
+          type: integer
+        contentType:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACTIVE]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Cats ──────────────────────────────────────────────────────────
+    CreateCatProfileRequest:
+      type: object
+      required: [name, age, ageUnit]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        age:
+          type: integer
+          minimum: 0
+        ageUnit:
+          $ref: '#/components/schemas/AgeUnit'
+        breed:
+          type: string
+          maxLength: 100
+        bio:
+          type: string
+          maxLength: 500
+
+    UpdateCatProfileRequest:
+      type: object
+      description: Partial update — only include fields to change
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        age:
+          type: integer
+          minimum: 0
+        ageUnit:
+          $ref: '#/components/schemas/AgeUnit'
+        breed:
+          type: string
+          maxLength: 100
+        bio:
+          type: string
+          maxLength: 500
+
+    CatProfileResponse:
+      type: object
+      required: [id, name, age, ageUnit, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        age:
+          type: integer
+        ageUnit:
+          $ref: '#/components/schemas/AgeUnit'
+        breed:
+          type: string
+        bio:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Cat Photos ────────────────────────────────────────────────────
+    CatUploadUrlRequest:
+      type: object
+      required: [contentType, fileName]
+      properties:
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png]
+        fileName:
+          type: string
+
+    CatUploadUrlResponse:
+      type: object
+      required: [photoId, uploadUrl, s3Key]
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+          format: uri
+        s3Key:
+          type: string
+
+    CatConfirmUploadResponse:
+      type: object
+      required: [photoId, s3Key, thumbnailS3Key, displayOrder, status]
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        s3Key:
+          type: string
+        thumbnailS3Key:
+          type: string
+        displayOrder:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE]
+
+    CatReorderRequest:
+      type: object
+      required: [photoIds]
+      properties:
+        photoIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    CatPhotoResponse:
+      type: object
+      required: [id, s3Key, displayOrder, contentType, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        s3Key:
+          type: string
+        thumbnailS3Key:
+          type: string
+        displayOrder:
+          type: integer
+        contentType:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACTIVE]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Discovery ─────────────────────────────────────────────────────
+    SwipeRequest:
+      type: object
+      required: [catId, action]
+      properties:
+        catId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [LIKE, PASS]
+
+    SwipeResponse:
+      type: object
+      required: [swipeId, matched]
+      properties:
+        swipeId:
+          type: string
+          format: uuid
+        matched:
+          type: boolean
+          description: True when both users have liked each other's cats
+        matchId:
+          type: string
+          format: uuid
+          description: Present only when a new match is created
+
+    FeedResponse:
+      type: object
+      required: [cats]
+      properties:
+        cats:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedItemResponse'
+        cursor:
+          $ref: '#/components/schemas/CursorResponse'
+
+    FeedItemResponse:
+      type: object
+      required: [catId, name, age, ageUnit, ownerId, ownerDisplayName, distanceKm]
+      properties:
+        catId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        age:
+          type: integer
+        ageUnit:
+          type: string
+          enum: [YEARS, MONTHS]
+        breed:
+          type: string
+        bio:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerDisplayName:
+          type: string
+        catPhotoThumbnail:
+          type: string
+          description: S3 key for the cat's primary thumbnail
+        ownerPhotoThumbnail:
+          type: string
+          description: S3 key for the owner's primary thumbnail
+        distanceKm:
+          type: integer
+          description: Distance in whole kilometres
+
+    CursorResponse:
+      type: object
+      required: [seed, offset, hasMore]
+      properties:
+        seed:
+          type: number
+          format: double
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+
+    OwnerProfileResponse:
+      type: object
+      required: [userId, displayName, age, gender, photos, cats]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        bio:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/OwnerPhotoResponse'
+        cats:
+          type: array
+          items:
+            $ref: '#/components/schemas/OwnerCatSummary'
+
+    OwnerPhotoResponse:
+      type: object
+      required: [s3Key]
+      properties:
+        s3Key:
+          type: string
+        thumbnailS3Key:
+          type: string
+
+    OwnerCatSummary:
+      type: object
+      required: [id, name, age]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        age:
+          type: integer
+        breed:
+          type: string
+        photoThumbnail:
+          type: string
+
+    # ── Matches ───────────────────────────────────────────────────────
+    MatchListResponse:
+      type: object
+      required: [matches]
+      properties:
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResponse'
+
+    MatchResponse:
+      type: object
+      required: [matchId, matchedAt, otherUser, otherUserCats]
+      properties:
+        matchId:
+          type: string
+          format: uuid
+        matchedAt:
+          type: string
+          format: date-time
+        otherUser:
+          $ref: '#/components/schemas/MatchUserSummary'
+        otherUserCats:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchCatSummary'
+
+    MatchUserSummary:
+      type: object
+      required: [userId, displayName]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        photoThumbnail:
+          type: string
+
+    MatchCatSummary:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        photoThumbnail:
+          type: string
+
+    # ── Chat ──────────────────────────────────────────────────────────
+    ConversationListResponse:
+      type: object
+      required: [conversations]
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationResponse'
+
+    ConversationResponse:
+      type: object
+      required: [conversationId, matchId, otherUser, otherUserCats, unreadCount]
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        matchId:
+          type: string
+          format: uuid
+        otherUser:
+          $ref: '#/components/schemas/MatchUserSummary'
+        otherUserCats:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchCatSummary'
+        lastMessage:
+          $ref: '#/components/schemas/LastMessagePreview'
+        unreadCount:
+          type: integer
+
+    LastMessagePreview:
+      type: object
+      required: [content, sentAt, sentByMe]
+      properties:
+        content:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        sentByMe:
+          type: boolean
+
+    MessagePageResponse:
+      type: object
+      required: [messages, hasMore]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessageResponse'
+        nextCursor:
+          type: string
+          format: date-time
+        hasMore:
+          type: boolean
+
+    ChatMessageResponse:
+      type: object
+      required: [messageId, conversationId, senderId, senderName, content, createdAt]
+      properties:
+        messageId:
+          type: string
+          format: uuid
+        conversationId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        senderName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    SendMessageRequest:
+      type: object
+      required: [content]
+      description: |
+        Used over STOMP `/app/chat.send`. Provide either `conversationId`
+        (existing conversation) or `matchId` (start new conversation from match),
+        but not both.
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        matchId:
+          type: string
+          format: uuid
+        content:
+          type: string
+          maxLength: 1000
+
+    ChatNotification:
+      type: object
+      description: Pushed to `/user/{userId}/queue/notifications` on new messages
+      required: [conversationId, messageId, senderName, preview]
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        messageId:
+          type: string
+          format: uuid
+        senderName:
+          type: string
+        preview:
+          type: string
+
+    # ── Shared / Error ────────────────────────────────────────────────
+    ProblemDetail:
+      type: object
+      description: RFC 7807 Problem Detail
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+
+    Gender:
+      type: string
+      enum: [MALE, FEMALE]
+
+    GenderPreference:
+      type: string
+      enum: [MALE, FEMALE, EVERYONE]
+
+    AgeUnit:
+      type: string
+      enum: [YEARS, MONTHS]
+
+# ─── WebSocket Documentation (non-standard extension) ──────────────────
+x-websocket:
+  endpoint: /ws
+  protocol: STOMP
+  authentication: |
+    Pass the JWT as a header in the STOMP CONNECT frame.
+    The WebSocketAuthInterceptor validates the token before the session is established.
+  destinations:
+    send:
+      /app/chat.send:
+        description: Send a chat message
+        payload:
+          $ref: '#/components/schemas/SendMessageRequest'
+    subscribe:
+      /topic/chat/{conversationId}:
+        description: Receive messages for a specific conversation
+        payload:
+          $ref: '#/components/schemas/ChatMessageResponse'
+      /user/{userId}/queue/notifications:
+        description: Receive push notifications for new messages
+        payload:
+          $ref: '#/components/schemas/ChatNotification'
