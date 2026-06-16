@@ -22,5 +22,21 @@ storage:
     access-key: catspell
     secret-key: catspell123
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoint:
+    health:
+      show-components: when-authorized
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include: health
+
 server:
   port: 0

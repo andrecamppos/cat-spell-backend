@@ -20,7 +20,6 @@ class JwtAuthenticationFilter(
         return path.startsWith("/api/auth/register") ||
                 path.startsWith("/api/auth/login") ||
                 path.startsWith("/api/auth/refresh") ||
-                path.startsWith("/actuator/health") ||
                 path.startsWith("/v3/api-docs")
     }
 

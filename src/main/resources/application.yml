@@ -36,6 +36,7 @@ springdoc:
 management:
   endpoint:
     health:
+      show-components: when-authorized
       show-details: when-authorized
   endpoints:
     web:

@@ -30,7 +30,7 @@ class RateLimitFilter : Filter {
         val httpRequest = request as HttpServletRequest
         val httpResponse = response as HttpServletResponse
 
-        val path = httpRequest.servletPath
+        val path = httpRequest.requestURI
         if (!AUTH_PATHS.any { path.startsWith(it) }) {
             chain.doFilter(request, response)
             return
