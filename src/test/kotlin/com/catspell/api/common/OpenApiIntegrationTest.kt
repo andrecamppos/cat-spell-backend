@@ -46,6 +46,17 @@ class OpenApiIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `should have all five API groups`() {
+        val groups = listOf("auth", "user", "cats", "discovery", "chat")
+        for (group in groups) {
+            mockMvc.perform(get("/v3/api-docs/$group"))
+                .andExpect(status().isOk)
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.paths").isNotEmpty)
+        }
+    }
+
+    @Test
     fun `should not expose Swagger UI`() {
         mockMvc.perform(get("/swagger-ui.html"))
             .andExpect(status().isUnauthorized)

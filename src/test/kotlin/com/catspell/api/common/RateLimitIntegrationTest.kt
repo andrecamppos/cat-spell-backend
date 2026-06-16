@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -103,5 +104,16 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
         repeat(10) { mockMvcWithFilter.perform(postRefresh(ip)) }
         mockMvcWithFilter.perform(postRefresh(ip))
             .andExpect(status().isTooManyRequests)
+    }
+
+    @Test
+    fun `should not rate limit non-auth endpoints`() {
+        val ip = "10.0.9.1"
+        repeat(15) {
+            val result = mockMvcWithFilter.perform(
+                get("/actuator/health").header("X-Forwarded-For", ip)
+            ).andReturn()
+            assertNotEquals(429, result.response.status, "Non-auth request ${it + 1} should not be rate limited")
+        }
     }
 }
