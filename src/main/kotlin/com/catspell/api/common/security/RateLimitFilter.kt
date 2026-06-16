@@ -2,7 +2,6 @@ package com.catspell.api.common.security
 
 import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
-import io.github.bucket4j.Refill
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
@@ -67,7 +66,10 @@ class RateLimitFilter : Filter {
     }
 
     private fun createBucket(): Bucket {
-        val bandwidth = Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(1)))
+        val bandwidth = Bandwidth.builder()
+            .capacity(10)
+            .refillIntervally(10, Duration.ofMinutes(1))
+            .build()
         return Bucket.builder().addLimit(bandwidth).build()
     }
 }
@@ -77,10 +79,9 @@ class RateLimitFilterConfig {
 
     @Bean
     fun rateLimitFilterRegistration(): FilterRegistrationBean<RateLimitFilter> {
-        val registration = FilterRegistrationBean<RateLimitFilter>()
-        registration.filter = RateLimitFilter()
+        val registration = FilterRegistrationBean(RateLimitFilter())
         registration.addUrlPatterns("/api/auth/*")
-        registration.order = Ordered.HIGHEST_PRECEDENCE
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE)
         return registration
     }
 }

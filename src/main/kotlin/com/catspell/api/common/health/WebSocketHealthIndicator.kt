@@ -1,7 +1,7 @@
 package com.catspell.api.common.health
 
-import org.springframework.boot.actuate.health.Health
-import org.springframework.boot.actuate.health.HealthIndicator
+import org.springframework.boot.health.contributor.Health
+import org.springframework.boot.health.contributor.HealthIndicator
 import org.springframework.messaging.simp.user.SimpUserRegistry
 import org.springframework.stereotype.Component
 
