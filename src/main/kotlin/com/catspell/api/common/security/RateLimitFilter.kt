@@ -9,6 +9,7 @@ import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
@@ -16,7 +17,7 @@ import org.springframework.http.MediaType
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 
-class RateLimitFilter : Filter {
+class RateLimitFilter(private val capacity: Long = 10) : Filter {
 
     private val buckets = ConcurrentHashMap<String, Bucket>()
 
@@ -67,19 +68,21 @@ class RateLimitFilter : Filter {
 
     private fun createBucket(): Bucket {
         val bandwidth = Bandwidth.builder()
-            .capacity(10)
-            .refillIntervally(10, Duration.ofMinutes(1))
+            .capacity(capacity)
+            .refillIntervally(capacity, Duration.ofMinutes(1))
             .build()
         return Bucket.builder().addLimit(bandwidth).build()
     }
 }
 
 @Configuration
-class RateLimitFilterConfig {
+class RateLimitFilterConfig(
+    @Value("\${rate-limit.capacity:10}") private val capacity: Long
+) {
 
     @Bean
     fun rateLimitFilterRegistration(): FilterRegistrationBean<RateLimitFilter> {
-        val registration = FilterRegistrationBean(RateLimitFilter())
+        val registration = FilterRegistrationBean(RateLimitFilter(capacity))
         registration.addUrlPatterns("/api/auth/*")
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE)
         return registration
