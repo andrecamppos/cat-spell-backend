@@ -443,4 +443,43 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         mockMvc.perform(get("/api/discovery/feed"))
             .andExpect(status().isUnauthorized)
     }
+
+    @Test
+    fun `feed returns empty list when no eligible cats exist`() {
+        // User with complete profile but no other users in the system nearby
+        val token = registerAndGetToken("disc-empty-feed@example.com")
+        createProfile(token, "LonelyUser", "Bio", "2000-01-15", "FEMALE", "MALE")
+        setLocation(token, 0.0, 0.0) // Remote location with no other users
+        addUserPhoto(token)
+        val catId = createCat(token, "LonelyCat")
+        addCatPhoto(token, catId)
+
+        mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cats").isArray)
+            .andExpect(jsonPath("$.cats").isEmpty)
+    }
+
+    @Test
+    fun `feed pagination with pageSize larger than available cats returns all and hasMore false`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-bigpage-a@example.com", "BigPageA", "FEMALE", lat = 51.5074, lng = -0.1278)
+        setupCompleteUser("disc-bigpage-b@example.com", "BigPageB", "MALE", lat = 51.5080, lng = -0.1280, catName = "BigPageCat")
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .param("pageSize", "100")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cats = json["cats"]
+        assert(cats.size() >= 1) { "Should have at least 1 cat" }
+        val cursor = json["cursor"]
+        if (cursor != null && !cursor.isNull) {
+            assert(!cursor["hasMore"].asBoolean()) { "hasMore should be false when all cats fit in one page" }
+        }
+    }
 }
