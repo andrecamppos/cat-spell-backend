@@ -48,8 +48,6 @@ All configuration is supplied via environment variables — see [Configuration](
 
 ## Production Checklist
 
-<!-- VERIFY: The following production recommendations are best practices — confirm they match the actual deployment target. -->
-
 ### Database
 
 - [ ] Use a managed PostgreSQL instance with PostGIS extension enabled
@@ -85,9 +83,7 @@ All configuration is supplied via environment variables — see [Configuration](
 
 ### Container Deployment
 
-<!-- VERIFY: No Dockerfile exists in the repository — these are recommendations for containerised deployment. -->
-
-To containerise the application:
+No Dockerfile is included in the repository. To containerise the application:
 
 ```dockerfile
 FROM eclipse-temurin:17-jre-alpine

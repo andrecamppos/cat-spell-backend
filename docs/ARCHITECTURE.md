@@ -101,6 +101,7 @@ com.catspell.api
     └── security/
         ├── JwtService               # Token generation and validation (HS512)
         ├── JwtAuthenticationFilter   # OncePerRequestFilter extracting Bearer tokens
+        ├── RateLimitFilter           # Bucket4j per-request rate limiting
         └── WebSocketAuthInterceptor  # STOMP CONNECT JWT validation
 ```
 
@@ -151,7 +152,7 @@ Conversations are created lazily on first message for a match. Messages are sent
 ### Security
 - Stateless sessions (`SessionCreationPolicy.STATELESS`)
 - CSRF disabled (API-only, no browser forms)
-- Public endpoints: `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/v3/api-docs/**`, `/actuator/health`, `/ws/**`
+- Public endpoints: `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/v3/api-docs/**`, `/actuator/health`, `/ws/**`, `/error`
 - All other endpoints require a valid JWT
 - WebSocket connections authenticated via STOMP `CONNECT` frame interceptor
 

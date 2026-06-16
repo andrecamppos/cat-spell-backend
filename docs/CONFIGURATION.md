@@ -61,10 +61,12 @@ spring:
 
 ```yaml
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:<dev-default-provided>}
   access-token-expiry: 3600000      # 1 hour in milliseconds
   refresh-token-expiry-days: 30     # 30 days
 ```
+
+A base64-encoded development default is provided in `application.yml`. **Never use it in production** — see [Generating a JWT Secret](#generating-a-jwt-secret).
 
 ### S3 / MinIO Storage
 
@@ -78,7 +80,7 @@ storage:
     secret-key: ${S3_SECRET_KEY:catspell123}
 ```
 
-For local development, MinIO runs on port 9000 (API) and 9001 (console). The bucket is created automatically if it does not exist. <!-- VERIFY: confirm bucket auto-creation behavior in StorageService -->
+For local development, MinIO runs on port 9000 (API) and 9001 (console). The bucket is created automatically on startup via `StorageService.createBucketIfNotExists()` (`@PostConstruct`).
 
 ### OpenAPI
 
