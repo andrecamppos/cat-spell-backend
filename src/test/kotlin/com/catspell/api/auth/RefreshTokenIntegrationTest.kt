@@ -62,7 +62,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token successfully`() {
-        val (_, refreshToken) = registerAndGetTokens("refresh-success@example.com")
+        val (_, refreshToken) = registerAndGetTokens("rt-refresh-success@example.com")
         val body = mapOf("refreshToken" to refreshToken)
         mockMvc.perform(
             post("/api/auth/refresh")
@@ -76,7 +76,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token rotation - old token rejected`() {
-        val (_, originalRefreshToken) = registerAndGetTokens("rotation@example.com")
+        val (_, originalRefreshToken) = registerAndGetTokens("rt-rotation@example.com")
         refreshAndGetTokens(originalRefreshToken)
 
         val body = mapOf("refreshToken" to originalRefreshToken)
@@ -90,7 +90,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token theft detection - reuse revokes all tokens`() {
-        val (_, tokenA) = registerAndGetTokens("theft@example.com")
+        val (_, tokenA) = registerAndGetTokens("rt-theft@example.com")
         val (_, tokenB) = refreshAndGetTokens(tokenA)
 
         val bodyA = mapOf("refreshToken" to tokenA)
@@ -112,7 +112,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token expired`() {
-        val (_, refreshToken) = registerAndGetTokens("expired@example.com")
+        val (_, refreshToken) = registerAndGetTokens("rt-expired@example.com")
         val storedToken = refreshTokenRepository.findByToken(refreshToken)!!
         storedToken.expiresAt = Instant.now().minusSeconds(3600)
         refreshTokenRepository.save(storedToken)
@@ -139,7 +139,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `register returns refresh token`() {
-        val body = mapOf("email" to "register-refresh@example.com", "password" to "password123")
+        val body = mapOf("email" to "rt-register-refresh@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -151,8 +151,8 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `login returns refresh token`() {
-        registerAndGetTokens("login-refresh@example.com")
-        val body = mapOf("email" to "login-refresh@example.com", "password" to "password123")
+        registerAndGetTokens("rt-login-refresh@example.com")
+        val body = mapOf("email" to "rt-login-refresh@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -164,9 +164,9 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `multi-device sessions - independent refresh tokens`() {
-        registerAndGetTokens("multi-device@example.com")
-        val (_, tokenDevice1) = loginAndGetTokens("multi-device@example.com")
-        val (_, tokenDevice2) = loginAndGetTokens("multi-device@example.com")
+        registerAndGetTokens("rt-multi-device@example.com")
+        val (_, tokenDevice1) = loginAndGetTokens("rt-multi-device@example.com")
+        val (_, tokenDevice2) = loginAndGetTokens("rt-multi-device@example.com")
 
         assertNotEquals(tokenDevice1, tokenDevice2)
 

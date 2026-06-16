@@ -48,6 +48,8 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-spatial")
     implementation("software.amazon.awssdk:s3:2.25.60")
     implementation("net.coobird:thumbnailator:0.4.20")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
