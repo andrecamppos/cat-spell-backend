@@ -17,7 +17,7 @@ services:
       MINIO_ROOT_USER: catspell
       MINIO_ROOT_PASSWORD: catspell123
     ports:
-      - "9000:9000"
+      - "9002:9000"
       - "9001:9001"
     volumes:
       - minio-data:/data
