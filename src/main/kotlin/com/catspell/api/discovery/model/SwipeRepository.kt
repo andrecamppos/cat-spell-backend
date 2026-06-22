@@ -19,33 +19,63 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
 
     @Query(
         value = """
-            SELECT 'CAT' AS type,
-                   cp.id AS cat_id, cp.name AS cat_name, cp.age AS cat_age, cp.age_unit AS cat_age_unit,
-                   cp.breed AS cat_breed, cp.bio AS cat_bio,
-                   cp.user_id AS user_id,
-                   up.display_name AS display_name,
-                   (SELECT cph.thumbnail_s3_key FROM cat_photos cph
-                    WHERE cph.cat_profile_id = cp.id AND cph.status = 'ACTIVE'
-                    ORDER BY cph.display_order ASC LIMIT 1) AS cat_photo_thumbnail,
-                   (SELECT uph.thumbnail_s3_key FROM user_photos uph
-                    WHERE uph.user_id = cp.user_id AND uph.status = 'ACTIVE'
-                    ORDER BY uph.display_order ASC LIMIT 1) AS user_photo_thumbnail,
-                   CAST(ROUND(ST_Distance(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000) AS INTEGER) AS distance_km
-            FROM cat_profiles cp
-            JOIN user_profiles up ON up.user_id = cp.user_id
-            JOIN user_profiles requester ON requester.user_id = :requesterId
-            WHERE cp.user_id != :requesterId
-              AND ST_DWithin(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :maxDistanceMeters)
-              AND (requester.gender_preference = 'EVERYONE' OR requester.gender_preference = up.gender)
-              AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
-              AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
-              AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
-              AND up.display_name IS NOT NULL AND up.bio IS NOT NULL
-              AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
-              AND up.location IS NOT NULL
-              AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = cp.user_id AND uph2.status = 'ACTIVE')
-              AND EXISTS (SELECT 1 FROM cat_photos cph2 WHERE cph2.cat_profile_id = cp.id AND cph2.status = 'ACTIVE')
-              AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = cp.user_id)
+            SELECT * FROM (
+                SELECT 'CAT' AS type,
+                       rc.id AS cat_id, rc.name AS cat_name, rc.age AS cat_age, rc.age_unit AS cat_age_unit,
+                       rc.breed AS cat_breed, rc.bio AS cat_bio,
+                       rc.user_id AS user_id,
+                       up.display_name AS display_name,
+                       (SELECT cph.thumbnail_s3_key FROM cat_photos cph
+                        WHERE cph.cat_profile_id = rc.id AND cph.status = 'ACTIVE'
+                        ORDER BY cph.display_order ASC LIMIT 1) AS cat_photo_thumbnail,
+                       (SELECT uph.thumbnail_s3_key FROM user_photos uph
+                        WHERE uph.user_id = rc.user_id AND uph.status = 'ACTIVE'
+                        ORDER BY uph.display_order ASC LIMIT 1) AS user_photo_thumbnail,
+                       CAST(ROUND(ST_Distance(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000) AS INTEGER) AS distance_km
+                FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at ASC) AS rn FROM cat_profiles) rc
+                JOIN user_profiles up ON up.user_id = rc.user_id
+                JOIN user_profiles requester ON requester.user_id = :requesterId
+                WHERE rc.rn = 1
+                  AND rc.user_id != :requesterId
+                  AND ST_DWithin(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :maxDistanceMeters)
+                  AND (requester.gender_preference = 'EVERYONE' OR requester.gender_preference = up.gender)
+                  AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
+                  AND up.display_name IS NOT NULL AND up.bio IS NOT NULL
+                  AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
+                  AND up.location IS NOT NULL
+                  AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = rc.user_id AND uph2.status = 'ACTIVE')
+                  AND EXISTS (SELECT 1 FROM cat_photos cph2 WHERE cph2.cat_profile_id = rc.id AND cph2.status = 'ACTIVE')
+                  AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = rc.user_id)
+
+                UNION ALL
+
+                SELECT 'HUMAN' AS type,
+                       CAST(NULL AS UUID) AS cat_id, NULL AS cat_name, CAST(NULL AS INTEGER) AS cat_age, NULL AS cat_age_unit,
+                       NULL AS cat_breed, NULL AS cat_bio,
+                       up.user_id AS user_id,
+                       up.display_name AS display_name,
+                       NULL AS cat_photo_thumbnail,
+                       (SELECT uph.thumbnail_s3_key FROM user_photos uph
+                        WHERE uph.user_id = up.user_id AND uph.status = 'ACTIVE'
+                        ORDER BY uph.display_order ASC LIMIT 1) AS user_photo_thumbnail,
+                       CAST(ROUND(ST_Distance(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000) AS INTEGER) AS distance_km
+                FROM user_profiles up
+                JOIN user_profiles requester ON requester.user_id = :requesterId
+                WHERE up.user_id != :requesterId
+                  AND NOT EXISTS (SELECT 1 FROM cat_profiles WHERE user_id = up.user_id)
+                  AND ST_DWithin(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :maxDistanceMeters)
+                  AND (requester.gender_preference = 'EVERYONE' OR requester.gender_preference = up.gender)
+                  AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
+                  AND up.display_name IS NOT NULL AND up.bio IS NOT NULL
+                  AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
+                  AND up.location IS NOT NULL
+                  AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = up.user_id AND uph2.status = 'ACTIVE')
+                  AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = up.user_id)
+            ) AS feed
             ORDER BY random()
             LIMIT :pageSize OFFSET :offset
         """,

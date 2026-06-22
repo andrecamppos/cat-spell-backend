@@ -135,6 +135,40 @@ class DiscoveryService(
         )
     }
 
+    @Transactional(readOnly = true)
+    fun getUserProfile(requesterId: UUID, userId: UUID): OwnerProfileResponse {
+        val profile = userProfileRepository.findByUserId(userId)
+            ?: throw ResourceNotFoundException("User profile not found")
+
+        val age = java.time.Period.between(profile.dateOfBirth, java.time.LocalDate.now()).years
+
+        val photos = userPhotoRepository.findByUserIdOrderByDisplayOrderAsc(userId)
+            .filter { it.status == "ACTIVE" }
+            .map { OwnerPhotoResponse(s3Key = it.s3Key, thumbnailS3Key = it.thumbnailS3Key) }
+
+        val cats = catProfileRepository.findByUserId(userId).map { cp ->
+            val firstPhoto = catPhotoRepository.findByCatProfileIdOrderByDisplayOrderAsc(cp.id!!)
+                .firstOrNull { it.status == "ACTIVE" }
+            OwnerCatSummary(
+                id = cp.id!!,
+                name = cp.name,
+                age = cp.age,
+                breed = cp.breed,
+                photoThumbnail = firstPhoto?.thumbnailS3Key
+            )
+        }
+
+        return OwnerProfileResponse(
+            userId = userId,
+            displayName = profile.displayName!!,
+            bio = profile.bio,
+            age = age,
+            gender = profile.gender!!,
+            photos = photos,
+            cats = cats
+        )
+    }
+
     @Transactional
     fun swipe(userId: UUID, request: SwipeRequest): SwipeResponse {
         require((request.catId != null) xor (request.targetUserId != null)) {
