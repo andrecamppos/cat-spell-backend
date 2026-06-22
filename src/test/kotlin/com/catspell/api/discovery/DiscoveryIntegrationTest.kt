@@ -194,18 +194,18 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $tokenA")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.cats").isArray)
+            .andExpect(jsonPath("$.cards").isArray)
             .andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        val whiskers = (0 until cats.size()).firstOrNull { cats[it]["name"].asText() == "Whiskers" }
+        val cards = json["cards"]
+        val whiskers = (0 until cards.size()).firstOrNull { cards[it]["catName"].asText() == "Whiskers" }
         assert(whiskers != null) { "Whiskers should appear in feed" }
-        val w = cats[whiskers!!]
+        val w = cards[whiskers!!]
         assert(w["catId"] != null) { "catId should exist" }
-        assert(w["age"].asInt() == 2) { "age should be 2" }
-        assert(w["ownerId"] != null) { "ownerId should exist" }
-        assert(w["ownerDisplayName"].asText() == "Bob") { "ownerDisplayName should be Bob" }
+        assert(w["catAge"].asInt() == 2) { "catAge should be 2" }
+        assert(w["userId"] != null) { "userId should exist" }
+        assert(w["displayName"].asText() == "Bob") { "displayName should be Bob" }
         assert(w["distanceKm"].isInt) { "distanceKm should be an integer" }
     }
 
@@ -220,8 +220,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        val catNames = (0 until cats.size()).map { cats[it]["name"].asText() }
+        val cards = json["cards"]
+        val catNames = (0 until cards.size()).map { cards[it]["catName"].asText() }
         assert("OwnACatUnique" !in catNames) { "Own cat should not appear in feed" }
     }
 
@@ -240,7 +240,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("NearCat" in catNames) { "Near cat should appear in feed" }
         assert("FarCat" !in catNames) { "Far cat should not appear in feed" }
     }
@@ -266,7 +266,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("SwipedCat" !in catNames) { "Swiped cat should not appear in feed" }
     }
 
@@ -285,7 +285,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("MatchCat" in catNames) { "Gender-matching cat should appear" }
         assert("NoMatchCat" !in catNames) { "Gender-mismatched cat should not appear" }
     }
@@ -305,7 +305,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("AgeMatchCat" in catNames) { "Age-matching cat should appear" }
         assert("AgeNoMatchCat" !in catNames) { "Age-mismatched cat should not appear" }
     }
@@ -354,7 +354,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("IncompleteCat" !in catNames) { "Cat from incomplete profile should not appear" }
     }
 
@@ -374,7 +374,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("NoPhotoCat" !in catNames) { "Cat without photo should not appear" }
     }
 
@@ -389,8 +389,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        if (json["cats"].size() > 0) {
-            val distanceKm = json["cats"][0]["distanceKm"]
+        if (json["cards"].size() > 0) {
+            val distanceKm = json["cards"][0]["distanceKm"]
             assert(distanceKm.isInt) { "distanceKm should be an integer" }
         }
     }
@@ -411,7 +411,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val firstJson = objectMapper.readTree(firstResult.response.contentAsString)
-        val firstCats = firstJson["cats"]
+        val firstCats = firstJson["cards"]
         assert(firstCats.size() == 2) { "First page should have 2 cats, got ${firstCats.size()}" }
 
         val cursor = firstJson["cursor"]
@@ -429,7 +429,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val secondJson = objectMapper.readTree(secondResult.response.contentAsString)
-        val secondCats = secondJson["cats"]
+        val secondCats = secondJson["cards"]
         assert(secondCats.size() > 0) { "Second page should have cats" }
 
         // Cats on second page should differ from first page
@@ -459,8 +459,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.cats").isArray)
-            .andExpect(jsonPath("$.cats").isEmpty)
+            .andExpect(jsonPath("$.cards").isArray)
+            .andExpect(jsonPath("$.cards").isEmpty)
     }
 
     @Test
@@ -475,8 +475,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        assert(cats.size() >= 1) { "Should have at least 1 cat" }
+        val cards = json["cards"]
+        assert(cards.size() >= 1) { "Should have at least 1 cat" }
         val cursor = json["cursor"]
         if (cursor != null && !cursor.isNull) {
             assert(!cursor["hasMore"].asBoolean()) { "hasMore should be false when all cats fit in one page" }

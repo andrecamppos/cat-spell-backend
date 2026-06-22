@@ -3,15 +3,16 @@ package com.catspell.api.discovery.model
 import java.util.UUID
 
 interface FeedProjection {
-    fun getCatId(): UUID
-    fun getName(): String
-    fun getAge(): Int
-    fun getAgeUnit(): String
-    fun getBreed(): String?
-    fun getBio(): String?
-    fun getOwnerId(): UUID
-    fun getOwnerDisplayName(): String
+    fun getType(): String
+    fun getCatId(): UUID?
+    fun getCatName(): String?
+    fun getCatAge(): Int?
+    fun getCatAgeUnit(): String?
+    fun getCatBreed(): String?
+    fun getCatBio(): String?
     fun getCatPhotoThumbnail(): String?
-    fun getOwnerPhotoThumbnail(): String?
+    fun getUserId(): UUID
+    fun getDisplayName(): String
+    fun getUserPhotoThumbnail(): String?
     fun getDistanceKm(): Int
 }

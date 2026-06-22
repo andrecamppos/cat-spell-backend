@@ -20,6 +20,6 @@ class LocationRequiredException(message: String = "Location required for discove
 
 class ProfileIncompleteException(message: String = "Complete your profile to use discovery") : RuntimeException(message)
 
-class DuplicateSwipeException(message: String = "Already swiped on this cat") : RuntimeException(message)
+class DuplicateSwipeException(message: String = "Already swiped on this profile") : RuntimeException(message)
 
-class SelfSwipeException(message: String = "Cannot swipe on your own cat") : RuntimeException(message)
+class SelfSwipeException(message: String = "Cannot swipe on yourself") : RuntimeException(message)

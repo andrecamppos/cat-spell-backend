@@ -5,8 +5,9 @@ import jakarta.validation.constraints.Pattern
 import java.util.UUID
 
 data class SwipeRequest(
-    @field:NotNull
-    val catId: UUID,
+    val catId: UUID? = null,
+
+    val targetUserId: UUID? = null,
 
     @field:NotNull
     @field:Pattern(regexp = "LIKE|PASS", message = "Action must be LIKE or PASS")
@@ -20,21 +21,22 @@ data class SwipeResponse(
 )
 
 data class FeedItemResponse(
-    val catId: UUID,
-    val name: String,
-    val age: Int,
-    val ageUnit: String,
-    val breed: String?,
-    val bio: String?,
-    val ownerId: UUID,
-    val ownerDisplayName: String,
-    val catPhotoThumbnail: String?,
-    val ownerPhotoThumbnail: String?,
+    val type: String,
+    val catId: UUID? = null,
+    val catName: String? = null,
+    val catAge: Int? = null,
+    val catAgeUnit: String? = null,
+    val breed: String? = null,
+    val catBio: String? = null,
+    val userId: UUID,
+    val displayName: String,
+    val catPhotoThumbnail: String? = null,
+    val userPhotoThumbnail: String? = null,
     val distanceKm: Int
 )
 
 data class FeedResponse(
-    val cats: List<FeedItemResponse>,
+    val cards: List<FeedItemResponse>,
     val cursor: CursorResponse?
 )
 

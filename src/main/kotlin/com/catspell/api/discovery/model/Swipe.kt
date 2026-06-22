@@ -18,8 +18,8 @@ class Swipe(
     var swiper: User,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cat_id", nullable = false)
-    var catProfile: CatProfile,
+    @JoinColumn(name = "cat_id", nullable = true)
+    var catProfile: CatProfile? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_user_id", nullable = false)

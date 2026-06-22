@@ -69,18 +69,19 @@ class DiscoveryService(
         val hasMore = results.size > effectivePageSize
         val items = results.take(effectivePageSize)
 
-        val cats = items.map { proj ->
+        val cards = items.map { proj ->
             FeedItemResponse(
+                type = proj.getType(),
                 catId = proj.getCatId(),
-                name = proj.getName(),
-                age = proj.getAge(),
-                ageUnit = proj.getAgeUnit(),
-                breed = proj.getBreed(),
-                bio = proj.getBio(),
-                ownerId = proj.getOwnerId(),
-                ownerDisplayName = proj.getOwnerDisplayName(),
+                catName = proj.getCatName(),
+                catAge = proj.getCatAge(),
+                catAgeUnit = proj.getCatAgeUnit(),
+                breed = proj.getCatBreed(),
+                catBio = proj.getCatBio(),
+                userId = proj.getUserId(),
+                displayName = proj.getDisplayName(),
                 catPhotoThumbnail = proj.getCatPhotoThumbnail(),
-                ownerPhotoThumbnail = proj.getOwnerPhotoThumbnail(),
+                userPhotoThumbnail = proj.getUserPhotoThumbnail(),
                 distanceKm = proj.getDistanceKm()
             )
         }
@@ -93,7 +94,7 @@ class DiscoveryService(
             )
         } else null
 
-        return FeedResponse(cats = cats, cursor = nextCursor)
+        return FeedResponse(cards = cards, cursor = nextCursor)
     }
 
     @Transactional(readOnly = true)
@@ -136,51 +137,97 @@ class DiscoveryService(
 
     @Transactional
     fun swipe(userId: UUID, request: SwipeRequest): SwipeResponse {
-        val cat = catProfileRepository.findById(request.catId)
-            .orElseThrow { ResourceNotFoundException("Cat not found") }
-
-        val catOwnerId = cat.user.id!!
-
-        if (catOwnerId == userId) {
-            throw SelfSwipeException()
-        }
-
-        if (swipeRepository.existsBySwiperIdAndCatProfileId(userId, request.catId)) {
-            throw DuplicateSwipeException()
+        require((request.catId != null) xor (request.targetUserId != null)) {
+            "Exactly one of catId or targetUserId must be provided"
         }
 
         val swiper = userRepository.getReferenceById(userId)
-        val targetUser = userRepository.getReferenceById(catOwnerId)
 
-        val swipe = Swipe(
-            swiper = swiper,
-            catProfile = cat,
-            targetUser = targetUser,
-            action = request.action
-        )
-        val savedSwipe = swipeRepository.save(swipe)
+        if (request.catId != null) {
+            val cat = catProfileRepository.findById(request.catId)
+                .orElseThrow { ResourceNotFoundException("Cat not found") }
 
-        if (request.action == "LIKE") {
-            val reverseLikes = swipeRepository.findBySwiperIdAndTargetUserIdAndAction(
-                swiperId = catOwnerId,
-                targetUserId = userId,
-                action = "LIKE"
+            val catOwnerId = cat.user.id!!
+
+            if (catOwnerId == userId) {
+                throw SelfSwipeException()
+            }
+
+            if (swipeRepository.existsBySwiperIdAndCatProfileId(userId, request.catId)) {
+                throw DuplicateSwipeException()
+            }
+
+            val targetUser = userRepository.getReferenceById(catOwnerId)
+
+            val swipe = Swipe(
+                swiper = swiper,
+                catProfile = cat,
+                targetUser = targetUser,
+                action = request.action
             )
-            if (reverseLikes.isNotEmpty()) {
-                val match = matchService.createMatch(userId, catOwnerId)
-                if (match != null) {
-                    return SwipeResponse(
-                        swipeId = savedSwipe.id!!,
-                        matched = true,
-                        matchId = match.id
-                    )
+            val savedSwipe = swipeRepository.save(swipe)
+
+            if (request.action == "LIKE") {
+                val reverseLikes = swipeRepository.findBySwiperIdAndTargetUserIdAndAction(
+                    swiperId = catOwnerId,
+                    targetUserId = userId,
+                    action = "LIKE"
+                )
+                if (reverseLikes.isNotEmpty()) {
+                    val match = matchService.createMatch(userId, catOwnerId)
+                    if (match != null) {
+                        return SwipeResponse(
+                            swipeId = savedSwipe.id!!,
+                            matched = true,
+                            matchId = match.id
+                        )
+                    }
                 }
             }
-        }
 
-        return SwipeResponse(
-            swipeId = savedSwipe.id!!,
-            matched = false
-        )
+            return SwipeResponse(swipeId = savedSwipe.id!!, matched = false)
+
+        } else {
+            val targetUserId = request.targetUserId!!
+
+            if (targetUserId == userId) {
+                throw SelfSwipeException()
+            }
+
+            if (swipeRepository.existsBySwiperIdAndTargetUserIdAndCatProfileIsNull(userId, targetUserId)) {
+                throw DuplicateSwipeException()
+            }
+
+            val targetUser = userRepository.findById(targetUserId)
+                .orElseThrow { ResourceNotFoundException("User not found") }
+
+            val swipe = Swipe(
+                swiper = swiper,
+                catProfile = null,
+                targetUser = targetUser,
+                action = request.action
+            )
+            val savedSwipe = swipeRepository.save(swipe)
+
+            if (request.action == "LIKE") {
+                val reverseLikes = swipeRepository.findBySwiperIdAndTargetUserIdAndAction(
+                    swiperId = targetUserId,
+                    targetUserId = userId,
+                    action = "LIKE"
+                )
+                if (reverseLikes.isNotEmpty()) {
+                    val match = matchService.createMatch(userId, targetUserId)
+                    if (match != null) {
+                        return SwipeResponse(
+                            swipeId = savedSwipe.id!!,
+                            matched = true,
+                            matchId = match.id
+                        )
+                    }
+                }
+            }
+
+            return SwipeResponse(swipeId = savedSwipe.id!!, matched = false)
+        }
     }
 }
