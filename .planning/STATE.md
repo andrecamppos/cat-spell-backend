@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-stopped_at: Phase 6 context gathered
-last_updated: "2026-06-16T13:19:01.800Z"
-last_activity: 2026-06-16 — Milestone v1.0 completed and archived
+milestone: v1.1
+milestone_name: Mixed Discovery
+status: active
+stopped_at: Phase 7 created
+last_updated: "2026-06-22T11:25:00.000Z"
+last_activity: 2026-06-22 — v1.1 milestone created (optional cat ownership, mixed discovery feed)
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,8 +20,8 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-06-16)
 
-**Core value:** Cat-first discovery — users fall for the cat first, then meet the person.
-**Current focus:** Planning next milestone
+**Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
+**Current focus:** v1.1 Mixed Discovery — Phase 7
 
 ## Milestone v1.0 — MVP Backend
 
@@ -31,11 +31,18 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 All phases complete. See `.planning/MILESTONES.md` for accomplishments.
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
+## Milestone v1.1 — Mixed Discovery
+
+**Status:** 🔲 Active
+**Phase 7:** Mixed Discovery Feed — not started
+
+**Design change:** Cat ownership optional. Discovery shows cat cards (users with cats) and human cards (users without cats).
+
 ## Session Continuity
 
-Last session: 2026-06-16
-Stopped at: Milestone v1.0 archived
-Next step: `/gsd-new-milestone` to start next milestone
+Last session: 2026-06-22
+Stopped at: v1.1 milestone and Phase 7 created
+Next step: `/gsd-discuss-phase 7` or `/gsd-plan-phase 7` to plan implementation
 
 ---
-*Last updated: 2026-06-16 after v1.0 milestone completion*
+*Last updated: 2026-06-22 after v1.1 milestone creation*

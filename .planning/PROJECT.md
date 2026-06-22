@@ -6,7 +6,7 @@ The backend API for Cat Spell — a dating app for cat lovers and cat owners. It
 
 ## Core Value
 
-Cat-first discovery — users fall for the cat first, then meet the person. The reveal mechanic and cat-influenced matching must work flawlessly; everything else supports this core loop.
+Cat-preferred discovery — users with cats show cat-first (fall for the cat, then meet the person). Users without cats appear as human cards. The app is for all cat lovers, not just cat owners. The reveal mechanic works for cat cards; human cards show the person directly.
 
 ## Requirements
 
@@ -31,6 +31,8 @@ Cat-first discovery — users fall for the cat first, then meet the person. The 
 
 ### Active
 
+- [ ] Mixed discovery feed — cat cards for users with cats, human cards for users without (v1.1, Phase 7)
+- [ ] Swipe supports both cat profiles and user profiles (v1.1, Phase 7)
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
 - [ ] Lifestyle signal scoring from cat ownership patterns
 - [ ] Primary/featured cat designation for swipe feed
@@ -54,8 +56,8 @@ Cat-first discovery — users fall for the cat first, then meet the person. The 
 - **Tech stack:** Kotlin + Spring Boot 4.0, PostgreSQL + PostGIS, S3 (MinIO local), WebSocket STOMP, Flyway, Testcontainers
 - **Domain:** Niche dating app targeting cat lovers/owners
 - **Architecture:** Backend-only REST + WebSocket API. Mobile app is a separate project.
-- **Reveal mechanic:** Two stages — Stage 1: Cat profile shown in swipe screen. Stage 2: Owner profile accessible by tapping into cat detail view
-- **Multi-cat:** Users can register up to 5 cats. Discovery feed shows cats (not owners). All cats visible in detail view.
+- **Reveal mechanic:** Cat cards: Two stages — Stage 1: Cat profile shown in swipe screen. Stage 2: Owner profile accessible by tapping into cat detail view. Human cards: User profile shown directly.
+- **Multi-cat:** Users can register up to 5 cats. Cat owners appear as cat cards in discovery. Users without cats appear as human cards.
 - **Chat:** WebSocket STOMP messaging with lazy conversation creation, offline delivery, and unread tracking. Unlocked after mutual match.
 - **Testing:** Full Testcontainers-based integration tests (PostgreSQL + PostGIS + MinIO). No H2.
 
@@ -80,6 +82,8 @@ Cat-first discovery — users fall for the cat first, then meet the person. The 
 | S3 presigned URLs | Client uploads directly to S3, backend never handles file bytes | ✓ Good — scalable, MinIO local dev parity |
 | Testcontainers over H2 | Real PostgreSQL + PostGIS in tests, no dialect mismatches | ✓ Good — caught real bugs H2 would miss |
 | Bucket4j rate limiting | Lightweight, no Redis dependency for MVP | ✓ Good — simple ConcurrentHashMap sufficient |
+| Optional cat ownership | App is for all cat lovers, not just owners — widens user base | — v1.1 (Phase 7) |
+| Mixed discovery feed | Cat cards for cat owners, human cards for catless users | — v1.1 (Phase 7) |
 | Defer moderation to v2 | Focus v1 on core matching/chat loop | — Pending (needed before public launch) |
 
 ## Evolution
@@ -100,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-16 after v1.0 milestone*
+*Last updated: 2026-06-22 after v1.1 milestone creation (optional cat ownership, mixed discovery feed)*

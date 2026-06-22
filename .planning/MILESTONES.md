@@ -15,4 +15,14 @@
 - Real-time WebSocket chat with STOMP, offline delivery, mark-read, and conversation management (Phase 5)
 - API hardening — OpenAPI docs, rate limiting, health indicators, 163 integration tests (Phase 6)
 
+## v1.1 Mixed Discovery (Active)
+
+**Goal:** Make cat ownership optional and transform discovery into a mixed feed of cats and humans.
+
+**Phases:**
+
+- Phase 7: Mixed Discovery Feed — polymorphic feed items, optional cat swipes, human cards for catless users
+
+**Design change:** Users no longer need a cat to use the app. Discovery shows cat cards for users with cats (cat-first preserved) and human cards for users without cats.
+
 ---
