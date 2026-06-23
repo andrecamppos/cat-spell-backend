@@ -1,4 +1,4 @@
-<!-- GSD:docs-update -->
+<!-- generated-by: gsd-doc-writer -->
 # Deployment
 
 ## Local Development Stack
@@ -6,15 +6,15 @@
 The `docker-compose.yml` provides the full local infrastructure:
 
 ```bash
-podman compose up -d
+podman compose up -d          # or: docker compose up -d
 ```
 
 ### Services
 
-| Service | Image | Ports | Purpose |
-|---------|-------|-------|---------|
+| Service | Image | Host Ports | Purpose |
+|---------|-------|------------|---------|
 | `postgres` | `postgis/postgis:16-3.4-alpine` | `5432` | PostgreSQL with PostGIS |
-| `minio` | `minio/minio:latest` | `9000` (API), `9001` (console) | S3-compatible object storage |
+| `minio` | `minio/minio:latest` | `9002` (API), `9001` (console) | S3-compatible object storage |
 
 ### Volumes
 
@@ -50,10 +50,11 @@ All configuration is supplied via environment variables — see [Configuration](
 
 ### Database
 
-- [ ] Use a managed PostgreSQL instance with PostGIS extension enabled
+- [ ] Use a managed PostgreSQL 16+ instance with PostGIS extension enabled
 - [ ] Set `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` environment variables
-- [ ] Flyway migrations run automatically on startup — ensure the database user has DDL permissions
+- [ ] Flyway migrations (13 total) run automatically on startup — ensure the database user has DDL permissions
 - [ ] Back up the database before deploying schema-changing releases
+<!-- VERIFY: specific managed database provider and PostGIS setup steps -->
 
 ### Authentication
 
@@ -64,21 +65,22 @@ All configuration is supplied via environment variables — see [Configuration](
 ### Object Storage
 
 - [ ] Use AWS S3 or an S3-compatible service (e.g. DigitalOcean Spaces, Cloudflare R2)
-- [ ] Create the photo bucket before first deployment
+- [ ] Create the `catspell-photos` bucket before first deployment (or rely on auto-creation if the app has `s3:CreateBucket` permission)
 - [ ] Set `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`
 - [ ] Configure bucket CORS if the mobile app uploads directly via presigned URLs
+<!-- VERIFY: production S3 provider and bucket CORS configuration -->
 
 ### Security
 
 - [ ] Run behind a reverse proxy (nginx, Caddy, or cloud load balancer) with TLS termination
 - [ ] The application listens on port `8080` by default — configure `server.port` or `SERVER_PORT` if needed
-- [ ] WebSocket endpoint (`/ws`) should be proxied with WebSocket upgrade support
-- [ ] Rate limiting is handled in-process via Bucket4j — consider additional rate limiting at the proxy level for DDoS protection
+- [ ] WebSocket endpoint (`/ws`) must be proxied with WebSocket upgrade support
+- [ ] Rate limiting is handled in-process via Bucket4j (10 req/min per IP on auth endpoints) — consider additional rate limiting at the proxy level for DDoS protection
 
 ### Monitoring
 
 - [ ] The health endpoint at `/actuator/health` returns `UP` when the application is healthy
-- [ ] Custom health indicators check S3 connectivity and WebSocket status
+- [ ] Custom health indicators check S3 connectivity (`S3HealthIndicator`) and WebSocket status (`WebSocketHealthIndicator`)
 - [ ] Health details (component-level) require authentication — configure an internal monitoring user or use a sidecar approach
 
 ### Container Deployment
@@ -100,18 +102,18 @@ podman build -t cat-spell-backend .
 podman run -p 8080:8080 --env-file .env cat-spell-backend
 ```
 
-### Environment Variables Summary
+## Environment Variables Summary
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | JDBC PostgreSQL URL |
-| `DATABASE_USERNAME` | Yes | Database user |
-| `DATABASE_PASSWORD` | Yes | Database password |
-| `JWT_SECRET` | Yes | Base64-encoded HS512 key (≥64 bytes) |
-| `S3_ENDPOINT` | Yes | S3 endpoint URL |
-| `S3_REGION` | Yes | S3 region |
-| `S3_BUCKET` | Yes | Photo storage bucket name |
-| `S3_ACCESS_KEY` | Yes | S3 access key |
-| `S3_SECRET_KEY` | Yes | S3 secret key |
-| `SERVER_PORT` | No | Override default port 8080 |
-| `SPRING_PROFILES_ACTIVE` | No | Spring profile (e.g. `dev`) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Yes | `jdbc:postgresql://localhost:5432/catspell` | JDBC PostgreSQL URL |
+| `DATABASE_USERNAME` | Yes | `catspell` | Database user |
+| `DATABASE_PASSWORD` | Yes | `catspell` | Database password |
+| `JWT_SECRET` | Yes | Dev default | Base64-encoded HS512 key (≥64 bytes) |
+| `S3_ENDPOINT` | Yes | `http://localhost:9002` | S3 endpoint URL |
+| `S3_REGION` | Yes | `us-east-1` | S3 region |
+| `S3_BUCKET` | Yes | `catspell-photos` | Photo storage bucket name |
+| `S3_ACCESS_KEY` | Yes | `catspell` | S3 access key |
+| `S3_SECRET_KEY` | Yes | `catspell123` | S3 secret key |
+| `SERVER_PORT` | No | `8080` | Override default port |
+| `SPRING_PROFILES_ACTIVE` | No | — | Spring profile (e.g. `dev`) |

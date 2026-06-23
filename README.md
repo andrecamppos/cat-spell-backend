@@ -1,17 +1,18 @@
-<!-- GSD:docs-update -->
+<!-- generated-by: gsd-doc-writer -->
 # Cat Spell Backend
 
-A cat-first dating app backend API built with **Kotlin**, **Spring Boot 4**, and **PostgreSQL + PostGIS**. Users create profiles, register their cats, discover nearby cats via a geolocation-based feed, swipe to match, and chat in real time over WebSockets.
+Backend API for **Cat Spell** — a dating app for cat lovers. Users with cats show cat-first in the discovery feed (fall for the cat, then meet the person). Users without cats appear as human cards. Built with **Kotlin 2.4**, **Spring Boot 4.0.6**, and **PostgreSQL 16 + PostGIS 3.4**.
 
 ## Key Features
 
-- **JWT Authentication** — register, login, token refresh with rotation and reuse detection
-- **User Profiles** — display name, bio, age, gender, preferences, location (PostGIS), profile completeness checks
-- **Photo Management** — presigned S3 uploads, server-side thumbnail generation, reorder and delete (user + cat photos)
-- **Cat Profiles** — CRUD for cats with name, age, breed, bio; up to 5 cats per user
-- **Discovery Feed** — geolocation-based, cursor-paginated, randomised feed of nearby cats
-- **Swipe & Match** — like/pass swipes with mutual-match detection and deduplication
-- **Real-time Chat** — STOMP over WebSocket, per-conversation messages, read receipts, unread counts, push notifications
+- **JWT Authentication** — register, login, token refresh with rotation and theft detection
+- **User Profiles** — display name, bio, age, gender, preferences, GPS location (PostGIS), profile completeness checks
+- **Photo Management** — presigned S3 uploads, server-side thumbnail generation, reorder and delete (user and cat photos)
+- **Cat Profiles** — CRUD for cats with name, age, breed, bio; up to 5 cats per user; cat ownership is optional
+- **Mixed Discovery Feed** — geolocation-based, cursor-paginated feed; cat cards for cat owners, human cards for catless users
+- **Swipe & Match** — LIKE/PASS swipes on cat profiles or user profiles, mutual-match detection, deduplication
+- **Real-time Chat** — STOMP over WebSocket, lazy conversation creation, unread counts, mark-read, offline message delivery
+- **API Hardening** — RFC 7807 error responses, Bucket4j rate limiting on auth endpoints, health indicators (S3, WebSocket, DB)
 - **OpenAPI** — grouped API docs via springdoc (`/v3/api-docs`)
 
 ## Tech Stack
@@ -21,19 +22,19 @@ A cat-first dating app backend API built with **Kotlin**, **Spring Boot 4**, and
 | Language | Kotlin 2.4, JVM 17 |
 | Framework | Spring Boot 4.0.6 |
 | Database | PostgreSQL 16 + PostGIS 3.4 |
-| Migrations | Flyway (12 versioned migrations) |
+| Migrations | Flyway (13 versioned migrations) |
 | Auth | JWT (jjwt 0.12.6), BCrypt |
-| Storage | AWS S3 SDK 2.25.60 (MinIO locally) |
+| Storage | AWS S3 SDK 2.25.60 (MinIO for local dev) |
 | WebSocket | Spring WebSocket + STOMP |
 | API Docs | springdoc-openapi 2.8.8 |
 | Rate Limiting | Bucket4j 8.10.1 |
 | Thumbnails | Thumbnailator 0.4.20 |
 | Spatial | Hibernate Spatial |
-| Testing | JUnit 5, Testcontainers, MockK, H2 |
+| Testing | JUnit 5, Testcontainers 1.20.6, MockK 1.13.11 |
 
 ## Quick Start
 
-**Prerequisites:** JDK 17+, [Podman](https://podman.io/) (or Docker)
+**Prerequisites:** JDK 17+, [Podman](https://podman.io/) or Docker
 
 ```bash
 # Clone and enter the project
@@ -43,19 +44,16 @@ git clone <repo-url> && cd cat-spell-backend
 cp .env.example .env
 
 # Start PostgreSQL + MinIO
-podman compose up -d
+podman compose up -d          # or: docker compose up -d
 
 # Run the app
 ./gradlew bootRun
 
-# Run tests
+# Run tests (starts its own containers via Testcontainers)
 ./gradlew test
-
-# Stop services
-podman compose down
 ```
 
-The API starts on **http://localhost:8080**. OpenAPI docs are at `/v3/api-docs`.
+The API starts on **http://localhost:8080**. OpenAPI spec is at `/v3/api-docs`.
 
 ## Project Structure
 
@@ -64,9 +62,9 @@ src/main/kotlin/com/catspell/api/
 ├── auth/          # Registration, login, JWT refresh
 ├── profile/       # User profiles and photo uploads
 ├── cat/           # Cat profiles and cat photo uploads
-├── discovery/     # Feed, swipe, owner profiles
-├── match/         # Match creation and listing
-├── chat/          # Conversations, messages, WebSocket
+├── discovery/     # Mixed feed, swipe, owner/user profiles
+├── match/         # Match listing
+├── chat/          # Conversations, messages, WebSocket STOMP
 └── common/        # Security, exceptions, health, OpenAPI config
 ```
 

@@ -1,4 +1,4 @@
-<!-- GSD:docs-update -->
+<!-- generated-by: gsd-doc-writer -->
 # Configuration
 
 All configuration is managed through Spring Boot's externalized configuration. Values can be set via environment variables, `application.yml`, or Spring profiles.
@@ -11,23 +11,21 @@ Copy `.env.example` to `.env` and fill in the values:
 cp .env.example .env
 ```
 
-### Required Variables
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Yes | `jdbc:postgresql://localhost:5432/catspell` | JDBC URL for PostgreSQL + PostGIS |
+| `DATABASE_USERNAME` | Yes | `catspell` | Database username |
+| `DATABASE_PASSWORD` | Yes | `catspell` | Database password |
+| `JWT_SECRET` | Yes | Dev default provided | Base64-encoded secret for HS512 signing (≥64 bytes) |
+| `S3_ENDPOINT` | Yes | `http://localhost:9002` | S3-compatible endpoint URL |
+| `S3_REGION` | Yes | `us-east-1` | S3 region |
+| `S3_BUCKET` | Yes | `catspell-photos` | S3 bucket name for photos |
+| `S3_ACCESS_KEY` | Yes | `catspell` | S3 access key |
+| `S3_SECRET_KEY` | Yes | `catspell123` | S3 secret key |
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | JDBC URL for PostgreSQL | `jdbc:postgresql://localhost:5432/catspell` |
-| `DATABASE_USERNAME` | Database username | `catspell` |
-| `DATABASE_PASSWORD` | Database password | `catspell` |
-| `JWT_SECRET` | Base64-encoded secret for HS512 signing (must be ≥64 bytes) | Dev default provided |
-| `S3_ENDPOINT` | S3-compatible endpoint URL | `http://localhost:9000` |
-| `S3_REGION` | S3 region | `us-east-1` |
-| `S3_BUCKET` | S3 bucket name for photos | `catspell-photos` |
-| `S3_ACCESS_KEY` | S3 access key | `catspell` |
-| `S3_SECRET_KEY` | S3 secret key | `catspell123` |
+All variables have development defaults. For production, **`JWT_SECRET`**, **`DATABASE_PASSWORD`**, **`S3_ACCESS_KEY`**, and **`S3_SECRET_KEY`** must be overridden with secure values.
 
 ### Generating a JWT Secret
-
-For production, generate a strong secret:
 
 ```bash
 openssl rand -base64 64
@@ -73,14 +71,23 @@ A base64-encoded development default is provided in `application.yml`. **Never u
 ```yaml
 storage:
   s3:
-    endpoint: ${S3_ENDPOINT:http://localhost:9000}
+    endpoint: ${S3_ENDPOINT:http://localhost:9002}
     region: ${S3_REGION:us-east-1}
     bucket: ${S3_BUCKET:catspell-photos}
     access-key: ${S3_ACCESS_KEY:catspell}
     secret-key: ${S3_SECRET_KEY:catspell123}
 ```
 
-For local development, MinIO runs on port 9000 (API) and 9001 (console). The bucket is created automatically on startup via `StorageService.createBucketIfNotExists()` (`@PostConstruct`).
+For local development, MinIO runs on port 9002 (API, mapped from container port 9000) and 9001 (console). See `docker-compose.yml` for the port mapping.
+
+### Rate Limiting
+
+```yaml
+rate-limit:
+  capacity: 10    # requests per minute per IP (auth endpoints only)
+```
+
+Configurable via `rate-limit.capacity` property. Applies to `/api/auth/*` endpoints. Returns `429 Too Many Requests` with `Retry-After` and `X-RateLimit-Remaining` headers.
 
 ### OpenAPI
 
@@ -108,7 +115,7 @@ management:
         include: health
 ```
 
-Only the `health` endpoint is exposed. Component details (S3 connectivity, WebSocket status) are visible to authenticated users.
+Only the `health` endpoint is exposed. Component details (S3 connectivity, WebSocket status) are visible to authenticated users only.
 
 ### Server
 
@@ -141,6 +148,14 @@ logging:
 
 Enables SQL logging with formatted output and DEBUG-level logging for security and application code.
 
+## Per-Environment Overrides
+
+| Environment | How to configure |
+|-------------|-----------------|
+| **Local dev** | `.env` file + `docker-compose.yml` defaults |
+| **Dev profile** | `SPRING_PROFILES_ACTIVE=dev` — enables SQL logging |
+| **Production** | Set all env vars via deployment platform secrets; override `JWT_SECRET`, `DATABASE_*`, `S3_*` <!-- VERIFY: production deployment platform and secret management approach --> |
+
 ## Gradle Configuration
 
 ### `gradle.properties`
@@ -152,34 +167,33 @@ org.gradle.parallel=true
 
 ### Key Build Dependencies
 
-| Dependency | Purpose |
-|-----------|---------|
-| `spring-boot-starter-web` | REST API |
-| `spring-boot-starter-data-jpa` | JPA / Hibernate |
-| `spring-boot-starter-security` | Spring Security 7.1 |
-| `spring-boot-starter-validation` | Bean validation |
-| `spring-boot-starter-websocket` | WebSocket / STOMP |
-| `spring-boot-starter-actuator` | Health endpoints |
-| `spring-boot-flyway` + `flyway-database-postgresql` | Database migrations |
-| `jjwt-api` / `jjwt-impl` / `jjwt-jackson` 0.12.6 | JWT token handling |
-| `jackson-module-kotlin` | Kotlin serialization support |
-| `hibernate-spatial` | PostGIS geometry types |
-| `aws-sdk-s3` 2.25.60 | S3-compatible object storage |
-| `thumbnailator` 0.4.20 | Server-side image thumbnails |
-| `springdoc-openapi-starter-webmvc-api` 2.8.8 | OpenAPI documentation |
-| `bucket4j-core` 8.10.1 | Rate limiting |
+| Dependency | Version | Purpose |
+|-----------|---------|---------|
+| `spring-boot-starter-web` | 4.0.6 | REST API |
+| `spring-boot-starter-data-jpa` | 4.0.6 | JPA / Hibernate |
+| `spring-boot-starter-security` | 4.0.6 | Spring Security 7.1 |
+| `spring-boot-starter-validation` | 4.0.6 | Bean validation |
+| `spring-boot-starter-websocket` | 4.0.6 | WebSocket / STOMP |
+| `spring-boot-starter-actuator` | 4.0.6 | Health endpoints |
+| `spring-boot-flyway` + `flyway-database-postgresql` | 4.0.6 | Database migrations |
+| `jjwt-api` / `jjwt-impl` / `jjwt-jackson` | 0.12.6 | JWT token handling |
+| `jackson-module-kotlin` | managed | Kotlin serialization support |
+| `hibernate-spatial` | managed | PostGIS geometry types |
+| `aws-sdk-s3` | 2.25.60 | S3-compatible object storage |
+| `thumbnailator` | 0.4.20 | Server-side image thumbnails |
+| `springdoc-openapi-starter-webmvc-api` | 2.8.8 | OpenAPI documentation |
+| `bucket4j-core` | 8.10.1 | Rate limiting |
 
 ## Business Limits
 
-| Limit | Value |
-|-------|-------|
-| Max photos per user | 6 |
-| Max cats per user | 5 |
-| Max photos per cat | 10 |
-| Allowed photo types | JPEG, PNG |
-| Max photo file size | 10 MB |
-| Thumbnail size | 200×200 px |
-| Feed page size range | 1–50 |
-| Min user age | 18 years |
-| Access token expiry | 1 hour |
-| Refresh token expiry | 30 days |
+| Limit | Value | Source |
+|-------|-------|--------|
+| Max photos per user | 6 | `PhotoLimitExceededException` |
+| Max cats per user | 5 | `CatLimitExceededException` |
+| Max photos per cat | 10 | `CatPhotoLimitExceededException` |
+| Allowed photo types | JPEG, PNG | `InvalidPhotoTypeException` |
+| Feed default page size | 20 | `DiscoveryController` |
+| Min user age | 18 years | `CreateProfileRequest` validation |
+| Access token expiry | 1 hour | `jwt.access-token-expiry` |
+| Refresh token expiry | 30 days | `jwt.refresh-token-expiry-days` |
+| Rate limit (auth) | 10 req/min per IP | `rate-limit.capacity` |

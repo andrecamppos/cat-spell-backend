@@ -1,11 +1,11 @@
-<!-- GSD:docs-update -->
+<!-- generated-by: gsd-doc-writer -->
 # API Reference
 
 Base URL: `http://localhost:8080`
 
 All endpoints require `Authorization: Bearer <accessToken>` unless marked as **public**.
 
-Error responses use [RFC 7807 Problem Detail](https://www.rfc-editor.org/rfc/rfc7807) format.
+Error responses use [RFC 7807 Problem Detail](https://www.rfc-editor.org/rfc/rfc7807) format. Rate limiting applies to auth endpoints (10 req/min per IP).
 
 ---
 
@@ -33,7 +33,7 @@ Register a new user.
 }
 ```
 
-**Errors:** `409` duplicate email, `400` validation failure
+**Errors:** `409` duplicate email, `400` validation failure, `429` rate limited
 
 ### POST `/api/auth/login` (public)
 
@@ -47,7 +47,7 @@ Register a new user.
 
 **Response (200):** same as register
 
-**Errors:** `401` invalid credentials
+**Errors:** `401` invalid credentials, `429` rate limited
 
 ### POST `/api/auth/refresh` (public)
 
@@ -62,7 +62,7 @@ Rotate a refresh token for a new token pair.
 
 **Response (200):** same as register
 
-**Errors:** `401` expired/invalid/reused token (reuse revokes all user tokens)
+**Errors:** `401` expired/invalid/reused token (reuse revokes all user tokens), `429` rate limited
 
 ### GET `/api/auth/me`
 
@@ -97,13 +97,17 @@ Create a user profile.
 }
 ```
 
-- `gender` — `MALE` or `FEMALE`
-- `genderPreference` — `MALE`, `FEMALE`, or `EVERYONE`
-- `dateOfBirth` — must be 18+ years ago
+- `displayName` — max 100 characters (required)
+- `bio` — max 1000 characters (optional)
+- `gender` — `MALE` or `FEMALE` (required)
+- `genderPreference` — `MALE`, `FEMALE`, or `EVERYONE` (required)
+- `dateOfBirth` — must be 18+ years ago (required)
+- `ageMin` / `ageMax` — 18–99 (required)
+- `maxDistanceKm` — ≥1 (required)
 
 **Response (201):** `ProfileResponse`
 
-**Errors:** `409` profile already exists, `400` validation failure (underage, invalid gender)
+**Errors:** `409` profile already exists, `400` validation failure
 
 ### GET `/api/profile`
 
@@ -151,6 +155,9 @@ Update the user's geolocation.
 }
 ```
 
+- `latitude` — -90.0 to 90.0 (required)
+- `longitude` — -180.0 to 180.0 (required)
+
 **Response (200):** `ProfileResponse`
 
 ### GET `/api/profile/completeness`
@@ -195,7 +202,7 @@ Request a presigned S3 upload URL.
 
 ### POST `/api/profile/photos/{id}/confirm`
 
-Confirm a photo upload. Server verifies the S3 object exists, generates a 200×200 thumbnail, and activates the photo.
+Confirm a photo upload. Server verifies the S3 object exists, generates a thumbnail, and activates the photo.
 
 **Response (200):**
 ```json
@@ -238,6 +245,8 @@ List all active photos in display order.
 ---
 
 ## Cat Profiles
+
+Cat ownership is optional. Users without cats appear as human cards in the discovery feed.
 
 ### POST `/api/cats`
 
@@ -338,28 +347,38 @@ List all active photos for a cat.
 
 ### GET `/api/discovery/feed`
 
-Get the discovery feed — nearby cats from other users.
+Get the mixed discovery feed — **CAT** cards for users with cats, **HUMAN** cards for users without.
 
 **Query params:**
 - `cursor` (optional) — base64-encoded pagination cursor
-- `pageSize` (optional, default `20`, max `50`)
+- `pageSize` (optional, default `20`)
 
 **Response (200):**
 ```json
 {
-  "cats": [
+  "cards": [
     {
+      "type": "CAT",
       "catId": "uuid",
-      "name": "Whiskers",
-      "age": 3,
-      "ageUnit": "YEARS",
+      "catName": "Whiskers",
+      "catAge": 3,
+      "catAgeUnit": "YEARS",
       "breed": "Persian",
-      "bio": "Fluffy",
-      "ownerId": "uuid",
-      "ownerDisplayName": "Cat Lover",
+      "catBio": "Fluffy",
+      "userId": "uuid",
+      "displayName": "Cat Lover",
       "catPhotoThumbnail": "thumbnails/...",
-      "ownerPhotoThumbnail": "thumbnails/...",
-      "distanceKm": 5.2
+      "userPhotoThumbnail": "thumbnails/...",
+      "distanceKm": 5
+    },
+    {
+      "type": "HUMAN",
+      "catId": null,
+      "catName": null,
+      "userId": "uuid",
+      "displayName": "Dog Person",
+      "userPhotoThumbnail": "thumbnails/...",
+      "distanceKm": 3
     }
   ],
   "cursor": {
@@ -376,7 +395,7 @@ Get the discovery feed — nearby cats from other users.
 
 Get the full owner profile for a cat from the feed.
 
-**Response (200):**
+**Response (200):** `OwnerProfileResponse`
 ```json
 {
   "userId": "uuid",
@@ -389,11 +408,17 @@ Get the full owner profile for a cat from the feed.
 }
 ```
 
+### GET `/api/discovery/users/{userId}/profile`
+
+Get a user's profile from the feed (for human cards).
+
+**Response (200):** `OwnerProfileResponse` (same shape as owner endpoint)
+
 ### POST `/api/discovery/swipe`
 
-Swipe on a cat (like or pass).
+Swipe on a cat card or a human card.
 
-**Request:**
+**Request (cat card):**
 ```json
 {
   "catId": "uuid",
@@ -401,6 +426,15 @@ Swipe on a cat (like or pass).
 }
 ```
 
+**Request (human card):**
+```json
+{
+  "targetUserId": "uuid",
+  "action": "PASS"
+}
+```
+
+- Provide `catId` **or** `targetUserId` (not both)
 - `action` — `LIKE` or `PASS`
 
 **Response (200):**
@@ -412,9 +446,9 @@ Swipe on a cat (like or pass).
 }
 ```
 
-`matched` is true when both users have liked each other's cats. `matchId` is present only when a new match is created.
+`matched` is true when both users have liked each other. `matchId` is present only when a new match is created.
 
-**Errors:** `409` already swiped, `400` cannot swipe on own cat, `404` cat not found
+**Errors:** `409` already swiped, `400` cannot swipe on yourself, `404` target not found
 
 ---
 
@@ -535,7 +569,7 @@ Either `conversationId` or `matchId` must be provided (not both).
 ### Subscriptions
 
 - **`/topic/chat/{conversationId}`** — receive messages for a specific conversation
-- **`/user/{userId}/queue/notifications`** — receive push notifications (new message previews)
+- **`/user/{userId}/queue/notifications`** — receive notifications (new message previews)
 
 ### Notification Format
 
@@ -546,6 +580,19 @@ Either `conversationId` or `matchId` must be provided (not both).
   "senderName": "Cat Lover",
   "preview": "Hey! How are you..."
 }
+```
+
+---
+
+## Health & Monitoring
+
+### GET `/actuator/health` (public)
+
+Returns application health status. Component details (S3, WebSocket) visible to authenticated users only.
+
+**Response (200):**
+```json
+{"status": "UP"}
 ```
 
 ---

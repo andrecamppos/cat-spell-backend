@@ -1,5 +1,9 @@
-<!-- GSD:docs-update -->
+<!-- generated-by: gsd-doc-writer -->
 # Testing
+
+## Overview
+
+The project has **180 integration tests** across 20 test files. All tests run against real infrastructure (PostgreSQL + PostGIS, MinIO) via Testcontainers — no mocked databases.
 
 ## Running Tests
 
@@ -10,9 +14,14 @@
 # Run a specific test class
 ./gradlew test --tests "com.catspell.api.auth.AuthIntegrationTest"
 
+# Run a specific domain's tests
+./gradlew test --tests "com.catspell.api.discovery.*"
+
 # Run tests with verbose output
 ./gradlew test --info
 ```
+
+Tests require a container runtime (Docker or Podman). No external infrastructure needs to be running — Testcontainers handles everything.
 
 ## Test Infrastructure
 
@@ -21,7 +30,12 @@ Tests use **Testcontainers** to spin up real PostgreSQL (PostGIS) and MinIO cont
 - **PostgreSQL** — `postgis/postgis:16-3.4-alpine` with database `catspell`
 - **MinIO** — `minio/minio:latest` on a random port, health-checked via `/minio/health/live`
 
-Both containers are started once and shared across all test classes (static companion object).
+Both containers are started once and shared across all test classes (static companion object). Connection properties are injected via `@DynamicPropertySource`:
+
+```kotlin
+registry.add("spring.datasource.url", postgres::getJdbcUrl)
+registry.add("storage.s3.endpoint") { "http://${minio.host}:${minio.getMappedPort(9000)}" }
+```
 
 ### Container Runtime
 
@@ -47,9 +61,9 @@ All integration tests extend `BaseIntegrationTest` and use `@SpringBootTest`:
 | `CatProfileIntegrationTest` | Cat | Cat CRUD, limits |
 | `CatPhotoIntegrationTest` | Cat | Cat photo upload, confirm, delete |
 | `CatCascadeDeleteIntegrationTest` | Cat | Deleting cat cascades to photos |
-| `DiscoveryIntegrationTest` | Discovery | Feed generation, pagination |
-| `OwnerProfileIntegrationTest` | Discovery | Owner profile endpoint |
-| `SwipeMatchIntegrationTest` | Discovery | Swipe, match detection, duplicate prevention |
+| `DiscoveryIntegrationTest` | Discovery | Mixed feed (CAT + HUMAN cards), pagination |
+| `OwnerProfileIntegrationTest` | Discovery | Owner/user profile endpoints |
+| `SwipeMatchIntegrationTest` | Discovery | Swipe on cats and users, match detection, duplicate prevention |
 | `MatchIntegrationTest` | Match | Match listing |
 | `ChatIntegrationTest` | Chat | Send message, message history |
 | `ConversationListIntegrationTest` | Chat | Conversation listing, unread counts |
@@ -62,7 +76,7 @@ All integration tests extend `BaseIntegrationTest` and use `@SpringBootTest`:
 1. Create a test class in `src/test/kotlin/com/catspell/api/<domain>/`
 2. Extend `BaseIntegrationTest`
 3. Annotate with `@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)`
-4. Use `TestRestTemplate` or `MockMvc` for HTTP requests
+4. Use `TestRestTemplate` for HTTP requests
 
 ### Example Pattern
 
@@ -102,12 +116,12 @@ Additional test resource: `src/test/resources/init-postgis.sql` — initialisati
 
 ## Test Dependencies
 
-| Dependency | Purpose |
-|-----------|---------|
-| `spring-boot-starter-test` | JUnit 5, AssertJ, MockMvc |
-| `spring-boot-starter-webmvc-test` | MockMvc + WebMvc test support |
-| `spring-security-test` | Security test utilities |
-| `h2` | In-memory database (available for unit tests) |
-| `testcontainers:postgresql` 1.20.6 | PostgreSQL container |
-| `testcontainers:junit-jupiter` 1.20.6 | JUnit 5 Testcontainers integration |
-| `mockk` 1.13.11 | Kotlin mocking framework |
+| Dependency | Version | Purpose |
+|-----------|---------|---------|
+| `spring-boot-starter-test` | 4.0.6 | JUnit 5, AssertJ, MockMvc |
+| `spring-boot-starter-webmvc-test` | 4.0.6 | MockMvc + WebMvc test support |
+| `spring-security-test` | managed | Security test utilities |
+| `h2` | managed | In-memory database (available for unit tests) |
+| `testcontainers:postgresql` | 1.20.6 | PostgreSQL container |
+| `testcontainers:junit-jupiter` | 1.20.6 | JUnit 5 Testcontainers integration |
+| `mockk` | 1.13.11 | Kotlin mocking framework |
