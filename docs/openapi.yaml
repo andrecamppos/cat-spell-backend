@@ -5,8 +5,10 @@ info:
   description: |
     Cat-first dating app backend API.
 
-    Users register, build a profile, add their cats, discover nearby cats via
-    a geolocation-based feed, swipe to match, and chat in real time.
+    Users register, build a profile, optionally add their cats, and discover
+    nearby profiles via a mixed geolocation-based feed. Cat owners appear as
+    **CAT** cards (cat-first), while users without cats appear as **HUMAN**
+    cards. Swipe to match and chat in real time.
 
     ## Authentication
     All endpoints (except those tagged **public**) require a Bearer JWT in the
@@ -36,7 +38,7 @@ tags:
   - name: Cat Photos
     description: Cat photo uploads and management
   - name: Discovery
-    description: Geolocation feed, owner profiles, and swiping
+    description: Mixed geolocation feed (CAT + HUMAN cards), profile detail, and swiping
   - name: Matches
     description: Match listing
   - name: Conversations
@@ -538,10 +540,12 @@ paths:
     get:
       operationId: getFeed
       tags: [Discovery]
-      summary: Get the discovery feed of nearby cats
+      summary: Get the mixed discovery feed
       description: |
-        Returns cats within the user's `maxDistanceKm`, excluding the user's
-        own cats and already-swiped cats. Randomised per session, cursor-paginated.
+        Returns a mixed feed of nearby profiles. Cat owners appear as **CAT**
+        cards (one per owner, first-created cat); users without cats appear as
+        **HUMAN** cards. Excludes the requester's own profile and already-swiped
+        profiles. Randomised per session, cursor-paginated.
       parameters:
         - name: cursor
           in: query
@@ -591,14 +595,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
+  /api/discovery/users/{userId}/profile:
+    get:
+      operationId: getUserProfile
+      tags: [Discovery]
+      summary: Get the full profile for a human card in the feed
+      description: |
+        Returns the user's profile, photos, and cats (empty list for catless
+        users). Used when tapping a HUMAN card for more detail.
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: User profile with photos and cats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerProfileResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
   /api/discovery/swipe:
     post:
       operationId: swipe
       tags: [Discovery]
-      summary: Swipe on a cat (LIKE or PASS)
+      summary: Swipe on a profile (LIKE or PASS)
       description: |
-        Records a swipe action. When both users have liked each other's cats,
-        `matched` is `true` and `matchId` contains the new match ID.
+        Records a swipe on a CAT card (provide `catId`) or a HUMAN card
+        (provide `targetUserId`). Exactly one of the two must be set.
+        When both users have liked each other, `matched` is `true` and
+        `matchId` contains the new match ID.
       requestBody:
         required: true
         content:
@@ -613,19 +643,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/SwipeResponse'
         '400':
-          description: Cannot swipe on own cat
+          description: Cannot swipe on yourself, or invalid target (must provide exactly one of catId or targetUserId)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '404':
-          description: Cat not found
+          description: Target cat or user not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '409':
-          description: Already swiped on this cat
+          description: Already swiped on this profile
           content:
             application/json:
               schema:
@@ -725,6 +755,14 @@ components:
 
     catPhotoId:
       name: catPhotoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    userId:
+      name: userId
       in: path
       required: true
       schema:
@@ -1131,11 +1169,19 @@ components:
     # ── Discovery ─────────────────────────────────────────────────────
     SwipeRequest:
       type: object
-      required: [catId, action]
+      required: [action]
+      description: |
+        Exactly one of `catId` (for CAT cards) or `targetUserId` (for HUMAN
+        cards) must be provided. Sending both or neither returns 400.
       properties:
         catId:
           type: string
           format: uuid
+          description: ID of the cat to swipe on (CAT card)
+        targetUserId:
+          type: string
+          format: uuid
+          description: ID of the user to swipe on (HUMAN card)
         action:
           type: string
           enum: [LIKE, PASS]
@@ -1149,7 +1195,7 @@ components:
           format: uuid
         matched:
           type: boolean
-          description: True when both users have liked each other's cats
+          description: True when both users have liked each other
         matchId:
           type: string
           format: uuid
@@ -1157,9 +1203,9 @@ components:
 
     FeedResponse:
       type: object
-      required: [cats]
+      required: [cards]
       properties:
-        cats:
+        cards:
           type: array
           items:
             $ref: '#/components/schemas/FeedItemResponse'
@@ -1168,33 +1214,48 @@ components:
 
     FeedItemResponse:
       type: object
-      required: [catId, name, age, ageUnit, ownerId, ownerDisplayName, distanceKm]
+      required: [type, userId, displayName, distanceKm]
+      description: |
+        A card in the mixed feed. `type` is either `CAT` (cat owner) or
+        `HUMAN` (catless user). Cat-specific fields are `null` for HUMAN cards.
       properties:
+        type:
+          type: string
+          enum: [CAT, HUMAN]
+          description: Card type discriminator
         catId:
           type: string
           format: uuid
-        name:
+          description: Present only for CAT cards
+        catName:
           type: string
-        age:
+          description: Cat's name (null for HUMAN cards)
+        catAge:
           type: integer
-        ageUnit:
+          description: Cat's age (null for HUMAN cards)
+        catAgeUnit:
           type: string
           enum: [YEARS, MONTHS]
+          description: Cat's age unit (null for HUMAN cards)
         breed:
           type: string
-        bio:
+          description: Cat's breed (null for HUMAN cards)
+        catBio:
           type: string
-        ownerId:
+          description: Cat's bio (null for HUMAN cards)
+        userId:
           type: string
           format: uuid
-        ownerDisplayName:
+          description: Owner's user ID (CAT) or the user's own ID (HUMAN)
+        displayName:
           type: string
+          description: User's display name
         catPhotoThumbnail:
           type: string
-          description: S3 key for the cat's primary thumbnail
-        ownerPhotoThumbnail:
+          description: S3 key for the cat's primary thumbnail (null for HUMAN cards)
+        userPhotoThumbnail:
           type: string
-          description: S3 key for the owner's primary thumbnail
+          description: S3 key for the user's primary thumbnail
         distanceKm:
           type: integer
           description: Distance in whole kilometres
