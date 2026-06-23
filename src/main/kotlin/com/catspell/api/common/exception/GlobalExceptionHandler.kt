@@ -126,14 +126,14 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(DuplicateSwipeException::class)
     fun handleDuplicateSwipe(ex: DuplicateSwipeException): ProblemDetail {
-        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Already swiped on this cat")
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Already swiped on this profile")
         problem.title = "Conflict"
         return problem
     }
 
     @ExceptionHandler(SelfSwipeException::class)
     fun handleSelfSwipe(ex: SelfSwipeException): ProblemDetail {
-        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Cannot swipe on your own cat")
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Cannot swipe on yourself")
         problem.title = "Bad Request"
         return problem
     }

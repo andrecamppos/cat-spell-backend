@@ -184,28 +184,55 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         return Triple(token, catId, email)
     }
 
+    private fun setupCatlessUser(
+        email: String,
+        displayName: String = "User",
+        gender: String = "MALE",
+        genderPreference: String = "EVERYONE",
+        dateOfBirth: String = "2000-01-15",
+        lat: Double = 40.7128,
+        lng: Double = -74.0060,
+        ageMin: Int = 18,
+        ageMax: Int = 50,
+        maxDistanceKm: Int = 100
+    ): Pair<String, String> {
+        val token = registerAndGetToken(email)
+        createProfile(token, displayName, "Bio for $displayName", dateOfBirth, gender, genderPreference, ageMin, ageMax, maxDistanceKm)
+        setLocation(token, lat, lng)
+        addUserPhoto(token)
+        return Pair(token, email)
+    }
+
+    private fun extractUserId(token: String): String {
+        val result = mockMvc.perform(
+            get("/api/auth/me")
+                .header("Authorization", "Bearer $token")
+        ).andExpect(status().isOk).andReturn()
+        return objectMapper.readTree(result.response.contentAsString)["userId"].asText()
+    }
+
     @Test
     fun `feed returns cat profiles with cat-first data`() {
-        val (tokenA, _, _) = setupCompleteUser("disc-catfirst-a@example.com", "Alice", "FEMALE")
-        setupCompleteUser("disc-catfirst-b@example.com", "Bob", "MALE", catName = "Whiskers")
+        val (tokenA, _, _) = setupCompleteUser("disc-catfirst-a@example.com", "Alice", "FEMALE", lat = -33.8688, lng = 151.2093)
+        setupCompleteUser("disc-catfirst-b@example.com", "Bob", "MALE", catName = "Whiskers", lat = -33.8690, lng = 151.2095)
 
         val result = mockMvc.perform(
             get("/api/discovery/feed")
                 .header("Authorization", "Bearer $tokenA")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.cats").isArray)
+            .andExpect(jsonPath("$.cards").isArray)
             .andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        val whiskers = (0 until cats.size()).firstOrNull { cats[it]["name"].asText() == "Whiskers" }
+        val cards = json["cards"]
+        val whiskers = (0 until cards.size()).firstOrNull { cards[it]["catName"].asText() == "Whiskers" }
         assert(whiskers != null) { "Whiskers should appear in feed" }
-        val w = cats[whiskers!!]
+        val w = cards[whiskers!!]
         assert(w["catId"] != null) { "catId should exist" }
-        assert(w["age"].asInt() == 2) { "age should be 2" }
-        assert(w["ownerId"] != null) { "ownerId should exist" }
-        assert(w["ownerDisplayName"].asText() == "Bob") { "ownerDisplayName should be Bob" }
+        assert(w["catAge"].asInt() == 2) { "catAge should be 2" }
+        assert(w["userId"] != null) { "userId should exist" }
+        assert(w["displayName"].asText() == "Bob") { "displayName should be Bob" }
         assert(w["distanceKm"].isInt) { "distanceKm should be an integer" }
     }
 
@@ -220,8 +247,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        val catNames = (0 until cats.size()).map { cats[it]["name"].asText() }
+        val cards = json["cards"]
+        val catNames = (0 until cards.size()).map { cards[it]["catName"].asText() }
         assert("OwnACatUnique" !in catNames) { "Own cat should not appear in feed" }
     }
 
@@ -240,7 +267,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("NearCat" in catNames) { "Near cat should appear in feed" }
         assert("FarCat" !in catNames) { "Far cat should not appear in feed" }
     }
@@ -266,7 +293,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("SwipedCat" !in catNames) { "Swiped cat should not appear in feed" }
     }
 
@@ -285,7 +312,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("MatchCat" in catNames) { "Gender-matching cat should appear" }
         assert("NoMatchCat" !in catNames) { "Gender-mismatched cat should not appear" }
     }
@@ -305,7 +332,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("AgeMatchCat" in catNames) { "Age-matching cat should appear" }
         assert("AgeNoMatchCat" !in catNames) { "Age-mismatched cat should not appear" }
     }
@@ -354,7 +381,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("IncompleteCat" !in catNames) { "Cat from incomplete profile should not appear" }
     }
 
@@ -374,7 +401,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val catNames = (0 until json["cats"].size()).map { json["cats"][it]["name"].asText() }
+        val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
         assert("NoPhotoCat" !in catNames) { "Cat without photo should not appear" }
     }
 
@@ -389,8 +416,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        if (json["cats"].size() > 0) {
-            val distanceKm = json["cats"][0]["distanceKm"]
+        if (json["cards"].size() > 0) {
+            val distanceKm = json["cards"][0]["distanceKm"]
             assert(distanceKm.isInt) { "distanceKm should be an integer" }
         }
     }
@@ -411,7 +438,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val firstJson = objectMapper.readTree(firstResult.response.contentAsString)
-        val firstCats = firstJson["cats"]
+        val firstCats = firstJson["cards"]
         assert(firstCats.size() == 2) { "First page should have 2 cats, got ${firstCats.size()}" }
 
         val cursor = firstJson["cursor"]
@@ -429,7 +456,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val secondJson = objectMapper.readTree(secondResult.response.contentAsString)
-        val secondCats = secondJson["cats"]
+        val secondCats = secondJson["cards"]
         assert(secondCats.size() > 0) { "Second page should have cats" }
 
         // Cats on second page should differ from first page
@@ -459,8 +486,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.cats").isArray)
-            .andExpect(jsonPath("$.cats").isEmpty)
+            .andExpect(jsonPath("$.cards").isArray)
+            .andExpect(jsonPath("$.cards").isEmpty)
     }
 
     @Test
@@ -475,11 +502,306 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ).andExpect(status().isOk).andReturn()
 
         val json = objectMapper.readTree(result.response.contentAsString)
-        val cats = json["cats"]
-        assert(cats.size() >= 1) { "Should have at least 1 cat" }
+        val cards = json["cards"]
+        assert(cards.size() >= 1) { "Should have at least 1 cat" }
         val cursor = json["cursor"]
         if (cursor != null && !cursor.isNull) {
             assert(!cursor["hasMore"].asBoolean()) { "hasMore should be false when all cats fit in one page" }
         }
+    }
+
+    @Test
+    fun `human card appears in mixed feed for catless user`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-human-a@example.com", "Alice", "FEMALE")
+        setupCatlessUser("disc-human-b@example.com", "Bob", "MALE")
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val bob = (0 until cards.size()).firstOrNull { cards[it]["displayName"].asText() == "Bob" }
+        assert(bob != null) { "Bob (catless) should appear in feed" }
+        val b = cards[bob!!]
+        assert(b["type"].asText() == "HUMAN") { "type should be HUMAN" }
+        assert(b["catId"].isNull) { "catId should be null for HUMAN card" }
+        assert(b["catName"].isNull) { "catName should be null for HUMAN card" }
+        assert(b["userId"] != null && !b["userId"].isNull) { "userId should exist" }
+        assert(b["displayName"].asText() == "Bob") { "displayName should be Bob" }
+    }
+
+    @Test
+    fun `cat card appears with type discriminator`() {
+        val (tokenA, _) = setupCatlessUser("disc-cattype-a@example.com", "CatTypeA", "FEMALE")
+        setupCompleteUser("disc-cattype-b@example.com", "CatTypeB", "MALE", catName = "TypedCat")
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val typed = (0 until cards.size()).firstOrNull { cards[it]["catName"]?.asText() == "TypedCat" }
+        assert(typed != null) { "TypedCat should appear in feed" }
+        val c = cards[typed!!]
+        assert(c["type"].asText() == "CAT") { "type should be CAT" }
+        assert(!c["catId"].isNull) { "catId should not be null for CAT card" }
+        assert(c["catName"].asText() == "TypedCat") { "catName should be TypedCat" }
+    }
+
+    @Test
+    fun `feed mixes both CAT and HUMAN cards`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-mix-a@example.com", "MixViewer", "FEMALE", lat = 48.8566, lng = 2.3522)
+        setupCompleteUser("disc-mix-b@example.com", "CatOwner", "MALE", lat = 48.8570, lng = 2.3530, catName = "MixCat")
+        setupCatlessUser("disc-mix-c@example.com", "CatlessUser", "MALE", lat = 48.8575, lng = 2.3535)
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val types = (0 until cards.size()).map { cards[it]["type"].asText() }.toSet()
+        assert("CAT" in types) { "Feed should contain CAT cards" }
+        assert("HUMAN" in types) { "Feed should contain HUMAN cards" }
+    }
+
+    @Test
+    fun `one card per user for multi-cat owner`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-multi-a@example.com", "MultiViewer", "FEMALE", lat = 35.6762, lng = 139.6503)
+        val (tokenB, _, _) = setupCompleteUser("disc-multi-b@example.com", "MultiCatOwner", "MALE", lat = 35.6770, lng = 139.6510, catName = "Cat1")
+        val cat2Id = createCat(tokenB, "Cat2")
+        addCatPhoto(tokenB, cat2Id)
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val userIdB = extractUserId(tokenB)
+        val cardsForB = (0 until cards.size()).filter { cards[it]["userId"].asText() == userIdB }
+        assert(cardsForB.size == 1) { "Should have exactly 1 card for multi-cat owner, got ${cardsForB.size}" }
+    }
+
+    @Test
+    fun `swipe on human card with targetUserId`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-hswipe-a@example.com", "HSwipeA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-hswipe-b@example.com", "HSwipeB", "MALE")
+        val userIdB = extractUserId(tokenB)
+
+        val body = mapOf("targetUserId" to userIdB, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.swipeId").exists())
+            .andExpect(jsonPath("$.matched").value(false))
+    }
+
+    @Test
+    fun `swipe rejects both catId and targetUserId`() {
+        val (tokenA, catIdA, _) = setupCompleteUser("disc-both-a@example.com", "BothA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-both-b@example.com", "BothB", "MALE")
+        val userIdB = extractUserId(tokenB)
+
+        val body = mapOf("catId" to catIdA, "targetUserId" to userIdB, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `swipe rejects neither catId nor targetUserId`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-neither-a@example.com", "NeitherA", "FEMALE")
+
+        val body = mapOf("action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `human card excluded after swipe`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-hexcl-a@example.com", "HExclA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-hexcl-b@example.com", "HExclB", "MALE")
+        val userIdB = extractUserId(tokenB)
+
+        val body = mapOf("targetUserId" to userIdB, "action" to "PASS")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isOk)
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val bCards = (0 until cards.size()).filter { cards[it]["userId"].asText() == userIdB }
+        assert(bCards.isEmpty()) { "Swiped human should not appear in feed" }
+    }
+
+    @Test
+    fun `cat card excluded by owner after swipe`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-cexcl-a@example.com", "CExclA", "FEMALE")
+        val (tokenB, catIdB, _) = setupCompleteUser("disc-cexcl-b@example.com", "CExclB", "MALE", catName = "ExclCat")
+
+        val body = mapOf("catId" to catIdB, "action" to "PASS")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isOk)
+
+        val result = mockMvc.perform(
+            get("/api/discovery/feed")
+                .header("Authorization", "Bearer $tokenA")
+        ).andExpect(status().isOk).andReturn()
+
+        val json = objectMapper.readTree(result.response.contentAsString)
+        val cards = json["cards"]
+        val userIdB = extractUserId(tokenB)
+        val bCards = (0 until cards.size()).filter { cards[it]["userId"].asText() == userIdB }
+        assert(bCards.isEmpty()) { "Owner should be excluded from feed after swiping on their cat" }
+    }
+
+    @Test
+    fun `mutual match between catless users`() {
+        val (tokenA, _) = setupCatlessUser("disc-hmatch-a@example.com", "HMatchA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-hmatch-b@example.com", "HMatchB", "MALE")
+        val userIdA = extractUserId(tokenA)
+        val userIdB = extractUserId(tokenB)
+
+        val bodyAB = mapOf("targetUserId" to userIdB, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bodyAB))
+        ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.matched").value(false))
+
+        val bodyBA = mapOf("targetUserId" to userIdA, "action" to "LIKE")
+        val matchResult = mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenB")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bodyBA))
+        ).andExpect(status().isOk).andReturn()
+
+        val matchJson = objectMapper.readTree(matchResult.response.contentAsString)
+        assert(matchJson["matched"].asBoolean()) { "Second LIKE should create match" }
+        assert(matchJson["matchId"] != null && !matchJson["matchId"].isNull) { "matchId should be present" }
+    }
+
+    @Test
+    fun `cross-type mutual match cat owner and catless user`() {
+        val (tokenA, catIdA, _) = setupCompleteUser("disc-xmatch-a@example.com", "XMatchA", "FEMALE", catName = "XCatA")
+        val (tokenB, _) = setupCatlessUser("disc-xmatch-b@example.com", "XMatchB", "MALE")
+        val userIdA = extractUserId(tokenA)
+        val userIdB = extractUserId(tokenB)
+
+        val bodyAB = mapOf("targetUserId" to userIdB, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bodyAB))
+        ).andExpect(status().isOk)
+
+        val bodyBA = mapOf("catId" to catIdA, "action" to "LIKE")
+        val matchResult = mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenB")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bodyBA))
+        ).andExpect(status().isOk).andReturn()
+
+        val matchJson = objectMapper.readTree(matchResult.response.contentAsString)
+        assert(matchJson["matched"].asBoolean()) { "Cross-type mutual LIKE should create match" }
+        assert(matchJson["matchId"] != null && !matchJson["matchId"].isNull) { "matchId should be present" }
+    }
+
+    @Test
+    fun `human card detail endpoint returns profile`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-hdetail-a@example.com", "HDetailA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-hdetail-b@example.com", "HDetailB", "MALE")
+        val userIdB = extractUserId(tokenB)
+
+        mockMvc.perform(
+            get("/api/discovery/users/$userIdB/profile")
+                .header("Authorization", "Bearer $tokenA")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.userId").value(userIdB))
+            .andExpect(jsonPath("$.displayName").value("HDetailB"))
+            .andExpect(jsonPath("$.bio").exists())
+            .andExpect(jsonPath("$.age").isNumber)
+            .andExpect(jsonPath("$.gender").value("MALE"))
+            .andExpect(jsonPath("$.photos").isArray)
+            .andExpect(jsonPath("$.cats").isEmpty)
+    }
+
+    @Test
+    fun `human card detail requires authentication`() {
+        mockMvc.perform(
+            get("/api/discovery/users/00000000-0000-0000-0000-000000000000/profile")
+        ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `self swipe on human card returns 400`() {
+        val (tokenA, _) = setupCatlessUser("disc-hself-a@example.com", "HSelfA", "FEMALE")
+        val userIdA = extractUserId(tokenA)
+
+        val body = mapOf("targetUserId" to userIdA, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `duplicate human swipe returns 409`() {
+        val (tokenA, _, _) = setupCompleteUser("disc-hdup-a@example.com", "HDupA", "FEMALE")
+        val (tokenB, _) = setupCatlessUser("disc-hdup-b@example.com", "HDupB", "MALE")
+        val userIdB = extractUserId(tokenB)
+
+        val body = mapOf("targetUserId" to userIdB, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $tokenA")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isConflict)
     }
 }

@@ -34,6 +34,13 @@ class DiscoveryController(
         return ResponseEntity.ok(response)
     }
 
+    @GetMapping("/users/{userId}/profile")
+    fun getUserProfile(@PathVariable userId: UUID): ResponseEntity<OwnerProfileResponse> {
+        val requesterId = extractUserId()
+        val response = discoveryService.getUserProfile(requesterId, userId)
+        return ResponseEntity.ok(response)
+    }
+
     @PostMapping("/swipe")
     fun swipe(@Valid @RequestBody request: SwipeRequest): ResponseEntity<SwipeResponse> {
         val userId = extractUserId()
