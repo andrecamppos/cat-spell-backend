@@ -52,7 +52,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 ## Context
 
-- **Current state:** v1.1 shipped. 180 integration tests. Cat ownership now optional with mixed discovery feed.
+- **Current state:** v1.1 shipped (2026-06-23). 8,880 LOC Kotlin, 180 integration tests. Both milestones complete.
 - **Tech stack:** Kotlin + Spring Boot 4.0, PostgreSQL + PostGIS, S3 (MinIO local), WebSocket STOMP, Flyway, Testcontainers
 - **Domain:** Niche dating app targeting cat lovers/owners
 - **Architecture:** Backend-only REST + WebSocket API. Mobile app is a separate project.
@@ -60,6 +60,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - **Multi-cat:** Users can register up to 5 cats. Cat owners appear as cat cards in discovery (one card per owner, first-created cat). Users without cats appear as human cards.
 - **Chat:** WebSocket STOMP messaging with lazy conversation creation, offline delivery, and unread tracking. Unlocked after mutual match.
 - **Testing:** Full Testcontainers-based integration tests (PostgreSQL + PostGIS + MinIO). No H2.
+- **Next focus:** Safety & moderation, compatibility scoring, or mobile app integration.
 
 ## Constraints
 
@@ -104,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-23 after Phase 7 UAT verified (v1.1 mixed discovery feed complete)*
+*Last updated: 2026-06-23 after v1.1 milestone completion*

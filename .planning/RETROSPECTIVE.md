@@ -49,6 +49,46 @@
 
 ---
 
+## Milestone: v1.1 — Mixed Discovery
+
+**Shipped:** 2026-06-23
+**Phases:** 1 | **Plans:** 2 | **Timeline:** 2 days
+
+### What Was Built
+- Mixed discovery feed with UNION ALL query — cat cards for cat owners, human cards for catless users
+- Schema migration: nullable cat_id with partial unique indexes for polymorphic swipe deduplication
+- Human card detail endpoint (`GET /api/discovery/users/{userId}/profile`)
+- Cross-type mutual match detection (cat owner ↔ catless user)
+- 15 new integration tests covering all mixed feed scenarios (180 total)
+
+### What Worked
+- **Tight phase scoping** — single phase with 2 plans delivered a complete feature in 2 days
+- **Plan 01 as foundation** — isolating schema/model changes let plan 02 focus purely on query + tests
+- **Test-driven validation** — 15 new tests covered every edge case (human swipe, cross-type match, exclusion)
+- **Existing test infrastructure** — Testcontainers + helper patterns from v1.0 made new test writing fast
+
+### What Was Inefficient
+- **Scope bleed in plan 01** — had to touch more files than planned (repository, service, test assertions) to keep compilation green; plan boundaries could have been tighter
+- **Test location contamination** — shared NYC coordinates between tests caused cross-test interference; required unique locations per scenario
+
+### Patterns Established
+- **Polymorphic feed items** — `type` discriminator (CAT/HUMAN) in DTOs for client rendering
+- **Partial unique indexes** — replace single unique constraint when a column becomes nullable
+- **Exactly-one validation** — `catId XOR targetUserId` pattern for mutually exclusive optional fields
+- **ROW_NUMBER per owner** — one card per multi-cat user in discovery (first-created cat)
+
+### Key Lessons
+1. **Plan boundaries at compilation boundaries** — if changing a model requires updating all consumers, include consumers in the same plan
+2. **Test isolation via unique coordinates** — PostGIS distance queries are sensitive to shared test data; each scenario needs its own location
+3. **UNION ALL for polymorphic queries** — cleaner than conditional JOINs when result shapes share a common projection
+
+### Cost Observations
+- Model mix: Cascade balanced profile
+- Sessions: ~3 sessions across 2 days
+- Notable: Compact feature delivery — 2 plans, 2 days, zero rework
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -56,14 +96,17 @@
 | Milestone | Timeline | Phases | Key Change |
 |-----------|----------|--------|------------|
 | v1.0 | 8 days | 6 | Initial vertical MVP delivery |
+| v1.1 | 2 days | 1 | Compact feature phase — schema + query + tests |
 
 ### Cumulative Quality
 
 | Milestone | Tests | LOC | Test Files |
 |-----------|-------|-----|------------|
 | v1.0 | 163 | 8,433 | 19 |
+| v1.1 | 180 | 8,880 | 19 |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Vertical slicing (DB → API → tests) per phase enables clean incremental delivery
 2. Real database testing (Testcontainers) catches issues that in-memory DBs hide
+3. Test data isolation (unique coordinates, unique emails) prevents cross-test interference

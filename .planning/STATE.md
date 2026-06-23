@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: milestone
-status: shipped
-stopped_at: Phase 7 shipped — PR #7
-last_updated: "2026-06-23T11:05:00Z"
+milestone_name: Mixed Discovery
+status: milestone_complete
+stopped_at: v1.1 milestone archived
+last_updated: "2026-06-23T14:33:00Z"
 progress:
   total_phases: 1
   completed_phases: 1
@@ -20,28 +20,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** v1.1 milestone shipped — PR #7 pending merge
+**Current focus:** Planning next milestone
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Milestone complete
-**Stats:** 6 phases, 13 plans, 163 tests, 8,433 LOC Kotlin
-
-All phases complete. See `.planning/MILESTONES.md` for accomplishments.
+**Status:** Milestone complete (shipped 2026-06-16)
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
 
-**Status:** ✅ Complete
-**Phase 7:** Mixed Discovery Feed — ✅ complete (2/2 plans, 180 tests, UAT 10/10 passed)
+**Status:** ✅ Milestone complete (shipped 2026-06-23)
+See `.planning/milestones/v1.1-ROADMAP.md` for archived phase details.
 
-**Design change:** Cat ownership optional. Discovery shows cat cards (users with cats) and human cards (users without cats).
+**Stats:** 1 phase, 2 plans, 180 tests, 8,880 LOC Kotlin
 
 ## Session Continuity
 
-Last session: 2026-06-23T11:05:00Z
-Stopped at: Phase 7 shipped — PR #7
+Last session: 2026-06-23T14:33:00Z
+Stopped at: v1.1 milestone archived
 Resume file: None
 
 ---
-*Last updated: 2026-06-23 after Phase 7 ship*
+*Last updated: 2026-06-23 after v1.1 milestone completion*
