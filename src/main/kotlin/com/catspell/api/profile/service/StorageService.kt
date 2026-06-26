@@ -30,6 +30,29 @@ class StorageService(
         } catch (e: Exception) {
             log.warn("Could not check/create S3 bucket '{}': {}", bucket, e.message)
         }
+        setPublicReadPolicy()
+    }
+
+    private fun setPublicReadPolicy() {
+        val policy = """
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::$bucket/*"
+                }
+              ]
+            }
+        """.trimIndent()
+        try {
+            s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucket).policy(policy).build())
+            log.info("Set public-read policy on bucket '{}'", bucket)
+        } catch (e: Exception) {
+            log.warn("Could not set public-read policy on bucket '{}': {}", bucket, e.message)
+        }
     }
 
     fun generatePresignedUploadUrl(s3Key: String, contentType: String, maxSizeBytes: Long): String {
