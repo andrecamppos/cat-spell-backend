@@ -42,7 +42,7 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                   AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
                   AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
                   AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
-                  AND up.display_name IS NOT NULL AND up.bio IS NOT NULL
+                  AND up.display_name IS NOT NULL
                   AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
                   AND up.location IS NOT NULL
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = rc.user_id AND uph2.status = 'ACTIVE')
@@ -70,7 +70,7 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                   AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
                   AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
                   AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
-                  AND up.display_name IS NOT NULL AND up.bio IS NOT NULL
+                  AND up.display_name IS NOT NULL
                   AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
                   AND up.location IS NOT NULL
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = up.user_id AND uph2.status = 'ACTIVE')

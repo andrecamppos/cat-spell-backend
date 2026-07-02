@@ -351,12 +351,12 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `feed only shows cats from complete profiles`() {
+    fun `feed shows cats from profiles without bio`() {
         val (tokenA, _, _) = setupCompleteUser("disc-complete-a@example.com", "CompleteA", "FEMALE")
-        // User B has no bio (incomplete profile) — create manually
-        val tokenB = registerAndGetToken("disc-incomplete-b@example.com")
-        val incompleteBody = mapOf(
-            "displayName" to "Incomplete",
+        // User B has no bio — bio is optional for discovery
+        val tokenB = registerAndGetToken("disc-nobio-b@example.com")
+        val noBioBody = mapOf(
+            "displayName" to "NoBio",
             "dateOfBirth" to "2000-01-15",
             "gender" to "MALE",
             "genderPreference" to "EVERYONE",
@@ -368,11 +368,11 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
             post("/api/profile")
                 .header("Authorization", "Bearer $tokenB")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(incompleteBody))
+                .content(objectMapper.writeValueAsString(noBioBody))
         ).andExpect(status().isCreated)
         setLocation(tokenB, 40.7128, -74.0060)
         addUserPhoto(tokenB)
-        val catId = createCat(tokenB, "IncompleteCat")
+        val catId = createCat(tokenB, "NoBioCat")
         addCatPhoto(tokenB, catId)
 
         val result = mockMvc.perform(
@@ -382,7 +382,7 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
 
         val json = objectMapper.readTree(result.response.contentAsString)
         val catNames = (0 until json["cards"].size()).map { json["cards"][it]["catName"].asText() }
-        assert("IncompleteCat" !in catNames) { "Cat from incomplete profile should not appear" }
+        assert("NoBioCat" in catNames) { "Cat from profile without bio should appear in feed" }
     }
 
     @Test
