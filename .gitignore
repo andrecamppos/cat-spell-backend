@@ -2,12 +2,16 @@
 
 # Gradle
 build/
+bin/
 .gradle/
 out/
 
 # IDE
 .idea/
 .vscode
+
+# macOS
+.DS_Store
 
 # Environment
 .env
