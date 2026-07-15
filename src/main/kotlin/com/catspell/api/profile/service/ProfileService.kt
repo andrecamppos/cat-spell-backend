@@ -16,8 +16,7 @@ import java.util.UUID
 @Service
 class ProfileService(
     private val userProfileRepository: UserProfileRepository,
-    private val userRepository: UserRepository,
-    private val userPhotoRepository: UserPhotoRepository
+    private val userRepository: UserRepository
 ) {
     private val geometryFactory = GeometryFactory(PrecisionModel(), 4326)
 
@@ -134,13 +133,9 @@ class ProfileService(
         }
 
         if (profile.displayName.isBlank()) missingFields.add("displayName")
-        if (profile.bio.isNullOrBlank()) missingFields.add("bio")
         if (profile.gender.isBlank()) missingFields.add("gender")
         if (profile.genderPreference.isBlank()) missingFields.add("genderPreference")
         if (profile.location == null) missingFields.add("location")
-
-        val activePhotos = userPhotoRepository.countByUserIdAndStatus(userId, "ACTIVE")
-        if (activePhotos < 1) missingFields.add("photo")
 
         return CompletenessResponse(isComplete = missingFields.isEmpty(), missingFields = missingFields)
     }

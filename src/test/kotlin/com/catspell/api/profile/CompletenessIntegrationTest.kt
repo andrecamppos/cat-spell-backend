@@ -115,7 +115,7 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `incomplete without photo`() {
+    fun `complete without photo`() {
         val token = registerAndGetToken("completeness-no-photo@example.com")
         createProfile(token)
         setLocation(token)
@@ -125,8 +125,8 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.complete").value(false))
-            .andExpect(jsonPath("$.missingFields[?(@ == 'photo')]").exists())
+            .andExpect(jsonPath("$.complete").value(true))
+            .andExpect(jsonPath("$.missingFields[?(@ == 'photo')]").doesNotExist())
     }
 
     @Test
@@ -148,6 +148,36 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
     fun `complete profile`() {
         val token = registerAndGetToken("completeness-full@example.com")
         createProfile(token)
+        setLocation(token)
+        uploadAndConfirmPhoto(token)
+
+        mockMvc.perform(
+            get("/api/profile/completeness")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.complete").value(true))
+            .andExpect(jsonPath("$.missingFields").isEmpty)
+    }
+
+    @Test
+    fun `complete without bio`() {
+        val token = registerAndGetToken("completeness-no-bio@example.com")
+        val body = mapOf(
+            "displayName" to "Test User",
+            "dateOfBirth" to "2000-01-15",
+            "gender" to "MALE",
+            "genderPreference" to "FEMALE",
+            "ageMin" to 18,
+            "ageMax" to 30,
+            "maxDistanceKm" to 50
+        )
+        mockMvc.perform(
+            post("/api/profile")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        ).andExpect(status().isCreated)
         setLocation(token)
         uploadAndConfirmPhoto(token)
 
