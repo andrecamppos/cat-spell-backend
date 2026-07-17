@@ -38,13 +38,18 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Primary/featured cat designation for swipe feed
 - [ ] Typing indicators and read receipts in chat
 - [ ] Block/report/unmatch safety features
+- [ ] **PUSH-01**: Device token registration endpoint — upsert by `(user_id, device_id)`, prune on FCM `UNREGISTERED` — v2.0 (Phase 8)
+- [ ] **PUSH-02**: Push notification on new match — v2.0 (Phase 8)
+- [ ] **PUSH-03**: Push notification on new chat message — v2.0 (Phase 8)
+- [ ] **PUSH-04**: "Offline + inactive" send decision — suppress push when recipient is viewing that conversation (STOMP presence + active-conversation tracking) — v2.0 (Phase 8)
+- [ ] **PUSH-05**: FCM HTTP v1 delivery behind a `send(token, payload)` provider abstraction (APNs-ready), collapse keys for chat unread — v2.0 (Phase 8)
+- [ ] **PUSH-06**: Backend-verifiable delivery — mocked FCM contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
 
 ### Out of Scope
 
 - Mobile app — separate project/repo
 - Admin moderation panel — v2 (after block/report is built)
 - OAuth/social login — v2 (email+password sufficient for MVP)
-- Push notifications — v2 (requires mobile app integration)
 - Chat media sharing — v2 (text-only proven sufficient)
 - Payment/subscription features — v2 (premature before community)
 - Video profiles — high storage/bandwidth cost, moderation burden
@@ -86,6 +91,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Optional cat ownership | App is for all cat lovers, not just owners — widens user base | ✓ Good — v1.1 (Phase 7) |
 | Mixed discovery feed | Cat cards for cat owners, human cards for catless users | ✓ Good — v1.1 (Phase 7) |
 | Defer moderation to v2 | Focus v1 on core matching/chat loop | — Pending (needed before public launch) |
+| Push notifications: FCM-only + "offline+inactive" send | Fastest path (one integration, relays to iOS+APNs); abstraction leaves room for direct APNs; suppress push when user is in the conversation | — Planned v2.0 (Phase 8) |
+| Push preferences: all-on, no toggle in v1 | OS-level permission is the off switch; avoids premature preferences model | — Planned v2.0 (Phase 8) |
 
 ## Evolution
 
@@ -105,4 +112,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-23 after v1.1 milestone completion*
+*Last updated: 2026-07-17 — promoted push notifications to Active (v2.0, Phase 8) via /gsd-explore*
