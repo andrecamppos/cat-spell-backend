@@ -11,8 +11,8 @@ Requirements for push notifications. Maps to Phases 8-9.
 
 ### Device Tokens
 
-- [ ] **PUSH-01**: User can register a device push token via an authenticated endpoint; upserted by `(user_id, device_id)`
-- [ ] **PUSH-02**: User can unregister a device token (on logout); multiple active devices per user are supported
+- [x] **PUSH-01**: User can register a device push token via an authenticated endpoint; upserted by `(user_id, device_id)`
+- [x] **PUSH-02**: User can unregister a device token (on logout); multiple active devices per user are supported
 - [ ] **PUSH-03**: Backend deactivates tokens FCM reports as `UNREGISTERED` so dead tokens stop receiving sends
 
 ### Match Notifications
@@ -58,8 +58,8 @@ Requirements for push notifications. Maps to Phases 8-9.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PUSH-01 | Phase 8 | Pending |
-| PUSH-02 | Phase 8 | Pending |
+| PUSH-01 | Phase 8 | Complete |
+| PUSH-02 | Phase 8 | Complete |
 | PUSH-03 | Phase 8 | Pending |
 | PUSH-04 | Phase 9 | Pending |
 | PUSH-05 | Phase 9 | Pending |
