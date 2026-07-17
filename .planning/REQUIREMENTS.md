@@ -13,7 +13,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 
 - [x] **PUSH-01**: User can register a device push token via an authenticated endpoint; upserted by `(user_id, device_id)`
 - [x] **PUSH-02**: User can unregister a device token (on logout); multiple active devices per user are supported
-- [ ] **PUSH-03**: Backend deactivates tokens FCM reports as `UNREGISTERED` so dead tokens stop receiving sends
+- [x] **PUSH-03**: Backend deactivates tokens FCM reports as `UNREGISTERED` so dead tokens stop receiving sends
 
 ### Match Notifications
 
@@ -37,7 +37,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 
 ### Verification
 
-- [ ] **PUSH-12**: Send-decision, payload shape, and token pruning are covered by integration tests using a mocked provider; an FCM `validate_only` dry-run smoke test confirms real auth/payload
+- [x] **PUSH-12**: Send-decision, payload shape, and token pruning are covered by integration tests using a mocked provider; an FCM `validate_only` dry-run smoke test confirms real auth/payload
 
 ## Future Requirements (deferred)
 
@@ -60,7 +60,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 |-------------|-------|--------|
 | PUSH-01 | Phase 8 | Complete |
 | PUSH-02 | Phase 8 | Complete |
-| PUSH-03 | Phase 8 | Pending |
+| PUSH-03 | Phase 8 | Complete |
 | PUSH-04 | Phase 9 | Pending |
 | PUSH-05 | Phase 9 | Pending |
 | PUSH-06 | Phase 9 | Pending |
@@ -69,7 +69,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 | PUSH-09 | Phase 8 | Complete |
 | PUSH-10 | Phase 9 | Pending |
 | PUSH-11 | Phase 8 | Complete |
-| PUSH-12 | Phase 8 | Pending |
+| PUSH-12 | Phase 8 | Complete |
 
 **Coverage:**
 

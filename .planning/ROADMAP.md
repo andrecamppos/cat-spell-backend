@@ -60,7 +60,7 @@
 | 5. Real-Time Chat | v1.0 | 2/2 | ✅ Complete | 2026-06-15 |
 | 6. API Polish & Integration Tests | v1.0 | 2/2 | ✅ Complete | 2026-06-16 |
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
-| 8. Push Delivery Foundation | v2.0 | 2/3 | In Progress|  |
+| 8. Push Delivery Foundation | v2.0 | 3/3 | In Progress|  |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 0/? | 🔜 Planned | — |
 
 ---
