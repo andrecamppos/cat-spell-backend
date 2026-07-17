@@ -1,252 +1,82 @@
-# Architecture Research
+# Architecture Research — Push Notifications (v2.0)
 
-**Domain:** Dating app backend (Kotlin / Spring Boot)
-**Researched:** 2025-06-09
-**Confidence:** HIGH
+**Milestone:** v2.0 Push Notifications
+**Researched:** 2026-07-17
+**Scope:** How push integrates with the existing domain-oriented Spring Boot monolith
+(auth, profile, discovery, chat). Existing architecture NOT re-researched.
 
-## Standard Architecture
+## Integration Approach: Event-Driven
 
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Mobile App (separate repo)              │
-├─────────────────────────────────────────────────────────────┤
-│                    REST API + WebSocket                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │   Auth   │  │ Profiles │  │ Matching │  │   Chat   │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-│       │              │              │              │          │
-├───────┴──────────────┴──────────────┴──────────────┴─────────┤
-│                      Service Layer                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │ AuthSvc  │  │ProfileSvc│  │MatchSvc  │  │ ChatSvc  │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-│       │              │              │              │          │
-├───────┴──────────────┴──────────────┴──────────────┴─────────┤
-│                      Data Layer                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │  PostgreSQL   │  │   S3/MinIO   │  │  WebSocket   │       │
-│  │  + PostGIS    │  │   (photos)   │  │   Broker     │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities
-
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Auth Controller | Registration, login, token refresh, password reset | `@RestController` with `/api/auth/**` endpoints |
-| Profile Controller | User CRUD, cat CRUD, photo management | `@RestController` with `/api/users/**`, `/api/cats/**` |
-| Discovery Controller | Feed generation, swipe actions (like/pass) | `@RestController` with `/api/discover/**` |
-| Match Controller | Match listing, unmatch | `@RestController` with `/api/matches/**` |
-| Chat WebSocket Handler | Real-time message delivery, typing indicators, read receipts | `@MessageMapping` STOMP endpoints |
-| Chat REST Controller | Message history, conversation listing | `@RestController` with `/api/chat/**` |
-| Auth Service | JWT creation/validation, password hashing, email verification | Spring Security + jjwt |
-| Profile Service | User/cat profile logic, photo URL generation | JPA repositories + S3 presigned URLs |
-| Match Service | Matching algorithm, score computation, mutual match detection | Custom scoring engine + JPA |
-| Chat Service | Message persistence, conversation management | JPA + WebSocket message broker |
-| Geolocation Service | Distance calculation, radius filtering | PostGIS `ST_DWithin` queries |
-
-## Recommended Project Structure
+Keep push **decoupled** from the match and chat domains via Spring
+`ApplicationEventPublisher`. Match/chat code publishes a domain event; a new
+notification domain listens and decides whether/what to send. This avoids coupling
+core flows to FCM and keeps sends async/off the request path.
 
 ```
-src/main/kotlin/com/catspell/
-├── config/                  # Spring configuration
-│   ├── SecurityConfig.kt    # JWT filter, endpoint security
-│   ├── WebSocketConfig.kt   # STOMP broker, endpoint registration
-│   ├── S3Config.kt          # AWS S3 client bean
-│   └── JacksonConfig.kt     # Kotlin module registration
-├── auth/                    # Authentication domain
-│   ├── controller/          # Auth REST endpoints
-│   ├── service/             # Auth business logic
-│   ├── dto/                 # Request/response DTOs
-│   ├── entity/              # User entity (auth fields)
-│   └── repository/          # User repository
-├── profile/                 # Profile domain (users + cats)
-│   ├── controller/          # Profile REST endpoints
-│   ├── service/             # Profile business logic
-│   ├── dto/                 # Profile DTOs
-│   ├── entity/              # User profile, Cat, Photo entities
-│   └── repository/          # Profile repositories
-├── discovery/               # Discovery & matching domain
-│   ├── controller/          # Discovery feed, swipe endpoints
-│   ├── service/             # Feed generation, matching algorithm
-│   ├── dto/                 # Discovery DTOs
-│   └── repository/          # Swipe/match repositories
-├── chat/                    # Chat domain
-│   ├── controller/          # Chat REST + WebSocket handlers
-│   ├── service/             # Message persistence, delivery
-│   ├── dto/                 # Message DTOs
-│   ├── entity/              # Conversation, Message entities
-│   └── repository/          # Chat repositories
-├── photo/                   # Photo management
-│   ├── controller/          # Upload/delete endpoints
-│   └── service/             # S3 presigned URL generation
-├── common/                  # Shared utilities
-│   ├── exception/           # Global exception handler
-│   ├── security/            # JWT filter, auth utilities
-│   └── dto/                 # Shared response wrappers
-└── CatSpellApplication.kt   # Main entry point
-
-src/main/resources/
-├── db/migration/            # Flyway SQL migrations
-├── application.yml          # Main config
-└── application-dev.yml      # Dev profile (Podman)
-
-src/test/kotlin/com/catspell/
-├── auth/                    # Auth tests
-├── profile/                 # Profile tests
-├── discovery/               # Discovery/matching tests
-├── chat/                    # Chat tests
-└── integration/             # Full integration tests (Testcontainers)
+DiscoveryService.detectMutualMatch() ──publish──▶ MatchCreatedEvent
+ChatService.persistMessage()          ──publish──▶ MessageDeliveredEvent
+                                                        │
+                                        @Async @EventListener
+                                                        ▼
+                                          NotificationService
+                                   (send-decision → build payload → FCM)
 ```
 
-### Structure Rationale
+## New Components (notification domain)
 
-- **Domain-based packages:** Each feature domain (auth, profile, discovery, chat) is self-contained with its own controller/service/repository. Easier to navigate and reason about than layer-based packaging.
-- **Shared `common/`:** Cross-cutting concerns (exception handling, security filters, response wrappers) live in common to avoid duplication.
-- **`photo/` as separate domain:** Photo operations (presigned URLs, validation) are used by both user and cat profiles — extract into shared module.
+1. **DeviceToken entity + repository** — `(id, user_id, device_id, token, platform,
+   app_version, is_active, last_seen, created_at)`. Unique on `(user_id, device_id)`.
+   New Flyway migration.
+2. **DeviceTokenController** — `POST /notifications/devices` (register/upsert),
+   `DELETE /notifications/devices/{deviceId}` (unregister on logout).
+3. **PushProvider abstraction** — `interface PushProvider { send(token, payload): Result }`.
+   `FcmPushProvider` implements it via `FirebaseMessaging`. Interface leaves room for a
+   future `ApnsPushProvider` with zero call-site changes.
+4. **NotificationService** — orchestrates: resolve recipient's active tokens →
+   apply send-decision → build payload (collapse key for chat) → call provider →
+   prune tokens on `UNREGISTERED`.
+5. **PresenceRegistry** — tracks live STOMP sessions per user + active conversation.
+   Populated from STOMP lifecycle events.
+6. **FirebaseConfig** — initializes `FirebaseApp`/`FirebaseMessaging` bean from ADC.
 
-## Architectural Patterns
+## Presence & Active-Conversation Tracking
 
-### Pattern 1: Domain-Scoped Packages
+- **Presence:** subscribe to Spring's `SessionConnectedEvent` /
+  `SessionDisconnectEvent` (STOMP) to maintain a `userId → sessionCount` map.
+- **Active conversation:** client sends a STOMP message (e.g. `/app/conversations/{id}/active`
+  and `/inactive`) on open/close; server records `sessionId → activeConversationId`.
+  Clear on disconnect.
+- **Scope note:** in-memory map is fine for a single-instance monolith. If the app
+  later scales horizontally, presence needs a shared store (Redis) — flag for future.
 
-**What:** Organize by business domain (auth, profile, discovery, chat) not by technical layer (controllers, services, repositories).
-**When to use:** Always for Spring Boot apps with 3+ domains.
-**Trade-offs:** Slightly more files per package, but vastly better navigability and encapsulation.
+## Data Flow (message push)
 
-```kotlin
-// Each domain owns its full vertical slice
-com.catspell.discovery.controller.DiscoveryController
-com.catspell.discovery.service.MatchingService
-com.catspell.discovery.repository.SwipeRepository
-```
+1. Recipient's client is backgrounded (STOMP disconnected) OR viewing another screen.
+2. Sender posts a message → `ChatService` persists → publishes `MessageDeliveredEvent`.
+3. `@Async` listener → `NotificationService.onMessage()`:
+   - Query `PresenceRegistry`: is recipient connected AND viewing this conversation?
+     If yes → **suppress**.
+   - Else → load active device tokens → build `Message` with `collapse_key = conversationId`
+     → `provider.send()`.
+   - On `UNREGISTERED` result → deactivate token.
 
-### Pattern 2: DTO Projection for API Responses
+## Suggested Build Order (within Phase 8)
 
-**What:** Never expose JPA entities directly in API responses. Use DTOs that project exactly the fields needed.
-**When to use:** Every API endpoint.
-**Trade-offs:** More mapping code, but decouples internal model from API contract.
+1. DeviceToken entity/migration + register/unregister endpoints (foundation).
+2. FirebaseConfig + PushProvider abstraction + FcmPushProvider (with dry-run smoke test).
+3. Presence + active-conversation tracking over STOMP.
+4. Event publication from match + chat domains → NotificationService wiring.
+5. Integration tests (mocked FCM) + validate_only dry-run.
 
-```kotlin
-// Entity — internal
-@Entity
-class Cat(
-    @Id val id: UUID,
-    val name: String,
-    val breed: String?,
-    @ManyToOne val owner: User, // internal relationship
-)
+## Integration Points (existing code to touch)
 
-// DTO — API response
-data class CatProfileResponse(
-    val id: UUID,
-    val name: String,
-    val breed: String?,
-    val photos: List<String>,
-    val traits: List<String>,
-    // No owner reference — cat-first reveal
-)
-```
-
-### Pattern 3: JWT Stateless Auth with Refresh Tokens
-
-**What:** Short-lived access tokens (15 min) + long-lived refresh tokens (7 days). Access token in header, refresh token for renewal.
-**When to use:** Mobile app backends where session cookies don't work.
-**Trade-offs:** Can't invalidate access tokens server-side (use short expiry). Refresh tokens need server-side storage for revocation.
-
-## Data Flow
-
-### Request Flow (REST)
-
-```
-[Mobile App]
-    ↓ (HTTP + Bearer JWT)
-[SecurityFilterChain] → JWT Validation → SecurityContext
-    ↓
-[Controller] → DTO Mapping → [Service] → Business Logic → [Repository] → [PostgreSQL]
-    ↓
-[Response DTO] → JSON Serialization → [Mobile App]
-```
-
-### WebSocket Flow (Chat)
-
-```
-[Mobile App]
-    ↓ (WS CONNECT + JWT token)
-[HandshakeInterceptor] → JWT Validation
-    ↓
-[STOMP SUBSCRIBE] → /user/queue/messages
-    ↓
-[STOMP SEND] → /app/chat.send
-    ↓
-[MessageMapping Handler] → [ChatService] → Persist to DB → [SimpleBroker] → Deliver to recipient
-```
-
-### Key Data Flows
-
-1. **Discovery flow:** App requests feed → DiscoveryService queries eligible profiles (not yet seen, within radius, passes matching algorithm) → Returns cat profiles sorted by match score
-2. **Swipe flow:** User likes/passes → SwipeService records action → If mutual like detected → MatchService creates match → Notification to both users
-3. **Chat flow:** User sends message via STOMP → ChatService persists → Broker routes to recipient's subscription → Read receipt returned via STOMP
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-5k users | Monolith is fine. Single Spring Boot instance, PostgreSQL, embedded STOMP broker |
-| 5k-50k users | Add Redis for WebSocket session registry (multi-instance). Database connection pooling (HikariCP). CDN for S3 photos |
-| 50k+ users | External message broker (RabbitMQ) for STOMP. Read replicas for PostgreSQL. Separate chat service. Matching algorithm caching |
-
-### Scaling Priorities
-
-1. **First bottleneck:** Database queries for discovery feed (complex geospatial + scoring). Fix: Indexed PostGIS queries, materialized scoring, pagination
-2. **Second bottleneck:** WebSocket connections per instance. Fix: Redis-backed session registry, horizontal scaling with sticky sessions or external broker
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Exposing JPA Entities in API
-
-**What people do:** Return `@Entity` objects directly from controllers
-**Why it's wrong:** Lazy loading exceptions, circular references (User↔Cat), leaks internal fields, locks API to DB schema
-**Do this instead:** Always map to DTOs. Use Kotlin extension functions for clean mapping
-
-### Anti-Pattern 2: Blocking in WebSocket Handlers
-
-**What people do:** Database queries directly in `@MessageMapping` handlers
-**Why it's wrong:** Blocks the WebSocket thread pool, degrades all connected users
-**Do this instead:** Offload persistence to a service with `@Async` or use virtual threads (Java 21+)
-
-### Anti-Pattern 3: N+1 Queries in Feed Generation
-
-**What people do:** Load cat profiles one-by-one when generating discovery feed
-**Why it's wrong:** Feed of 20 cats = 20+ DB queries = slow response
-**Do this instead:** Use `JOIN FETCH` or `@EntityGraph` to batch-load related data in single query
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| AWS S3 / MinIO | Presigned URL generation (no proxy) | App generates upload URL, client uploads directly to S3. Saves bandwidth |
-| SMTP (email) | Spring Mail with async sending | Email verification, password reset. Use async to avoid blocking auth flow |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Auth ↔ Profile | Shared User entity | Auth owns credentials, Profile owns bio/photos. Same DB table, different concerns |
-| Discovery ↔ Profile | Service call | Discovery reads profiles via ProfileService, doesn't access repositories directly |
-| Chat ↔ Match | Service call | Chat checks match exists before allowing messages |
+- **Chat domain:** publish `MessageDeliveredEvent` after message persistence (Phase 5 code).
+- **Discovery domain:** publish `MatchCreatedEvent` in mutual-match detection (Phase 4/7 code).
+- **WebSocket config:** add STOMP session + active-conversation listeners.
+- **Security:** device endpoints require the existing JWT auth.
 
 ## Sources
 
-- Spring Boot 4.x official documentation
-- Spring WebSocket + STOMP documentation
-- Hibernate Spatial + PostGIS integration guides
-- Dating app architecture case studies (public engineering blogs)
-
----
-*Architecture research for: dating app backend (Kotlin/Spring Boot)*
-*Researched: 2025-06-09*
+- Firebase Admin SDK send/dryRun (HIGH)
+- Spring STOMP session event model (Spring docs, HIGH)
+- Existing project ARCHITECTURE (v1.0 archived research)

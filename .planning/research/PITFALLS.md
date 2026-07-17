@@ -1,205 +1,79 @@
-# Pitfalls Research
+# Pitfalls Research — Push Notifications (v2.0)
 
-**Domain:** Dating app backend (Kotlin / Spring Boot)
-**Researched:** 2025-06-09
-**Confidence:** HIGH
+**Milestone:** v2.0 Push Notifications
+**Researched:** 2026-07-17
+**Scope:** Common mistakes when adding push to an existing Spring Boot dating backend.
 
 ## Critical Pitfalls
 
-### Pitfall 1: Discovery Feed N+1 Query Explosion
+### 1. Insert-only token storage (duplicate/stale tokens)
 
-**What goes wrong:**
-Discovery feed loads 20 cat profiles, each triggering separate queries for photos, traits, and owner existence check. Response times balloon from 50ms to 2+ seconds.
+- **Symptom:** duplicate rows per device, sends to dead tokens, wrong targeting.
+- **Prevention:** always **upsert** by `(user_id, device_id)`. Enforce a unique
+  constraint. Handle FCM `onTokenRefresh` by upserting the new token.
 
-**Why it happens:**
-JPA lazy loading defaults. Developers build entity relationships and forget that each `.photos` access triggers a query.
+### 2. Never pruning invalid tokens
 
-**How to avoid:**
-Use `@EntityGraph` or JPQL `JOIN FETCH` for feed queries. Write a dedicated feed projection DTO that fetches everything in 1-2 queries.
+- **Symptom:** repeated failed sends, wasted calls, misleading metrics.
+- **Prevention:** on send result `UNREGISTERED`/`NotRegistered` (FCM) — mark
+  `is_active = false` immediately. Optionally deactivate tokens with `last_seen > 90d`.
 
-**Warning signs:**
-Slow feed endpoint (>200ms), Hibernate query count per request >5 for feed.
+### 3. Treating push delivery as guaranteed
 
-**Phase to address:**
-Discovery/matching phase — when building the feed endpoint.
+- **Symptom:** assuming a sent push means the user saw it; missing messages when
+  offline past TTL.
+- **Prevention:** push is best-effort. Keep WebSocket + offline-message-on-reconnect
+  (Phase 5) as the source of truth. Push is a nudge, not the delivery channel.
 
----
+### 4. Double-notifying active users
 
-### Pitfall 2: JWT Secret/Key Management
+- **Symptom:** user in an open conversation gets both the in-app message and a buzz.
+- **Prevention:** the "offline + inactive" send-decision. Requires reliable presence +
+  active-conversation state. Ensure state is **cleared on disconnect** (else a crashed
+  client looks "active" forever and suppresses pushes it shouldn't).
 
-**What goes wrong:**
-JWT signing key hardcoded in `application.yml` or committed to git. Token generation uses weak HMAC with short keys.
+### 5. Blocking the request/STOMP thread on FCM I/O
 
-**Why it happens:**
-Quick setup tutorials use inline secrets. Developers copy-paste without securing.
+- **Symptom:** message send latency spikes because FCM HTTP call runs inline.
+- **Prevention:** publish a domain event and handle sends with `@Async`. Never call
+  `FirebaseMessaging.send()` on the message-persistence path synchronously.
 
-**How to avoid:**
-Use RSA key pair for JWT signing. Load keys from environment variables or external secrets manager. Never commit keys.
+### 6. In-memory presence breaks under horizontal scaling
 
-**Warning signs:**
-`jwt.secret=mysecretkey` in config files. HMAC-SHA256 with <256-bit key.
+- **Symptom:** works on one instance; wrong suppression decisions behind a load balancer
+  (session on instance A, event handled on instance B).
+- **Prevention:** acceptable for single-instance v2.0, but document the constraint.
+  Migrate presence to a shared store (Redis) before scaling out. Flag explicitly.
 
-**Phase to address:**
-Authentication phase — during JWT setup.
+### 7. Missing collapse keys for chat
 
----
+- **Symptom:** an offline user returns to 30 stacked notifications from one chat.
+- **Prevention:** set FCM `collapse_key` (= conversation ID) so only the latest is shown.
 
-### Pitfall 3: Geospatial Query Without Proper Indexing
+### 8. Credential leakage / misconfiguration
 
-**What goes wrong:**
-Distance filtering queries scan entire user table for every feed request. Works with 100 users, breaks at 10k.
+- **Symptom:** service-account JSON committed, or `GOOGLE_APPLICATION_CREDENTIALS`
+  unset in prod → all sends fail.
+- **Prevention:** gitignore the JSON, inject via env/secret manager, add a health
+  indicator (reuse the project's health-indicator pattern from Phase 6) that checks
+  Firebase init. Fail fast at startup if credentials are missing.
 
-**Why it happens:**
-PostGIS `ST_DWithin` works without spatial index but uses sequential scan. Developers don't notice until data grows.
+### 9. Testing gap — no mobile app in this repo
 
-**How to avoid:**
-Create GiST index on the geometry/geography column in the first migration that adds location. Use `geography` type (not `geometry`) for earth-distance accuracy.
+- **Symptom:** feature "untestable" because the mobile client is separate.
+- **Prevention:** mock the `PushProvider` in integration tests to assert send-decision,
+  payload shape, and pruning. Use FCM `dryRun`/`validate_only` for a real auth/payload
+  smoke test. Only the on-device banner needs the app.
 
-**Warning signs:**
-`EXPLAIN ANALYZE` shows Seq Scan on user table for distance queries.
+## Which pitfalls map to which build step
 
-**Phase to address:**
-Profile/geolocation phase — when adding location fields.
-
----
-
-### Pitfall 4: WebSocket Authentication Gap
-
-**What goes wrong:**
-WebSocket connections accept any client, or JWT validation happens only on HTTP upgrade but not on subsequent STOMP frames. Users can impersonate others in chat.
-
-**Why it happens:**
-Spring WebSocket security is configured differently from REST security. `SecurityFilterChain` doesn't apply to WebSocket messages by default.
-
-**How to avoid:**
-Validate JWT in `HandshakeInterceptor` during CONNECT. Set `Principal` on the session. Use Spring Security's `@MessageMapping` security annotations or `ChannelInterceptor` to verify identity on every message.
-
-**Warning signs:**
-Chat works without auth token. Users can send messages as other users.
-
-**Phase to address:**
-Chat phase — during WebSocket setup.
-
----
-
-### Pitfall 5: Match Race Condition (Double Match)
-
-**What goes wrong:**
-Two users like each other simultaneously. Both requests detect "other user liked me" and both create a Match record, resulting in duplicate matches.
-
-**Why it happens:**
-No database-level uniqueness constraint or optimistic locking on match creation.
-
-**How to avoid:**
-Add unique constraint on match pair (user_a_id, user_b_id) with ordered IDs (smaller ID always first). Use `INSERT ... ON CONFLICT DO NOTHING` for atomic match creation.
-
-**Warning signs:**
-Duplicate match entries in database. User sees same match twice.
-
-**Phase to address:**
-Discovery/matching phase — when implementing like/match flow.
-
----
-
-### Pitfall 6: Kotlin Entity Gotchas with Hibernate
-
-**What goes wrong:**
-Kotlin data classes used for JPA entities cause issues: no no-arg constructor, broken equals/hashCode with proxy objects, immutable properties vs. Hibernate dirty checking.
-
-**Why it happens:**
-Kotlin idioms (data classes, val properties) conflict with Hibernate's proxy/reflection requirements.
-
-**How to avoid:**
-Use regular Kotlin classes (not data classes) for entities. Use `kotlin-jpa` compiler plugin for no-arg constructors. Use `var` for mutable fields. Override `equals`/`hashCode` based on ID only.
-
-**Warning signs:**
-`InstantiationException` on entity load. Dirty checking not detecting changes. Broken collections.
-
-**Phase to address:**
-Foundation phase — when setting up entities.
-
-## Technical Debt Patterns
-
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Embedded STOMP broker | No external dependency for chat | Single-instance only, no horizontal scaling | MVP with <5k users |
-| Synchronous email sending | Simpler code | Blocks auth flow for 1-3 seconds | Never — always use @Async |
-| Single DB for everything | Simple deployment | Chat messages grow fast, pollutes main DB | MVP, split chat DB at scale |
-| No image validation | Faster upload flow | Malicious files, wrong formats | Never — validate mime type and size |
-
-## Integration Gotchas
-
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| S3 presigned URLs | Generating download URLs with long expiry | Short-lived presigned URLs (15 min) for uploads, serve via CDN/proxy for downloads |
-| PostGIS | Using `geometry` type with SRID 4326 | Use `geography` type for accurate earth-distance calculations |
-| Spring Security + WebSocket | Applying HTTP security config to WS | Separate `WebSocketSecurityConfig` with `@EnableWebSocketSecurity` |
-| Flyway + Hibernate | Letting Hibernate `ddl-auto` create tables alongside Flyway | Set `ddl-auto=validate` — Flyway owns schema, Hibernate validates |
-
-## Performance Traps
-
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| No pagination on feed | Slow response, high memory | Always paginate, default 20 items | 100+ eligible profiles |
-| Loading all messages for chat | Chat opening takes seconds | Paginate messages, load latest 50 | 500+ messages in conversation |
-| Matching score computed on every request | Feed latency increases linearly | Cache scores, recompute on profile change | 1k+ active users |
-| No connection pooling tuning | Connection exhaustion under load | Configure HikariCP pool size (10-20 for starter) | 50+ concurrent requests |
-
-## Security Mistakes
-
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Location stored at full GPS precision | Stalking risk — user location pinpointed | Round coordinates to ~1km precision, never expose exact coords |
-| Chat messages unencrypted in DB | Data breach exposes private conversations | Encrypt message content at rest, or use application-level encryption |
-| No rate limiting on auth endpoints | Brute force attacks, credential stuffing | Rate limit login/register to 5/min per IP |
-| Photo URLs guessable | Unauthorized access to private photos | Use random UUIDs in S3 keys, short-lived presigned URLs |
-
-## UX Pitfalls
-
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| Showing same profiles repeatedly | Frustrating, feels broken | Track "seen" profiles, exclude from future feeds |
-| Empty feed for new users | Feels like dead app | Show profiles from wider radius, or all profiles initially |
-| No "undo" on swipe | Accidental pass on great match | Defer to v2 — focus on core flow first |
-| Matching on inactive accounts | Matches that never respond | Track last active, deprioritize inactive (>30 days) |
-
-## "Looks Done But Isn't" Checklist
-
-- [ ] **Auth:** Often missing refresh token rotation — verify expired refresh tokens can't be reused
-- [ ] **Photo upload:** Often missing file size limits — verify max upload size is enforced (e.g., 10MB)
-- [ ] **Chat:** Often missing message ordering guarantee — verify messages display in send order, not arrival order
-- [ ] **Feed:** Often missing "already seen" tracking — verify passed profiles don't reappear
-- [ ] **Geolocation:** Often missing null handling — verify feed works for users who haven't set location
-- [ ] **Matching:** Often missing edge case for self-match — verify user can't match with themselves
-
-## Recovery Strategies
-
-| Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| N+1 queries | LOW | Add `@EntityGraph` or `JOIN FETCH` to repository methods |
-| JWT key in git | HIGH | Rotate keys, invalidate all tokens, force re-login |
-| No spatial index | LOW | Add GiST index migration, no downtime on small data |
-| Duplicate matches | MEDIUM | Add unique constraint + migration to deduplicate existing data |
-| Kotlin entity issues | MEDIUM | Refactor entities from data class to regular class, update equals/hashCode |
-
-## Pitfall-to-Phase Mapping
-
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| Kotlin entity gotchas | Foundation/setup | Entities use regular classes, kotlin-jpa plugin configured |
-| JWT key management | Authentication | Keys loaded from env, not in git |
-| Geospatial indexing | Profile/geolocation | GiST index in migration, EXPLAIN shows Index Scan |
-| N+1 feed queries | Discovery feed | Feed endpoint uses ≤3 queries for 20 items |
-| WebSocket auth gap | Chat | Chat rejects unauthenticated STOMP frames |
-| Match race condition | Matching | Unique constraint on match pairs, concurrent test passes |
+- Steps 1-2 (token store): #1, #2, #8
+- Step 3 (presence): #4, #6
+- Step 4 (event wiring): #3, #5, #7
+- Step 5 (tests): #9
 
 ## Sources
 
-- Spring Boot + Kotlin official best practices
-- Hibernate/JPA with Kotlin gotchas (JetBrains docs)
-- PostGIS documentation and performance guides
-- Dating app engineering blog posts (security and scale lessons)
-
----
-*Pitfalls research for: dating app backend (Kotlin/Spring Boot)*
-*Researched: 2025-06-09*
+- APNs vs FCM developer guides; token lifecycle best practices (HIGH/MEDIUM)
+- Firebase Admin SDK docs — dryRun, credentials (HIGH)
+- Exploration research pass 2026-07-17
