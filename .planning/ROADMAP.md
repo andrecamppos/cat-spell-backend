@@ -30,7 +30,7 @@
 <details open>
 <summary>🔜 v2.0 Push Notifications (Phases 8-9) — PLANNED</summary>
 
-- [ ] **Phase 8: Push Delivery Foundation** — planned
+- [x] **Phase 8: Push Delivery Foundation** — planned (completed 2026-07-17)
   - Goal: A device token can be registered, stored, and used to deliver a validated FCM push; dead tokens are pruned.
   - Requirements: PUSH-01, PUSH-02, PUSH-03, PUSH-09, PUSH-11, PUSH-12
   - Success criteria:
@@ -60,7 +60,7 @@
 | 5. Real-Time Chat | v1.0 | 2/2 | ✅ Complete | 2026-06-15 |
 | 6. API Polish & Integration Tests | v1.0 | 2/2 | ✅ Complete | 2026-06-16 |
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
-| 8. Push Delivery Foundation | v2.0 | 3/3 | In Progress|  |
+| 8. Push Delivery Foundation | v2.0 | 3/3 | Complete    | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 0/? | 🔜 Planned | — |
 
 ---

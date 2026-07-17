@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Push Notifications
-current_phase: 8
-status: executing
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-07-17T13:23:14.991Z"
+current_phase: 9
+current_phase_name: notification triggers & smart delivery
+status: planning
+stopped_at: Phase 8 context gathered
+last_updated: "2026-07-17T17:20:16.592Z"
 last_activity: 2026-07-17
-last_activity_desc: Phase 8 plan 03 (dead-token pruning + provider-mocked verification) complete
+last_activity_desc: Phase 08 complete, transitioned to Phase 9
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
   completed_plans: 3
 ---
@@ -26,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Milestone complete (shipped 2026-06-16)
+**Status:** Ready to plan
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -47,7 +48,7 @@ Resume file: .planning/phases/08-push-delivery-foundation/08-CONTEXT.md
 
 ## Current Position
 
-Phase: 8 — Push Delivery Foundation (all plans executed)
-Plan: 08-03 complete (3/3)
+Phase: 9 — notification triggers & smart delivery
+Plan: Not started
 Status: All Phase 8 plans executed — pending phase verification
-Last activity: 2026-07-17 — Phase 8 plan 03 (dead-token pruning & provider-mocked verification) complete
+Last activity: 2026-07-17 — Phase 08 complete, transitioned to Phase 9
