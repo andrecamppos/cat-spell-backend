@@ -7,7 +7,7 @@ from the app, complementing (not replacing) real-time WebSocket chat.
 
 ## v2.0 Requirements
 
-Requirements for push notifications. Maps to Phase 8.
+Requirements for push notifications. Maps to Phases 8-9.
 
 ### Device Tokens
 
@@ -61,20 +61,20 @@ Requirements for push notifications. Maps to Phase 8.
 | PUSH-01 | Phase 8 | Pending |
 | PUSH-02 | Phase 8 | Pending |
 | PUSH-03 | Phase 8 | Pending |
-| PUSH-04 | Phase 8 | Pending |
-| PUSH-05 | Phase 8 | Pending |
-| PUSH-06 | Phase 8 | Pending |
-| PUSH-07 | Phase 8 | Pending |
-| PUSH-08 | Phase 8 | Pending |
+| PUSH-04 | Phase 9 | Pending |
+| PUSH-05 | Phase 9 | Pending |
+| PUSH-06 | Phase 9 | Pending |
+| PUSH-07 | Phase 9 | Pending |
+| PUSH-08 | Phase 9 | Pending |
 | PUSH-09 | Phase 8 | Pending |
-| PUSH-10 | Phase 8 | Pending |
+| PUSH-10 | Phase 9 | Pending |
 | PUSH-11 | Phase 8 | Pending |
 | PUSH-12 | Phase 8 | Pending |
 
 **Coverage:**
 
 - v2.0 requirements: 12 total
-- Mapped to phases: 12 (all → Phase 8)
+- Mapped to phases: 12 (Phase 8: 6, Phase 9: 6)
 - Unmapped: 0 ✓
 
 ---

@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP Backend** — Phases 1-6 (shipped 2026-06-16)
 - ✅ **v1.1 Mixed Discovery** — Phase 7 (shipped 2026-06-23)
-- 🔜 **v2.0 Push Notifications** — Phase 8 (planned)
+- 🔜 **v2.0 Push Notifications** — Phases 8-9 (planned)
 
 ## Phases
 
@@ -28,15 +28,24 @@
 </details>
 
 <details open>
-<summary>🔜 v2.0 Push Notifications (Phase 8) — PLANNED</summary>
+<summary>🔜 v2.0 Push Notifications (Phases 8-9) — PLANNED</summary>
 
-- [ ] Phase 8: Push Notifications (FCM) — planned
-  - FCM HTTP v1 provider behind a `send(token, payload)` abstraction (APNs-ready)
-  - Device token registration + lifecycle (upsert by user_id/device_id, prune on UNREGISTERED)
-  - Push on new match and new chat message
-  - "Offline + inactive" send decision (STOMP presence + active-conversation tracking)
-  - Collapse keys for chat unread; all-on preferences (no toggle in v1)
-  - Contract tests with mocked FCM + `validate_only` dry-run smoke test
+- [ ] **Phase 8: Push Delivery Foundation** — planned
+  - Goal: A device token can be registered, stored, and used to deliver a validated FCM push; dead tokens are pruned.
+  - Requirements: PUSH-01, PUSH-02, PUSH-03, PUSH-09, PUSH-11, PUSH-12
+  - Success criteria:
+    1. Authenticated client can register/unregister a device token (upsert by user+device, multi-device)
+    2. `PushProvider` abstraction delivers via FCM HTTP v1; APNs addable later without call-site changes
+    3. Tokens reported `UNREGISTERED` are deactivated
+    4. Firebase health indicator reports status; `validate_only` dry-run + mocked-provider tests pass
+- [ ] **Phase 9: Notification Triggers & Smart Delivery** — planned
+  - Goal: Matches and messages trigger pushes through the "offline + inactive" decision, asynchronously.
+  - Requirements: PUSH-04, PUSH-05, PUSH-06, PUSH-07, PUSH-08, PUSH-10
+  - Success criteria:
+    1. Mutual match notifies both users; new message notifies the recipient with deep-link payload
+    2. Push suppressed when recipient is actively viewing that conversation (STOMP presence + active-conversation)
+    3. Message pushes collapse per conversation
+    4. Sends run async off domain events, never blocking message persistence
 
 </details>
 
@@ -51,8 +60,9 @@
 | 5. Real-Time Chat | v1.0 | 2/2 | ✅ Complete | 2026-06-15 |
 | 6. API Polish & Integration Tests | v1.0 | 2/2 | ✅ Complete | 2026-06-16 |
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
-| 8. Push Notifications (FCM) | v2.0 | 0/? | 🔜 Planned | — |
+| 8. Push Delivery Foundation | v2.0 | 0/? | 🔜 Planned | — |
+| 9. Notification Triggers & Smart Delivery | v2.0 | 0/? | 🔜 Planned | — |
 
 ---
 *Roadmap created: 2025-06-09*
-*Last updated: 2026-07-17 — added v2.0 Push Notifications (Phase 8) from /gsd-explore*
+*Last updated: 2026-07-17 — v2.0 Push Notifications roadmap (Phases 8-9) via /gsd-new-milestone*
