@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Mixed Discovery
-status: milestone_complete
-stopped_at: v1.1 milestone archived
-last_updated: "2026-06-23T14:33:00Z"
+milestone: v2.0
+milestone_name: Push Notifications
+status: planning
+last_updated: "2026-07-17T10:59:01.657Z"
+last_activity: 2026-07-17
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -42,3 +42,10 @@ Resume file: None
 
 ---
 *Last updated: 2026-06-23 after v1.1 milestone completion*
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-17 — Milestone v2.0 started

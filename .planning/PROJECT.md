@@ -8,6 +8,17 @@ The backend API for Cat Spell — a dating app for cat lovers and cat owners. It
 
 Cat-preferred discovery — users with cats show cat-first (fall for the cat, then meet the person). Users without cats appear as human cards. The app is for all cat lovers, not just cat owners. The reveal mechanic works for cat cards; human cards show the person directly.
 
+## Current Milestone: v2.0 Push Notifications
+
+**Goal:** Deliver push notifications for new matches and new chat messages, reaching users when the app is backgrounded or closed.
+
+**Target features:**
+- Device token registration + lifecycle (FCM, upsert by `(user_id, device_id)`, prune on `UNREGISTERED`)
+- Push on new match and new chat message
+- "Offline + inactive" send decision (STOMP presence + active-conversation tracking)
+- FCM HTTP v1 delivery behind a `send(token, payload)` provider abstraction (APNs-ready), collapse keys for chat
+- Backend-verifiable delivery (mocked FCM contract tests + `validate_only` dry-run)
+
 ## Requirements
 
 ### Validated
