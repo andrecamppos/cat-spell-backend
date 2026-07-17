@@ -27,6 +27,11 @@ storage:
     access-key: ${S3_ACCESS_KEY:catspell}
     secret-key: ${S3_SECRET_KEY:catspell123}
 
+push:
+  enabled: ${PUSH_ENABLED:false}
+  firebase:
+    credentials-base64: ${FIREBASE_CREDENTIALS_BASE64:}
+
 springdoc:
   api-docs:
     path: /v3/api-docs
