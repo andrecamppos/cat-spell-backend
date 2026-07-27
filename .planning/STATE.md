@@ -4,16 +4,16 @@ milestone: v2.0
 milestone_name: Push Notifications
 current_phase: 9
 current_phase_name: notification triggers & smart delivery
-status: planning
+status: "Phase 8 shipped — PR #8"
 stopped_at: Phase 8 context gathered
-last_updated: "2026-07-17T17:20:16.592Z"
-last_activity: 2026-07-17
-last_activity_desc: Phase 08 complete, transitioned to Phase 9
+last_updated: "2026-07-27T15:42:46.133Z"
+last_activity: 2026-07-27
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 3
   completed_plans: 3
+last_activity_desc: Phase 08 complete, transitioned to Phase 9
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 8 shipped — PR #8
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -51,4 +51,4 @@ Resume file: .planning/phases/08-push-delivery-foundation/08-CONTEXT.md
 Phase: 9 — notification triggers & smart delivery
 Plan: Not started
 Status: All Phase 8 plans executed — pending phase verification
-Last activity: 2026-07-17 — Phase 08 complete, transitioned to Phase 9
+Last activity: 2026-07-27
