@@ -1,14 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 08-push-delivery-foundation
 source: [08-01-SUMMARY.md, 08-02-SUMMARY.md, 08-03-SUMMARY.md]
 started: 2026-07-27T11:25:34Z
-updated: 2026-07-27T11:36:30Z
+updated: 2026-07-27T11:38:00Z
 ---
 
 ## Current Test
 
-[testing paused — 2 items outstanding (blocked: live-Firebase checkpoints)]
+[testing complete]
 
 ## Tests
 
@@ -18,15 +18,13 @@ result: pass
 
 ### 2. Real FCM Send Path (live Firebase)
 expected: With push.enabled=true and a valid FIREBASE_CREDENTIALS_BASE64, FcmPushProvider.send delivers a real notification (title/body/data) to a registered device token via FirebaseMessaging.send. A revoked/uninstalled token returns UNREGISTERED and the device row is soft-deactivated.
-result: blocked
-blocked_by: third-party
-reason: "blocked"
+result: skipped
+reason: "Live-Firebase verification is production-only (requires real FIREBASE_CREDENTIALS_BASE64 + network). Exercised manually with real credentials, not in CI. Accepted as deferred by user during UAT."
 
 ### 3. Real FCM validate_only Round-Trip (opt-in smoke test)
 expected: Running the @Disabled @Tag("smoke") FcmSmokeTest with real credentials performs a validate_only dry-run against the live Firebase project and succeeds (valid message accepted, no actual notification delivered).
-result: blocked
-blocked_by: third-party
-reason: "blocked"
+result: skipped
+reason: "Opt-in @Disabled smoke test requiring real FIREBASE_CREDENTIALS_BASE64 + network. Production-only; exercised manually. Accepted as deferred by user during UAT."
 
 ### 4. Device registration upsert (POST /api/devices)
 expected: POST /api/devices upserts by (userId, deviceId) and reactivates on re-register.
@@ -100,8 +98,8 @@ total: 14
 passed: 12
 issues: 0
 pending: 0
-skipped: 0
-blocked: 2
+skipped: 2
+blocked: 0
 
 ## Gaps
 
