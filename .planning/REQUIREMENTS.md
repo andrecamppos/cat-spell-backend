@@ -27,7 +27,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 ### Send Logic
 
 - [ ] **PUSH-07**: Push is sent only when the recipient is offline OR online-but-not-viewing that conversation ("offline + inactive")
-- [ ] **PUSH-08**: Backend tracks STOMP presence and active-conversation per session to drive the send decision; state clears on disconnect
+- [x] **PUSH-08**: Backend tracks STOMP presence and active-conversation per session to drive the send decision; state clears on disconnect
 
 ### Delivery Infrastructure
 
@@ -65,7 +65,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 | PUSH-05 | Phase 9 | Pending |
 | PUSH-06 | Phase 9 | Pending |
 | PUSH-07 | Phase 9 | Pending |
-| PUSH-08 | Phase 9 | Pending |
+| PUSH-08 | Phase 9 | Complete |
 | PUSH-09 | Phase 8 | Complete |
 | PUSH-10 | Phase 9 | Pending |
 | PUSH-11 | Phase 8 | Complete |
