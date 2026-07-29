@@ -32,7 +32,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 ### Delivery Infrastructure
 
 - [x] **PUSH-09**: Notifications deliver via FCM HTTP v1 behind a `PushProvider` abstraction that allows adding direct APNs later without call-site changes
-- [ ] **PUSH-10**: FCM sends run asynchronously (off Spring domain events), never blocking the message-persistence or request path
+- [x] **PUSH-10**: FCM sends run asynchronously (off Spring domain events), never blocking the message-persistence or request path
 - [x] **PUSH-11**: A health indicator reports Firebase/FCM configuration status; startup fails fast if credentials are missing
 
 ### Verification
@@ -67,7 +67,7 @@ Requirements for push notifications. Maps to Phases 8-9.
 | PUSH-07 | Phase 9 | Complete |
 | PUSH-08 | Phase 9 | Complete |
 | PUSH-09 | Phase 8 | Complete |
-| PUSH-10 | Phase 9 | Pending |
+| PUSH-10 | Phase 9 | Complete |
 | PUSH-11 | Phase 8 | Complete |
 | PUSH-12 | Phase 8 | Complete |
 
