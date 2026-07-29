@@ -14,6 +14,7 @@ import com.catspell.api.push.service.PushNotificationService
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -123,5 +124,40 @@ class PushTriggerIntegrationTest : BaseIntegrationTest() {
                 pushNotificationService.notifyMessage(recipientId, response.conversationId, any(), senderId, any(), any())
             }
         }
+    }
+
+    @Test
+    fun `match creation dispatches notifyMatch asynchronously after the transaction commits`() {
+        val userA = createUser("push-match-trigger-a@example.com")
+        val userB = createUser("push-match-trigger-b@example.com")
+
+        val matchId = matchService.createMatch(userA, userB)!!.id!!
+
+        // notifyMatch is invoked asynchronously AFTER the createMatch transaction commits,
+        // carrying both matched users and the new matchId (PUSH-04, D-07).
+        val usersSlot = slot<List<UUID>>()
+        await().atMost(Duration.ofSeconds(5)).untilAsserted {
+            verify(exactly = 1) {
+                pushNotificationService.notifyMatch(capture(usersSlot), matchId)
+            }
+        }
+        assertTrue(usersSlot.captured.containsAll(listOf(userA, userB)))
+    }
+
+    @Test
+    fun `duplicate match creation dispatches only one match notification`() {
+        val userA = createUser("push-match-dup-a@example.com")
+        val userB = createUser("push-match-dup-b@example.com")
+
+        val first = matchService.createMatch(userA, userB)!!
+        // Second call for the same pair returns the existing match and must NOT publish again (T-9-08).
+        val second = matchService.createMatch(userB, userA)!!
+        assertEquals(first.id, second.id)
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted {
+            verify(exactly = 1) { pushNotificationService.notifyMatch(any(), first.id!!) }
+        }
+        // Exactly one match notification overall — the duplicate create dispatched nothing.
+        verify(exactly = 1) { pushNotificationService.notifyMatch(any(), any()) }
     }
 }
