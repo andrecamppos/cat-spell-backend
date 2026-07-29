@@ -3,7 +3,8 @@ package com.catspell.api.push.service
 data class PushPayload(
     val title: String,
     val body: String,
-    val data: Map<String, String> = emptyMap()
+    val data: Map<String, String> = emptyMap(),
+    val collapseKey: String? = null
 )
 
 enum class PushSendStatus { SUCCESS, UNREGISTERED, ERROR }

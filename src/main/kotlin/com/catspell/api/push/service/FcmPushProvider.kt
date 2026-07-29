@@ -1,5 +1,7 @@
 package com.catspell.api.push.service
 
+import com.google.firebase.messaging.AndroidConfig
+import com.google.firebase.messaging.ApnsConfig
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.MessagingErrorCode
@@ -35,8 +37,8 @@ class FcmPushProvider(
         }
     }
 
-    private fun buildMessage(token: String, payload: PushPayload): Message =
-        Message.builder()
+    private fun buildMessage(token: String, payload: PushPayload): Message {
+        val builder = Message.builder()
             .setToken(token)
             .setNotification(
                 Notification.builder()
@@ -45,5 +47,20 @@ class FcmPushProvider(
                     .build()
             )
             .putAllData(payload.data)
-            .build()
+
+        payload.collapseKey?.let { collapseKey ->
+            builder.setAndroidConfig(
+                AndroidConfig.builder()
+                    .setCollapseKey(collapseKey)
+                    .build()
+            )
+            builder.setApnsConfig(
+                ApnsConfig.builder()
+                    .putHeader("apns-collapse-id", collapseKey)
+                    .build()
+            )
+        }
+
+        return builder.build()
+    }
 }
