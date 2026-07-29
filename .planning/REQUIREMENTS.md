@@ -17,16 +17,16 @@ Requirements for push notifications. Maps to Phases 8-9.
 
 ### Match Notifications
 
-- [ ] **PUSH-04**: Both users receive a push notification when a mutual match is detected, with a deep-link payload to the match
+- [x] **PUSH-04**: Both users receive a push notification when a mutual match is detected, with a deep-link payload to the match
 
 ### Message Notifications
 
-- [ ] **PUSH-05**: Recipient receives a push notification for a new chat message, with sender + conversation deep-link payload
-- [ ] **PUSH-06**: Message pushes use a per-conversation collapse key so an offline device shows only the latest, not a stack
+- [x] **PUSH-05**: Recipient receives a push notification for a new chat message, with sender + conversation deep-link payload
+- [x] **PUSH-06**: Message pushes use a per-conversation collapse key so an offline device shows only the latest, not a stack
 
 ### Send Logic
 
-- [ ] **PUSH-07**: Push is sent only when the recipient is offline OR online-but-not-viewing that conversation ("offline + inactive")
+- [x] **PUSH-07**: Push is sent only when the recipient is offline OR online-but-not-viewing that conversation ("offline + inactive")
 - [x] **PUSH-08**: Backend tracks STOMP presence and active-conversation per session to drive the send decision; state clears on disconnect
 
 ### Delivery Infrastructure
@@ -61,10 +61,10 @@ Requirements for push notifications. Maps to Phases 8-9.
 | PUSH-01 | Phase 8 | Complete |
 | PUSH-02 | Phase 8 | Complete |
 | PUSH-03 | Phase 8 | Complete |
-| PUSH-04 | Phase 9 | Pending |
-| PUSH-05 | Phase 9 | Pending |
-| PUSH-06 | Phase 9 | Pending |
-| PUSH-07 | Phase 9 | Pending |
+| PUSH-04 | Phase 9 | Complete |
+| PUSH-05 | Phase 9 | Complete |
+| PUSH-06 | Phase 9 | Complete |
+| PUSH-07 | Phase 9 | Complete |
 | PUSH-08 | Phase 9 | Complete |
 | PUSH-09 | Phase 8 | Complete |
 | PUSH-10 | Phase 9 | Pending |
