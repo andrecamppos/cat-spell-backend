@@ -6,6 +6,8 @@ import com.catspell.api.cat.model.CatProfileRepository
 import com.catspell.api.match.model.*
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
+import com.catspell.api.push.event.MatchCreatedEvent
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +20,8 @@ class MatchService(
     private val userProfileRepository: UserProfileRepository,
     private val userPhotoRepository: UserPhotoRepository,
     private val catProfileRepository: CatProfileRepository,
-    private val catPhotoRepository: CatPhotoRepository
+    private val catPhotoRepository: CatPhotoRepository,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
 
     @Transactional
@@ -33,7 +36,11 @@ class MatchService(
         val user2 = userRepository.getReferenceById(u2)
 
         return try {
-            matchRepository.save(Match(user1 = user1, user2 = user2))
+            val match = matchRepository.save(Match(user1 = user1, user2 = user2))
+            // Publish only on a genuinely new match (not the existing-match return or the
+            // duplicate-key fallback) to avoid duplicate notifications (T-9-08).
+            eventPublisher.publishEvent(MatchCreatedEvent(match.id!!, u1, u2))
+            match
         } catch (e: DataIntegrityViolationException) {
             matchRepository.findByUserPair(u1, u2)
         }

@@ -11,6 +11,8 @@ import com.catspell.api.match.model.MatchRepository
 import com.catspell.api.match.model.MatchUserSummary
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
+import com.catspell.api.push.event.MessageSentEvent
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
@@ -29,7 +31,8 @@ class ChatService(
     private val userPhotoRepository: UserPhotoRepository,
     private val catProfileRepository: CatProfileRepository,
     private val catPhotoRepository: CatPhotoRepository,
-    private val messagingTemplate: SimpMessagingTemplate
+    private val messagingTemplate: SimpMessagingTemplate,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
 
     @Transactional
@@ -89,6 +92,19 @@ class ChatService(
             ChatNotification(
                 conversationId = conversation.id!!,
                 messageId = message.id!!,
+                senderName = senderName,
+                preview = message.content.take(100)
+            )
+        )
+
+        // Published inside this @Transactional method so the AFTER_COMMIT listener binds to it (D-07).
+        // Reuses the same recipient, sender name, and 100-char preview computed above.
+        eventPublisher.publishEvent(
+            MessageSentEvent(
+                recipientId = otherUserId,
+                conversationId = conversation.id!!,
+                messageId = message.id!!,
+                senderId = senderId,
                 senderName = senderName,
                 preview = message.content.take(100)
             )

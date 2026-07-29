@@ -38,7 +38,7 @@
     2. `PushProvider` abstraction delivers via FCM HTTP v1; APNs addable later without call-site changes
     3. Tokens reported `UNREGISTERED` are deactivated
     4. Firebase health indicator reports status; `validate_only` dry-run + mocked-provider tests pass
-- [ ] **Phase 9: Notification Triggers & Smart Delivery** — planned
+- [x] **Phase 9: Notification Triggers & Smart Delivery** — planned (3 plans, 3 waves) (completed 2026-07-29)
   - Goal: Matches and messages trigger pushes through the "offline + inactive" decision, asynchronously.
   - Requirements: PUSH-04, PUSH-05, PUSH-06, PUSH-07, PUSH-08, PUSH-10
   - Success criteria:
@@ -46,6 +46,10 @@
     2. Push suppressed when recipient is actively viewing that conversation (STOMP presence + active-conversation)
     3. Message pushes collapse per conversation
     4. Sends run async off domain events, never blocking message persistence
+  - Plans:
+    - [x] 09-01-PLAN.md — Presence & active-conversation registry (Wave 1, PUSH-08)
+    - [x] 09-02-PLAN.md — Send decision, payloads & collapse key (Wave 2, PUSH-04/05/06/07)
+    - [x] 09-03-PLAN.md — Domain events & async AFTER_COMMIT dispatch (Wave 3, PUSH-10)
 
 </details>
 
@@ -61,7 +65,7 @@
 | 6. API Polish & Integration Tests | v1.0 | 2/2 | ✅ Complete | 2026-06-16 |
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
 | 8. Push Delivery Foundation | v2.0 | 3/3 | Complete    | 2026-07-17 |
-| 9. Notification Triggers & Smart Delivery | v2.0 | 0/? | 🔜 Planned | — |
+| 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | Complete    | 2026-07-29 |
 
 ---
 *Roadmap created: 2025-06-09*
