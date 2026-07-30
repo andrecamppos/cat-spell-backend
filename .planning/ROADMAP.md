@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP Backend** — Phases 1-6 (shipped 2026-06-16)
 - ✅ **v1.1 Mixed Discovery** — Phase 7 (shipped 2026-06-23)
-- 🔜 **v2.0 Push Notifications** — Phases 8-9 (planned)
+- ✅ **v2.0 Push Notifications** — Phases 8-9 (shipped 2026-07-30)
 
 ## Phases
 
@@ -27,29 +27,13 @@
 
 </details>
 
-<details open>
-<summary>🔜 v2.0 Push Notifications (Phases 8-9) — PLANNED</summary>
+<details>
+<summary>✅ v2.0 Push Notifications (Phases 8-9) — SHIPPED 2026-07-30</summary>
 
-- [x] **Phase 8: Push Delivery Foundation** — planned (completed 2026-07-17)
-  - Goal: A device token can be registered, stored, and used to deliver a validated FCM push; dead tokens are pruned.
-  - Requirements: PUSH-01, PUSH-02, PUSH-03, PUSH-09, PUSH-11, PUSH-12
-  - Success criteria:
-    1. Authenticated client can register/unregister a device token (upsert by user+device, multi-device)
-    2. `PushProvider` abstraction delivers via FCM HTTP v1; APNs addable later without call-site changes
-    3. Tokens reported `UNREGISTERED` are deactivated
-    4. Firebase health indicator reports status; `validate_only` dry-run + mocked-provider tests pass
-- [x] **Phase 9: Notification Triggers & Smart Delivery** — planned (3 plans, 3 waves) (completed 2026-07-29)
-  - Goal: Matches and messages trigger pushes through the "offline + inactive" decision, asynchronously.
-  - Requirements: PUSH-04, PUSH-05, PUSH-06, PUSH-07, PUSH-08, PUSH-10
-  - Success criteria:
-    1. Mutual match notifies both users; new message notifies the recipient with deep-link payload
-    2. Push suppressed when recipient is actively viewing that conversation (STOMP presence + active-conversation)
-    3. Message pushes collapse per conversation
-    4. Sends run async off domain events, never blocking message persistence
-  - Plans:
-    - [x] 09-01-PLAN.md — Presence & active-conversation registry (Wave 1, PUSH-08)
-    - [x] 09-02-PLAN.md — Send decision, payloads & collapse key (Wave 2, PUSH-04/05/06/07)
-    - [x] 09-03-PLAN.md — Domain events & async AFTER_COMMIT dispatch (Wave 3, PUSH-10)
+- [x] Phase 8: Push Delivery Foundation (3/3 plans) — completed 2026-07-17
+- [x] Phase 9: Notification Triggers & Smart Delivery (3/3 plans) — completed 2026-07-29
+
+_Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 
 </details>
 
@@ -64,9 +48,9 @@
 | 5. Real-Time Chat | v1.0 | 2/2 | ✅ Complete | 2026-06-15 |
 | 6. API Polish & Integration Tests | v1.0 | 2/2 | ✅ Complete | 2026-06-16 |
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
-| 8. Push Delivery Foundation | v2.0 | 3/3 | Complete    | 2026-07-17 |
-| 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | Complete    | 2026-07-29 |
+| 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
+| 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 
 ---
 *Roadmap created: 2025-06-09*
-*Last updated: 2026-07-17 — v2.0 Push Notifications roadmap (Phases 8-9) via /gsd-new-milestone*
+*Last updated: 2026-07-30 — v2.0 Push Notifications shipped and archived via /gsd-complete-milestone*

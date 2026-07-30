@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Push Notifications
-current_phase: 09
-status: "Phase 09 shipped — PR #9"
+status: completed
 stopped_at: Phase 9 context gathered
-last_updated: "2026-07-29T16:57:57.027Z"
-last_activity: 2026-07-29
+last_updated: "2026-07-30T10:33:29.885Z"
+last_activity: 2026-07-30
+last_activity_desc: Milestone v2.0 completed and archived
 progress:
   total_phases: 2
   completed_phases: 2
   total_plans: 6
   completed_plans: 6
+current_phase: 09
 current_phase_name: notification-triggers-smart-delivery
-last_activity_desc: Phase 09 complete
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 09 shipped — PR #9
+**Status:** v2.0 milestone complete
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -48,7 +48,11 @@ Resume file: .planning/phases/09-notification-triggers-smart-delivery/09-CONTEXT
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-07-29
+Phase: Milestone v2.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-30 — Milestone v2.0 completed and archived
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

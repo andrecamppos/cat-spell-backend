@@ -1,5 +1,5 @@
 ---
-status: testing
+status: complete
 phase: 09-notification-triggers-smart-delivery
 source: [09-01-SUMMARY.md, 09-02-SUMMARY.md, 09-03-SUMMARY.md]
 started: 2026-07-29T16:28:42Z

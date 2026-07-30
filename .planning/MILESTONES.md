@@ -1,5 +1,23 @@
 # Milestones
 
+## v2.0 Push Notifications (Shipped: 2026-07-30)
+
+**Phases completed:** 2 phases, 6 plans, 20 tasks
+**Stats:** 65 commits, 10,608 LOC Kotlin, 221 test methods
+**Timeline:** 2026-06-26 → 2026-07-29
+**Requirements:** 12/12 v2.0 requirements complete (PUSH-01 → PUSH-12)
+
+**Key accomplishments:**
+
+- Authenticated device-token registration API with `(userId, deviceId)` upsert, soft-deactivation, multi-device support, and IDOR-safe object-level authz backed by a Flyway V14 `device_tokens` table.
+- Provider-neutral `PushProvider` abstraction with `push.enabled`-gated selection between a no-op `LoggingPushProvider` and a firebase-admin `FcmPushProvider`, fail-fast credential wiring, and an actuator Firebase health indicator.
+- `PushSendService` send seam that soft-deactivates FCM `UNREGISTERED` tokens (only), with mocked-provider contract tests for payload shape + pruning branches and a disabled-by-default validate_only smoke test.
+- In-memory single-instance `PresenceRegistry` (ConcurrentHashMap-backed) plus a `StompPresenceListener` that tracks live STOMP sessions and `/topic/chat/{id}` subscriptions to drive the Phase 9 "offline + inactive" send decision.
+- `PushNotificationService` holding match presence-suppression fan-out and the message "offline + inactive" send decision, plus a provider-neutral `collapseKey` mapped to FCM `AndroidConfig.collapse_key` and APNs `apns-collapse-id`.
+- `@Async @TransactionalEventListener(AFTER_COMMIT)` push pipeline: `MatchService`/`ChatService` publish ID-only domain events that `PushNotificationListener` consumes off-thread after commit and delegates to `PushNotificationService`, so a slow/failing FCM call never blocks or rolls back persistence (PUSH-10).
+
+---
+
 ## v1.0 MVP Backend (Shipped: 2026-06-16)
 
 **Phases completed:** 6 phases, 13 plans, 50 tasks

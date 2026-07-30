@@ -8,16 +8,11 @@ The backend API for Cat Spell — a dating app for cat lovers and cat owners. It
 
 Cat-preferred discovery — users with cats show cat-first (fall for the cat, then meet the person). Users without cats appear as human cards. The app is for all cat lovers, not just cat owners. The reveal mechanic works for cat cards; human cards show the person directly.
 
-## Current Milestone: v2.0 Push Notifications
+## Current State
 
-**Goal:** Deliver push notifications for new matches and new chat messages, reaching users when the app is backgrounded or closed.
+**Shipped:** v2.0 Push Notifications (2026-07-29) — FCM push notifications for new matches and new chat messages, delivered when users are away from the app, behind a provider abstraction and dispatched asynchronously off domain events.
 
-**Target features:**
-- Device token registration + lifecycle (FCM, upsert by `(user_id, device_id)`, prune on `UNREGISTERED`)
-- Push on new match and new chat message
-- "Offline + inactive" send decision (STOMP presence + active-conversation tracking)
-- FCM HTTP v1 delivery behind a `send(token, payload)` provider abstraction (APNs-ready), collapse keys for chat
-- Backend-verifiable delivery (mocked FCM contract tests + `validate_only` dry-run)
+**Next milestone:** TBD — start with `/gsd-new-milestone`. Candidate focus areas: safety & moderation (block/report/unmatch), cat compatibility scoring, or direct APNs delivery hardening.
 
 ## Requirements
 
@@ -42,6 +37,13 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Mixed discovery feed — cat cards for users with cats, human cards for users without — v1.1 (Phase 7)
 - ✓ Swipe supports both cat profiles and user profiles — v1.1 (Phase 7)
 - ✓ 180 integration tests across all domains — v1.1 (Phase 7)
+- ✓ Device token registration + lifecycle — authenticated endpoint, upsert by `(user_id, device_id)`, multi-device, prune on FCM `UNREGISTERED` — v2.0 (Phase 8)
+- ✓ Push notification on new match with deep-link payload — v2.0 (Phase 9)
+- ✓ Push notification on new chat message with sender + conversation deep-link and per-conversation collapse key — v2.0 (Phase 9)
+- ✓ "Offline + inactive" send decision — suppress push when recipient is viewing that conversation (STOMP presence + active-conversation tracking) — v2.0 (Phase 9)
+- ✓ FCM HTTP v1 delivery behind a `PushProvider` abstraction (APNs-ready) with fail-fast config + Firebase health indicator — v2.0 (Phase 8)
+- ✓ Async off-thread FCM sends (`AFTER_COMMIT` domain events) that never block or roll back persistence — v2.0 (Phase 9)
+- ✓ Backend-verifiable delivery — mocked-provider contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -49,12 +51,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Primary/featured cat designation for swipe feed
 - [ ] Typing indicators and read receipts in chat
 - [ ] Block/report/unmatch safety features
-- [ ] **PUSH-01**: Device token registration endpoint — upsert by `(user_id, device_id)`, prune on FCM `UNREGISTERED` — v2.0 (Phase 8)
-- [ ] **PUSH-02**: Push notification on new match — v2.0 (Phase 8)
-- [ ] **PUSH-03**: Push notification on new chat message — v2.0 (Phase 8)
-- [ ] **PUSH-04**: "Offline + inactive" send decision — suppress push when recipient is viewing that conversation (STOMP presence + active-conversation tracking) — v2.0 (Phase 8)
-- [ ] **PUSH-05**: FCM HTTP v1 delivery behind a `send(token, payload)` provider abstraction (APNs-ready), collapse keys for chat unread — v2.0 (Phase 8)
-- [ ] **PUSH-06**: Backend-verifiable delivery — mocked FCM contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
+- [ ] Per-type notification toggles + quiet hours (deferred from v2.0)
+- [ ] Direct APNs integration for iOS delivery reliability (deferred from v2.0)
 
 ### Out of Scope
 
@@ -68,15 +66,16 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 ## Context
 
-- **Current state:** v1.1 shipped (2026-06-23). 8,880 LOC Kotlin, 180 integration tests. Both milestones complete.
+- **Current state:** v2.0 shipped (2026-07-29). 10,608 LOC Kotlin, 221 test methods. Three milestones complete (v1.0, v1.1, v2.0).
 - **Tech stack:** Kotlin + Spring Boot 4.0, PostgreSQL + PostGIS, S3 (MinIO local), WebSocket STOMP, Flyway, Testcontainers
 - **Domain:** Niche dating app targeting cat lovers/owners
 - **Architecture:** Backend-only REST + WebSocket API. Mobile app is a separate project.
 - **Reveal mechanic:** Cat cards: Two stages — Stage 1: Cat profile shown in swipe screen. Stage 2: Owner profile accessible by tapping into cat detail view. Human cards: User profile shown directly.
 - **Multi-cat:** Users can register up to 5 cats. Cat owners appear as cat cards in discovery (one card per owner, first-created cat). Users without cats appear as human cards.
 - **Chat:** WebSocket STOMP messaging with lazy conversation creation, offline delivery, and unread tracking. Unlocked after mutual match.
+- **Push:** FCM push for matches and messages behind a `PushProvider` abstraction (APNs-ready), "offline + inactive" send decision via STOMP presence, async `AFTER_COMMIT` dispatch, dead-token pruning.
 - **Testing:** Full Testcontainers-based integration tests (PostgreSQL + PostGIS + MinIO). No H2.
-- **Next focus:** Safety & moderation, compatibility scoring, or mobile app integration.
+- **Next focus:** Safety & moderation, compatibility scoring, direct APNs hardening, or mobile app integration.
 
 ## Constraints
 
@@ -102,8 +101,10 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Optional cat ownership | App is for all cat lovers, not just owners — widens user base | ✓ Good — v1.1 (Phase 7) |
 | Mixed discovery feed | Cat cards for cat owners, human cards for catless users | ✓ Good — v1.1 (Phase 7) |
 | Defer moderation to v2 | Focus v1 on core matching/chat loop | — Pending (needed before public launch) |
-| Push notifications: FCM-only + "offline+inactive" send | Fastest path (one integration, relays to iOS+APNs); abstraction leaves room for direct APNs; suppress push when user is in the conversation | — Planned v2.0 (Phase 8) |
-| Push preferences: all-on, no toggle in v1 | OS-level permission is the off switch; avoids premature preferences model | — Planned v2.0 (Phase 8) |
+| Push notifications: FCM-only + "offline+inactive" send | Fastest path (one integration, relays to iOS+APNs); abstraction leaves room for direct APNs; suppress push when user is in the conversation | ✓ Good — shipped v2.0 (Phases 8-9); `PushProvider` abstraction kept call sites APNs-agnostic |
+| Push preferences: all-on, no toggle in v1 | OS-level permission is the off switch; avoids premature preferences model | ✓ Good — v2.0; per-type toggles + quiet hours deferred to a later milestone |
+| Async AFTER_COMMIT push dispatch | Domain-event listeners run off-thread after commit so a slow/failing FCM call never blocks or rolls back message persistence | ✓ Good — v2.0 (Phase 9), verified persistence is never blocked |
+| In-memory single-instance presence registry | ConcurrentHashMap-backed STOMP presence/active-conversation is sufficient for single-instance; Redis-backed shared store deferred until horizontal scaling | ✓ Good — v2.0 (Phase 9); scaling caveat documented as future work |
 
 ## Evolution
 
@@ -123,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-17 — promoted push notifications to Active (v2.0, Phase 8) via /gsd-explore*
+*Last updated: 2026-07-29 — v2.0 Push Notifications shipped; full evolution review via /gsd-complete-milestone*
