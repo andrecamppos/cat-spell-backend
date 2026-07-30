@@ -43,6 +43,8 @@ tags:
     description: Match listing
   - name: Conversations
     description: Chat conversations and message history
+  - name: Devices
+    description: Push notification device token registration
 
 security:
   - bearerAuth: []
@@ -726,6 +728,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessagePageResponse'
+
+  # ─── Devices ─────────────────────────────────────────────────────────
+  /api/devices:
+    post:
+      operationId: registerDevice
+      tags: [Devices]
+      summary: Register or refresh a device token for push notifications
+      description: |
+        Idempotent by `deviceId` for the current user. Registering an existing
+        `deviceId` refreshes its token and reactivates it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '204':
+          description: Device registered
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/devices/{deviceId}:
+    delete:
+      operationId: unregisterDevice
+      tags: [Devices]
+      summary: Unregister a device token
+      description: Deactivates the device token so it no longer receives push notifications.
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          description: Client-generated device identifier used at registration
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Device unregistered
 
 # ─── Components ──────────────────────────────────────────────────────────
 components:
@@ -1480,6 +1524,24 @@ components:
           type: string
         preview:
           type: string
+
+    # ── Devices ───────────────────────────────────────────────────────
+    RegisterDeviceRequest:
+      type: object
+      required: [token, deviceId, platform]
+      properties:
+        token:
+          type: string
+          description: Push provider (FCM) registration token
+        deviceId:
+          type: string
+          description: Stable client-generated device identifier
+        platform:
+          $ref: '#/components/schemas/Platform'
+
+    Platform:
+      type: string
+      enum: [ANDROID, IOS]
 
     # ── Shared / Error ────────────────────────────────────────────────
     ProblemDetail:
