@@ -1543,6 +1543,66 @@ components:
       type: string
       enum: [ANDROID, IOS]
 
+    # ── Push Notifications (FCM — informational, not a callable API) ────
+    PushNotification:
+      type: object
+      description: |
+        Off-app notification delivered via FCM (Firebase Cloud Messaging), NOT part of the
+        REST/WebSocket API surface — documented here for mobile client reference only.
+        Sent only when the recipient is offline or online-but-not-viewing the relevant
+        conversation (see `x-push-notifications`). All `data` values are strings (FCM constraint).
+      required: [title, body, data]
+      properties:
+        title:
+          type: string
+          description: Notification title (e.g. "It's a match!" or the sender's name)
+        body:
+          type: string
+          description: Notification body (match blurb or 100-char message preview)
+        collapseKey:
+          type: string
+          description: |
+            Message pushes only. Equals the `conversationId`; maps to FCM
+            `AndroidConfig.collapse_key` and APNs `apns-collapse-id` so an offline device
+            shows only the latest message per conversation.
+        data:
+          description: FCM data map (all string values). Discriminated by `type`.
+          oneOf:
+            - $ref: '#/components/schemas/MatchPushData'
+            - $ref: '#/components/schemas/MessagePushData'
+          discriminator:
+            propertyName: type
+
+    MatchPushData:
+      type: object
+      description: FCM `data` payload for a mutual-match notification
+      required: [type, matchId]
+      properties:
+        type:
+          type: string
+          enum: [match]
+        matchId:
+          type: string
+          format: uuid
+
+    MessagePushData:
+      type: object
+      description: FCM `data` payload for a new chat message
+      required: [type, conversationId, messageId, senderId]
+      properties:
+        type:
+          type: string
+          enum: [message]
+        conversationId:
+          type: string
+          format: uuid
+        messageId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+
     # ── Shared / Error ────────────────────────────────────────────────
     ProblemDetail:
       type: object
@@ -1595,3 +1655,26 @@ x-websocket:
         description: Receive push notifications for new messages
         payload:
           $ref: '#/components/schemas/ChatNotification'
+
+# ─── Push Notifications (FCM — non-standard extension) ─────────────────
+x-push-notifications:
+  provider: FCM (Firebase Cloud Messaging, HTTP v1 via firebase-admin)
+  description: |
+    Transactional, off-app push notifications delivered via FCM (FCM relays to APNs for iOS).
+    Not part of the callable REST/WebSocket surface — documented for mobile client reference.
+    The client registers its FCM registration token via POST /api/devices (platform IOS|ANDROID,
+    upsert by (userId, deviceId)) and removes it via DELETE /api/devices/{deviceId} on logout.
+    The `token` field MUST be an FCM registration token, not a raw APNs token.
+  sendDecision: |
+    Match: pushed to every matched user with NO live STOMP session (online users suppressed).
+    Message: sent when the recipient is offline OR online-but-not-viewing that conversation
+    (STOMP presence + active-conversation subscription on /topic/chat/{conversationId}).
+  events:
+    match:
+      description: Mutual match detected — both users notified (data.type = "match")
+      payload:
+        $ref: '#/components/schemas/PushNotification'
+    message:
+      description: New chat message — recipient notified, collapsed per conversation (data.type = "message")
+      payload:
+        $ref: '#/components/schemas/PushNotification'

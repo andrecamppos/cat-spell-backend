@@ -105,6 +105,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Push preferences: all-on, no toggle in v1 | OS-level permission is the off switch; avoids premature preferences model | ✓ Good — v2.0; per-type toggles + quiet hours deferred to a later milestone |
 | Async AFTER_COMMIT push dispatch | Domain-event listeners run off-thread after commit so a slow/failing FCM call never blocks or rolls back message persistence | ✓ Good — v2.0 (Phase 9), verified persistence is never blocked |
 | In-memory single-instance presence registry | ConcurrentHashMap-backed STOMP presence/active-conversation is sufficient for single-instance; Redis-backed shared store deferred until horizontal scaling | ✓ Good — v2.0 (Phase 9); scaling caveat documented as future work |
+| iOS client uses the FCM SDK (client-owned FCM token) | Backend delivers only via FCM (`FirebaseMessaging.send(setToken(...))`), which requires an FCM registration token, not a raw APNs token; iOS app adds Firebase Messaging SDK and registers its FCM token via `POST /api/devices`. Keeps the shipped contract unchanged; direct APNs stays deferred | — Decided 2026-07-30 (cross-repo); FCM payload shapes documented in `docs/openapi.yaml` (`x-push-notifications`) |
 
 ## Evolution
 
