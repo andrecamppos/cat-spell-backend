@@ -1,5 +1,8 @@
 package com.catspell.api
 
+import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.GenericContainer
@@ -8,6 +11,25 @@ import org.testcontainers.containers.wait.strategy.HttpWaitStrategy
 import org.testcontainers.utility.DockerImageName
 
 abstract class BaseIntegrationTest {
+
+    @Autowired
+    private lateinit var jdbcTemplate: JdbcTemplate
+
+    @BeforeEach
+    fun cleanDatabase() {
+        val tables = jdbcTemplate.queryForList(
+            """
+            SELECT tablename FROM pg_tables
+            WHERE schemaname = 'public'
+              AND tablename NOT IN ('spatial_ref_sys', 'flyway_schema_history')
+            """.trimIndent(),
+            String::class.java
+        )
+        if (tables.isNotEmpty()) {
+            val joined = tables.joinToString(", ") { "\"$it\"" }
+            jdbcTemplate.execute("TRUNCATE TABLE $joined RESTART IDENTITY CASCADE")
+        }
+    }
 
     companion object {
         @JvmStatic
