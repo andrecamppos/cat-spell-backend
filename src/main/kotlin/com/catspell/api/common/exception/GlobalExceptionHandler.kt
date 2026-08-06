@@ -110,17 +110,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
-    @ExceptionHandler(LocationRequiredException::class)
-    fun handleLocationRequired(ex: LocationRequiredException): ProblemDetail {
-        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Location required for discovery")
-        problem.title = "Bad Request"
-        return problem
-    }
-
     @ExceptionHandler(ProfileIncompleteException::class)
     fun handleProfileIncomplete(ex: ProfileIncompleteException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Complete your profile to use discovery")
         problem.title = "Bad Request"
+        problem.setProperty("missingFields", ex.missingFields)
         return problem
     }
 

@@ -4,11 +4,12 @@ import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.CatPhotoRepository
 import com.catspell.api.cat.model.CatProfileRepository
 import com.catspell.api.common.exception.DuplicateSwipeException
-import com.catspell.api.common.exception.LocationRequiredException
+import com.catspell.api.common.exception.ProfileIncompleteException
 import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.common.exception.SelfSwipeException
 import com.catspell.api.discovery.model.*
 import com.catspell.api.match.service.MatchService
+import com.catspell.api.profile.model.ProfileCompleteness
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
 import jakarta.persistence.EntityManager
@@ -34,8 +35,12 @@ class DiscoveryService(
         val profile = userProfileRepository.findByUserId(userId)
             ?: throw ResourceNotFoundException("Profile not found")
 
-        val location = profile.location
-            ?: throw LocationRequiredException()
+        val missingFields = ProfileCompleteness.missingFields(profile)
+        if (missingFields.isNotEmpty()) {
+            throw ProfileIncompleteException(missingFields = missingFields)
+        }
+
+        val location = profile.location!!
 
         val seed: Double
         val offset: Int
@@ -173,6 +178,13 @@ class DiscoveryService(
     fun swipe(userId: UUID, request: SwipeRequest): SwipeResponse {
         require((request.catId != null) xor (request.targetUserId != null)) {
             "Exactly one of catId or targetUserId must be provided"
+        }
+
+        val profile = userProfileRepository.findByUserId(userId)
+            ?: throw ResourceNotFoundException("Profile not found")
+        val missingFields = ProfileCompleteness.missingFields(profile)
+        if (missingFields.isNotEmpty()) {
+            throw ProfileIncompleteException(missingFields = missingFields)
         }
 
         val swiper = userRepository.getReferenceById(userId)

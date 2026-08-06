@@ -348,6 +348,27 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.missingFields[?(@ == 'location')]").exists())
+    }
+
+    @Test
+    fun `swipe returns 400 when requester profile is incomplete`() {
+        // Target is a fully set-up user; the swiper has a profile but never set a location.
+        val (_, catIdA, _) = setupCompleteUser("disc-swipe-incomplete-target@example.com", "SwipeTarget", "FEMALE", catName = "SwipeCat")
+
+        val token = registerAndGetToken("disc-swipe-incomplete@example.com")
+        createProfile(token)
+        addUserPhoto(token)
+
+        val body = mapOf("catId" to catIdA, "action" to "LIKE")
+        mockMvc.perform(
+            post("/api/discovery/swipe")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.missingFields[?(@ == 'location')]").exists())
     }
 
     @Test

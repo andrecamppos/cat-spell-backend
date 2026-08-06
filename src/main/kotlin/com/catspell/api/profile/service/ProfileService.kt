@@ -124,19 +124,8 @@ class ProfileService(
     }
 
     fun checkCompleteness(userId: UUID): CompletenessResponse {
-        val missingFields = mutableListOf<String>()
         val profile = userProfileRepository.findByUserId(userId)
-
-        if (profile == null) {
-            missingFields.add("profile")
-            return CompletenessResponse(isComplete = false, missingFields = missingFields)
-        }
-
-        if (profile.displayName.isBlank()) missingFields.add("displayName")
-        if (profile.gender.isBlank()) missingFields.add("gender")
-        if (profile.genderPreference.isBlank()) missingFields.add("genderPreference")
-        if (profile.location == null) missingFields.add("location")
-
+        val missingFields = ProfileCompleteness.missingFields(profile)
         return CompletenessResponse(isComplete = missingFields.isEmpty(), missingFields = missingFields)
     }
 

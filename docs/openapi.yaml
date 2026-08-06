@@ -570,7 +570,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/FeedResponse'
         '400':
-          description: Location required or profile incomplete
+          description: |
+            Profile incomplete — all of displayName, gender, genderPreference and
+            location must be set before using discovery. The response `missingFields`
+            array lists the fields still missing.
           content:
             application/json:
               schema:
@@ -645,7 +648,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/SwipeResponse'
         '400':
-          description: Cannot swipe on yourself, or invalid target (must provide exactly one of catId or targetUserId)
+          description: |
+            Cannot swipe on yourself, invalid target (must provide exactly one of
+            catId or targetUserId), or the swiper's profile is incomplete (a
+            `missingFields` array lists the fields still missing).
           content:
             application/json:
               schema:

@@ -92,8 +92,7 @@ Current domain exceptions (12 types):
 | `InvalidPhotoTypeException` | 400 | Non-JPEG/PNG upload |
 | `CatLimitExceededException` | 409 | More than 5 cats |
 | `CatPhotoLimitExceededException` | 400 | More than 10 cat photos |
-| `LocationRequiredException` | 400 | Discovery without location set |
-| `ProfileIncompleteException` | 400 | Discovery with incomplete profile |
+| `ProfileIncompleteException` | 400 | Discovery (feed or swipe) with an incomplete profile; response includes a `missingFields` list |
 | `DuplicateSwipeException` | 409 | Swiping on same profile twice |
 | `SelfSwipeException` | 400 | Swiping on own profile |
 

@@ -16,9 +16,10 @@ class CatLimitExceededException(message: String = "Maximum 5 cats allowed") : Ru
 
 class CatPhotoLimitExceededException(message: String = "Maximum 10 photos per cat allowed") : RuntimeException(message)
 
-class LocationRequiredException(message: String = "Location required for discovery") : RuntimeException(message)
-
-class ProfileIncompleteException(message: String = "Complete your profile to use discovery") : RuntimeException(message)
+class ProfileIncompleteException(
+    val missingFields: List<String> = emptyList(),
+    message: String = "Complete your profile to use discovery"
+) : RuntimeException(message)
 
 class DuplicateSwipeException(message: String = "Already swiped on this profile") : RuntimeException(message)
 
