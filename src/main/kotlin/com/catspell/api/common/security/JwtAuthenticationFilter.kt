@@ -1,7 +1,5 @@
 package com.catspell.api.common.security
 
-import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.security.SignatureException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -46,14 +44,8 @@ class JwtAuthenticationFilter(
                 userId, null, emptyList()
             )
             SecurityContextHolder.getContext().authentication = authentication
-        } catch (e: ExpiredJwtException) {
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
-            return
-        } catch (e: SignatureException) {
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
-            return
         } catch (e: Exception) {
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
+            writeUnauthorized(response, "Invalid or expired token")
             return
         }
 

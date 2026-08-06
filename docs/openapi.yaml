@@ -15,6 +15,11 @@ info:
     `Authorization` header. Obtain tokens via `/api/auth/register` or
     `/api/auth/login`, and rotate them via `/api/auth/refresh`.
 
+    When the token is missing, malformed, expired, or invalid, secured
+    endpoints respond with `401` and an `application/problem+json` body
+    (see the `Unauthorized` response). This applies globally to every
+    secured operation and is not repeated per-endpoint below.
+
     ## Real-time Chat
     Chat messages are sent and received over **STOMP-over-WebSocket** at
     `ws://<host>/ws`. See the [WebSocket](#section/WebSocket) section for
@@ -75,7 +80,7 @@ paths:
         '409':
           description: Email already registered
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -101,7 +106,7 @@ paths:
         '401':
           description: Invalid credentials
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -131,7 +136,7 @@ paths:
         '401':
           description: Expired, invalid, or reused refresh token
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -177,7 +182,7 @@ paths:
         '409':
           description: Profile already exists
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -195,7 +200,7 @@ paths:
         '404':
           description: Profile not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -295,7 +300,7 @@ paths:
         '400':
           description: Invalid content type or photo limit reached
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -319,7 +324,7 @@ paths:
         '404':
           description: Photo not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -375,7 +380,7 @@ paths:
         '409':
           description: Cat limit reached (max 5)
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -410,7 +415,7 @@ paths:
         '404':
           description: Cat not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -488,7 +493,7 @@ paths:
         '400':
           description: Invalid content type or cat photo limit reached
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -575,7 +580,7 @@ paths:
             location must be set before using discovery. The response `missingFields`
             array lists the fields still missing.
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -596,7 +601,7 @@ paths:
         '404':
           description: Cat not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -620,7 +625,7 @@ paths:
         '404':
           description: User not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -653,19 +658,19 @@ paths:
             catId or targetUserId), or the swiper's profile is incomplete (a
             `missingFields` array lists the fields still missing).
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '404':
           description: Target cat or user not found
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '409':
           description: Already swiped on this profile
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -756,7 +761,7 @@ paths:
         '400':
           description: Validation error
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
@@ -831,7 +836,7 @@ components:
     ValidationError:
       description: Validation failed
       content:
-        application/json:
+        application/problem+json:
           schema:
             allOf:
               - $ref: '#/components/schemas/ProblemDetail'
@@ -846,6 +851,14 @@ components:
                           type: string
                         message:
                           type: string
+    Unauthorized:
+      description: |
+        Missing, malformed, expired, or invalid Bearer token. Returned by
+        every secured endpoint via the security layer.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
 
   schemas:
     # ── Auth ──────────────────────────────────────────────────────────

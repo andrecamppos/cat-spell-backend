@@ -141,4 +141,27 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
         )
             .andExpect(status().isBadRequest)
     }
+
+    @Test
+    fun `protected endpoint without token returns problem+json 401`() {
+        mockMvc.perform(get("/api/profile"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+            .andExpect(jsonPath("$.title").value("Unauthorized"))
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.detail").value("Authentication required"))
+    }
+
+    @Test
+    fun `protected endpoint with invalid token returns problem+json 401`() {
+        mockMvc.perform(
+            get("/api/profile")
+                .header("Authorization", "Bearer not-a-valid-token")
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+            .andExpect(jsonPath("$.title").value("Unauthorized"))
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.detail").value("Invalid or expired token"))
+    }
 }
