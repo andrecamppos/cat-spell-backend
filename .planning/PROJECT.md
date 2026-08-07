@@ -12,7 +12,18 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 **Shipped:** v2.0 Push Notifications (2026-07-29) — FCM push notifications for new matches and new chat messages, delivered when users are away from the app, behind a provider abstraction and dispatched asynchronously off domain events.
 
-**Next milestone:** TBD — start with `/gsd-new-milestone`. Candidate focus areas: safety & moderation (block/report/unmatch), cat compatibility scoring, or direct APNs delivery hardening.
+**Next milestone:** v2.1 Account Recovery & Email Verification (in planning) — self-service password recovery and email verification, backed by reusable transactional email infrastructure.
+
+## Current Milestone: v2.1 Account Recovery & Email Verification
+
+**Goal:** Give users a self-service way to recover access and prove ownership of their email, backed by reusable transactional email infrastructure.
+
+**Target features:**
+- Transactional email infrastructure — provider-abstracted email sending (new dependency; reusable across features)
+- Password recovery — forgot/reset via emailed tokenized link (hashed single-use token, short TTL, enumeration-safe, rate-limited; revokes all refresh tokens on reset)
+- Email verification on signup — hard gate (unverified users cannot log in), resend-verification flow, existing users grandfathered as verified via migration
+- Change email (logged in) — requires current password + verification of the new address before the switch takes effect
+- Change password (logged in) — requires current password; revokes all other sessions on success
 
 ## Requirements
 
@@ -46,6 +57,11 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Backend-verifiable delivery — mocked-provider contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
 
 ### Active
+- [ ] Transactional email infrastructure (provider abstraction) — v2.1
+- [ ] Password recovery via emailed reset link — v2.1
+- [ ] Email verification on signup (hard gate, resend, grandfather existing users) — v2.1
+- [ ] Change email while logged in (password + new-address verification) — v2.1
+- [ ] Change password while logged in (password + revoke other sessions) — v2.1
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
 - [ ] Lifestyle signal scoring from cat ownership patterns
 - [ ] Primary/featured cat designation for swipe feed
@@ -125,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-29 — v2.0 Push Notifications shipped; full evolution review via /gsd-complete-milestone*
+*Last updated: 2026-08-07 — v2.1 Account Recovery & Email Verification milestone started via /gsd-new-milestone*

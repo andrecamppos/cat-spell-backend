@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Push Notifications
-status: completed
-stopped_at: Phase 9 context gathered
-last_updated: "2026-07-30T10:33:29.885Z"
-last_activity: 2026-07-30
-last_activity_desc: Milestone v2.0 completed and archived
+milestone: v2.1
+milestone_name: Account Recovery & Email Verification
+status: planning
+last_updated: "2026-08-07T11:59:46.344Z"
+last_activity: 2026-08-07
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
-current_phase: 09
-current_phase_name: notification-triggers-smart-delivery
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -48,10 +45,10 @@ Resume file: .planning/phases/09-notification-triggers-smart-delivery/09-CONTEXT
 
 ## Current Position
 
-Phase: Milestone v2.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-30 — Milestone v2.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-08-07 — Milestone v2.1 started
 
 ## Operator Next Steps
 
