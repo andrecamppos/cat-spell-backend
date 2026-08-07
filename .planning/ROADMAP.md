@@ -5,6 +5,7 @@
 - ✅ **v1.0 MVP Backend** — Phases 1-6 (shipped 2026-06-16)
 - ✅ **v1.1 Mixed Discovery** — Phase 7 (shipped 2026-06-23)
 - ✅ **v2.0 Push Notifications** — Phases 8-9 (shipped 2026-07-30)
+- 🔭 **v2.1 Account Recovery** — Phase 10 (planned)
 
 ## Phases
 
@@ -37,6 +38,19 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 
 </details>
 
+<details open>
+<summary>🔭 v2.1 Account Recovery (Phase 10) — PLANNED</summary>
+
+- [ ] Phase 10: Password Recovery — email-based forgot/reset-password flow
+
+  Introduces transactional email infrastructure (new dependency), a hashed
+  single-use reset token with short TTL, enumeration-safe responses, and rate
+  limiting on the forgot-password endpoint. Design captured in
+  `.planning/notes/password-recovery-design.md`; email capability seed in
+  `.planning/seeds/transactional-email-infra.md`.
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -50,7 +64,8 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
+| 10. Password Recovery | v2.1 | 0/? | 🔭 Planned | — |
 
 ---
 *Roadmap created: 2025-06-09*
-*Last updated: 2026-07-30 — v2.0 Push Notifications shipped and archived via /gsd-complete-milestone*
+*Last updated: 2026-08-07 — Added planned Phase 10 (Password Recovery) via /gsd-explore*
