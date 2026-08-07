@@ -56,7 +56,11 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
   4. A successful reset revokes all of the user's refresh tokens
   5. The forgot-password endpoint is rate-limited (per-IP and per-email) using existing Bucket4j infrastructure
   6. Email is sent through a provider-abstracted `EmailSender` seam, stubbed/logged in tests (no real network sends)
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 10-01-PLAN.md — EmailSender seam + no-op logging provider + backend-rendered reset email + config (EMAIL-01, EMAIL-02) [Wave 1]
+- [ ] 10-02-PLAN.md — PasswordResetToken entity + repository + V15 Flyway migration (RECOV-05) [Wave 1]
+- [ ] 10-03-PLAN.md — PasswordResetService + AuthService.resetPassword + three-whitelist security wiring (RECOV-02/04/05/06/07) [Wave 2]
+- [ ] 10-04-PLAN.md — forgot/reset endpoints + DTOs + integration tests (RECOV-01/03/04/05/06/07) [Wave 3]
 
 Introduces transactional email infrastructure (new dependency), a hashed single-use reset token with short TTL, enumeration-safe responses, and rate limiting on the forgot-password endpoint. Design captured in `.planning/notes/password-recovery-design.md`; email capability seed in `.planning/seeds/transactional-email-infra.md`.
 
