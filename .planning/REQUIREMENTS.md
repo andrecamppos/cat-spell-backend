@@ -67,31 +67,31 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMAIL-01 | TBD | Pending |
-| EMAIL-02 | TBD | Pending |
-| RECOV-01 | TBD | Pending |
-| RECOV-02 | TBD | Pending |
-| RECOV-03 | TBD | Pending |
-| RECOV-04 | TBD | Pending |
-| RECOV-05 | TBD | Pending |
-| RECOV-06 | TBD | Pending |
-| RECOV-07 | TBD | Pending |
-| VERIFY-01 | TBD | Pending |
-| VERIFY-02 | TBD | Pending |
-| VERIFY-03 | TBD | Pending |
-| VERIFY-04 | TBD | Pending |
-| VERIFY-05 | TBD | Pending |
-| ACCT-01 | TBD | Pending |
-| ACCT-02 | TBD | Pending |
-| ACCT-03 | TBD | Pending |
-| ACCT-04 | TBD | Pending |
-| ACCT-05 | TBD | Pending |
+| EMAIL-01 | Phase 10 | Pending |
+| EMAIL-02 | Phase 10 | Pending |
+| RECOV-01 | Phase 10 | Pending |
+| RECOV-02 | Phase 10 | Pending |
+| RECOV-03 | Phase 10 | Pending |
+| RECOV-04 | Phase 10 | Pending |
+| RECOV-05 | Phase 10 | Pending |
+| RECOV-06 | Phase 10 | Pending |
+| RECOV-07 | Phase 10 | Pending |
+| VERIFY-01 | Phase 11 | Pending |
+| VERIFY-02 | Phase 11 | Pending |
+| VERIFY-03 | Phase 11 | Pending |
+| VERIFY-04 | Phase 11 | Pending |
+| VERIFY-05 | Phase 11 | Pending |
+| ACCT-01 | Phase 12 | Pending |
+| ACCT-02 | Phase 12 | Pending |
+| ACCT-03 | Phase 12 | Pending |
+| ACCT-04 | Phase 12 | Pending |
+| ACCT-05 | Phase 12 | Pending |
 
 **Coverage:**
 - v1 requirements: 19 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-07*
-*Last updated: 2026-08-07 after initial definition (milestone v2.1)*
+*Last updated: 2026-08-07 — mapped all 19 requirements to Phases 10-12 (roadmap completed)*
