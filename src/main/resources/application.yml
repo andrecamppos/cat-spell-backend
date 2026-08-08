@@ -32,6 +32,12 @@ push:
   firebase:
     credentials-base64: ${FIREBASE_CREDENTIALS_BASE64:}
 
+email:
+  enabled: ${EMAIL_ENABLED:false}
+
+app:
+  reset-password-url: ${RESET_PASSWORD_URL:catspell://reset-password}
+
 springdoc:
   api-docs:
     path: /v3/api-docs
