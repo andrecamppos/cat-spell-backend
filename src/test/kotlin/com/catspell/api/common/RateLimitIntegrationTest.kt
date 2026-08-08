@@ -46,6 +46,11 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
         .content("""{"refreshToken":"fake-token"}""")
         .header("X-Forwarded-For", ip)
 
+    private fun postForgotPassword(ip: String) = post("/api/auth/forgot-password")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""{"email":"rate-limit-forgot@example.com"}""")
+        .header("X-Forwarded-For", ip)
+
     @Test
     fun `should return rate limit headers on auth requests`() {
         mockMvcWithFilter.perform(postLogin("10.0.1.1"))
@@ -103,6 +108,14 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
         val ip = "10.0.8.1"
         repeat(10) { mockMvcWithFilter.perform(postRefresh(ip)) }
         mockMvcWithFilter.perform(postRefresh(ip))
+            .andExpect(status().isTooManyRequests)
+    }
+
+    @Test
+    fun `should rate limit forgot-password endpoint`() {
+        val ip = "10.0.10.1"
+        repeat(10) { mockMvcWithFilter.perform(postForgotPassword(ip)) }
+        mockMvcWithFilter.perform(postForgotPassword(ip))
             .andExpect(status().isTooManyRequests)
     }
 
