@@ -71,7 +71,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 10-04-PLAN.md — forgot/reset endpoints + DTOs + integration tests (RECOV-01/03/04/05/06/07) [Wave 3]
+- [x] 10-04-PLAN.md — forgot/reset endpoints + DTOs + integration tests (RECOV-01/03/04/05/06/07) [Wave 3]
 
 Introduces transactional email infrastructure (new dependency), a hashed single-use reset token with short TTL, enumeration-safe responses, and rate limiting on the forgot-password endpoint. Design captured in `.planning/notes/password-recovery-design.md`; email capability seed in `.planning/seeds/transactional-email-infra.md`.
 
@@ -108,7 +108,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
-| 10. Password Recovery | v2.1 | 3/4 | In Progress|  |
+| 10. Password Recovery | v2.1 | 4/4 | In Progress|  |
 | 11. Email Verification | v2.1 | 0/? | 🔭 Planned | — |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
