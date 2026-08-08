@@ -9,14 +9,17 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.MessageDigest
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.HexFormat
 import java.util.UUID
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
     @Value("\${jwt.refresh-token-expiry-days:30}") private val refreshTokenExpiryDays: Long
@@ -85,6 +88,33 @@ class AuthService(
             accessToken = accessToken,
             refreshToken = newRefreshTokenString
         )
+    }
+
+    @Transactional
+    fun resetPassword(rawToken: String, newPassword: String) {
+        val tokenHash = hashToken(rawToken)
+        val resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+            ?: throw InvalidTokenException()
+
+        if (resetToken.usedAt != null || resetToken.expiresAt.isBefore(Instant.now())) {
+            throw InvalidTokenException()
+        }
+
+        resetToken.usedAt = Instant.now()
+        passwordResetTokenRepository.save(resetToken)
+
+        val user = resetToken.user
+        user.passwordHash = passwordEncoder.encode(newPassword)!!
+        user.updatedAt = Instant.now()
+        userRepository.save(user)
+
+        revokeAllUserTokens(user)
+    }
+
+    private fun hashToken(rawToken: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(rawToken.toByteArray(Charsets.UTF_8))
+        return HexFormat.of().formatHex(hash)
     }
 
     private fun createRefreshToken(user: User): String {
