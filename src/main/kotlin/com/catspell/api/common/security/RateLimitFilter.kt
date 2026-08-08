@@ -24,7 +24,8 @@ class RateLimitFilter(private val capacity: Long = 10) : Filter {
     private val AUTH_PATHS = setOf(
         "/api/auth/register",
         "/api/auth/login",
-        "/api/auth/refresh"
+        "/api/auth/refresh",
+        "/api/auth/forgot-password"
     )
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
