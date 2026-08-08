@@ -62,7 +62,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 **Plans**: 4 plans
 **Wave 1**
 
-- [ ] 10-01-PLAN.md — EmailSender seam + no-op logging provider + backend-rendered reset email + config (EMAIL-01, EMAIL-02) [Wave 1]
+- [x] 10-01-PLAN.md — EmailSender seam + no-op logging provider + backend-rendered reset email + config (EMAIL-01, EMAIL-02) [Wave 1]
 - [ ] 10-02-PLAN.md — PasswordResetToken entity + repository + V15 Flyway migration (RECOV-05) [Wave 1]
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -108,7 +108,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
-| 10. Password Recovery | v2.1 | 0/? | 🔭 Planned | — |
+| 10. Password Recovery | v2.1 | 1/4 | In Progress|  |
 | 11. Email Verification | v2.1 | 0/? | 🔭 Planned | — |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
