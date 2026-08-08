@@ -18,10 +18,10 @@ Requirements for milestone v2.1. Each maps to a roadmap phase.
 - [ ] **RECOV-01**: User can request a password reset by submitting their email address
 - [x] **RECOV-02**: User receives an email containing a single-use, time-limited reset link
 - [ ] **RECOV-03**: User can set a new password by submitting a valid reset token and new password
-- [ ] **RECOV-04**: The forgot-password endpoint returns an identical generic response whether or not the email is registered (no account enumeration)
+- [x] **RECOV-04**: The forgot-password endpoint returns an identical generic response whether or not the email is registered (no account enumeration)
 - [x] **RECOV-05**: Reset tokens are stored hashed, are single-use (invalidated after use), and expire after a short TTL (~15–30 min); used or expired tokens are rejected
-- [ ] **RECOV-06**: On a successful password reset, all of the user's active sessions (refresh tokens) are revoked
-- [ ] **RECOV-07**: The forgot-password endpoint is rate-limited (per-email and/or per-IP) to prevent email-bombing abuse
+- [x] **RECOV-06**: On a successful password reset, all of the user's active sessions (refresh tokens) are revoked
+- [x] **RECOV-07**: The forgot-password endpoint is rate-limited (per-email and/or per-IP) to prevent email-bombing abuse
 
 ### Email Verification
 
@@ -72,10 +72,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RECOV-01 | Phase 10 | Pending |
 | RECOV-02 | Phase 10 | Complete |
 | RECOV-03 | Phase 10 | Pending |
-| RECOV-04 | Phase 10 | Pending |
+| RECOV-04 | Phase 10 | Complete |
 | RECOV-05 | Phase 10 | Complete |
-| RECOV-06 | Phase 10 | Pending |
-| RECOV-07 | Phase 10 | Pending |
+| RECOV-06 | Phase 10 | Complete |
+| RECOV-07 | Phase 10 | Complete |
 | VERIFY-01 | Phase 11 | Pending |
 | VERIFY-02 | Phase 11 | Pending |
 | VERIFY-03 | Phase 11 | Pending |

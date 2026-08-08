@@ -67,7 +67,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 10-03-PLAN.md — PasswordResetService + AuthService.resetPassword + three-whitelist security wiring (RECOV-02/04/05/06/07) [Wave 2]
+- [x] 10-03-PLAN.md — PasswordResetService + AuthService.resetPassword + three-whitelist security wiring (RECOV-02/04/05/06/07) [Wave 2]
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -108,7 +108,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 7. Mixed Discovery Feed | v1.1 | 2/2 | ✅ Complete | 2026-06-23 |
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
-| 10. Password Recovery | v2.1 | 2/4 | In Progress|  |
+| 10. Password Recovery | v2.1 | 3/4 | In Progress|  |
 | 11. Email Verification | v2.1 | 0/? | 🔭 Planned | — |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
