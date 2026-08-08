@@ -96,12 +96,16 @@ class AuthService(
         val resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
             ?: throw InvalidTokenException()
 
-        if (resetToken.usedAt != null || resetToken.expiresAt.isBefore(Instant.now())) {
+        if (resetToken.expiresAt.isBefore(Instant.now())) {
             throw InvalidTokenException()
         }
 
-        resetToken.usedAt = Instant.now()
-        passwordResetTokenRepository.save(resetToken)
+        // Atomically claim the token. If another concurrent request already consumed it, the
+        // conditional update matches zero rows and we reject — enforcing single-use without a
+        // read-check-write race (a plain usedAt check + save would let two callers both succeed).
+        if (passwordResetTokenRepository.markUsed(resetToken.id!!, Instant.now()) == 0) {
+            throw InvalidTokenException()
+        }
 
         val user = resetToken.user
         user.passwordHash = passwordEncoder.encode(newPassword)!!

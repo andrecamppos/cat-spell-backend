@@ -55,7 +55,11 @@ class PasswordResetService(
             return
         }
 
-        val user = userRepository.findByEmail(normalizedEmail) ?: return
+        // Look up the user with the email exactly as submitted — matching register/login, which store
+        // and query the address verbatim. Normalizing only here (e.g. lowercasing) would silently fail
+        // to match any account registered with different casing, locking that user out of recovery.
+        // The normalized value above is used solely as the rate-limit bucket key.
+        val user = userRepository.findByEmail(email) ?: return
 
         // Invalidate any prior unused tokens so only the freshest link is usable.
         val priorTokens = passwordResetTokenRepository.findAllByUserAndUsedAtIsNull(user)
