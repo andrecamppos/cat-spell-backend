@@ -227,6 +227,53 @@ class PasswordResetIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `RECOV-01 - forgot-password matches an account registered with mixed-case email`() {
+        // Regression: recovery lookup must use the email verbatim (as register/login do), not a
+        // lowercased copy — otherwise a user registered with mixed-case is silently locked out.
+        register("Mixed.Case@Example.com")
+        sentMessages.clear()
+
+        forgotPassword("Mixed.Case@Example.com").andExpect(status().isAccepted)
+
+        val registered = userRepository.findByEmail("Mixed.Case@Example.com")!!
+        val rows = passwordResetTokenRepository.findAllByUserAndUsedAtIsNull(registered)
+        assertEquals(1, rows.size, "a reset token must be issued for the mixed-case account")
+        assertEquals(1, sentMessages.size, "a reset email must be sent for the mixed-case account")
+    }
+
+    @Test
+    fun `RECOV-05 - concurrent reset-password with the same token succeeds exactly once`() {
+        register("recov05-race@example.com", "oldpassword1")
+        sentMessages.clear()
+        forgotPassword("recov05-race@example.com").andExpect(status().isAccepted)
+        val rawToken = capturedResetToken()
+
+        val threads = 4
+        val executor = Executors.newFixedThreadPool(threads)
+        val statuses = java.util.Collections.synchronizedList(mutableListOf<Int>())
+        try {
+            val tasks = (0 until threads).map {
+                java.util.concurrent.Callable {
+                    val status = mockMvc.perform(
+                        post("/api/auth/reset-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(mapOf("token" to rawToken, "newPassword" to "newpassword1")))
+                    ).andReturn().response.status
+                    statuses.add(status)
+                }
+            }
+            executor.invokeAll(tasks)
+        } finally {
+            executor.shutdown()
+            executor.awaitTermination(30, TimeUnit.SECONDS)
+        }
+
+        assertEquals(threads, statuses.size)
+        assertEquals(1, statuses.count { it == 200 }, "exactly one concurrent reset must succeed (single-use), got $statuses")
+        assertEquals(threads - 1, statuses.count { it == 401 }, "all other concurrent resets must be rejected 401, got $statuses")
+    }
+
+    @Test
     fun `concurrent forgot-password requests each return 202`() {
         repeat(5) { register("recov01-concurrent-$it@example.com") }
 
