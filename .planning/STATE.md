@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 10 shipped — PR #10
+**Status:** ✅ Milestone complete
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
