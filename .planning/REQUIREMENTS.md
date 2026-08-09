@@ -10,18 +10,18 @@ Requirements for milestone v2.1. Each maps to a roadmap phase.
 
 ### Email Infrastructure
 
-- [ ] **EMAIL-01**: System sends transactional email through a provider-abstracted `EmailSender` seam (concrete provider swappable, stubbed in tests)
-- [ ] **EMAIL-02**: Email sending is environment-configurable — provider API key via env, with a no-op/logging provider used for local dev and integration tests (no real network sends in tests)
+- [x] **EMAIL-01**: System sends transactional email through a provider-abstracted `EmailSender` seam (concrete provider swappable, stubbed in tests)
+- [x] **EMAIL-02**: Email sending is environment-configurable — provider API key via env, with a no-op/logging provider used for local dev and integration tests (no real network sends in tests)
 
 ### Password Recovery
 
-- [ ] **RECOV-01**: User can request a password reset by submitting their email address
-- [ ] **RECOV-02**: User receives an email containing a single-use, time-limited reset link
-- [ ] **RECOV-03**: User can set a new password by submitting a valid reset token and new password
-- [ ] **RECOV-04**: The forgot-password endpoint returns an identical generic response whether or not the email is registered (no account enumeration)
-- [ ] **RECOV-05**: Reset tokens are stored hashed, are single-use (invalidated after use), and expire after a short TTL (~15–30 min); used or expired tokens are rejected
-- [ ] **RECOV-06**: On a successful password reset, all of the user's active sessions (refresh tokens) are revoked
-- [ ] **RECOV-07**: The forgot-password endpoint is rate-limited (per-email and/or per-IP) to prevent email-bombing abuse
+- [x] **RECOV-01**: User can request a password reset by submitting their email address
+- [x] **RECOV-02**: User receives an email containing a single-use, time-limited reset link
+- [x] **RECOV-03**: User can set a new password by submitting a valid reset token and new password
+- [x] **RECOV-04**: The forgot-password endpoint returns an identical generic response whether or not the email is registered (no account enumeration)
+- [x] **RECOV-05**: Reset tokens are stored hashed, are single-use (invalidated after use), and expire after a short TTL (~15–30 min); used or expired tokens are rejected
+- [x] **RECOV-06**: On a successful password reset, all of the user's active sessions (refresh tokens) are revoked
+- [x] **RECOV-07**: The forgot-password endpoint is rate-limited (per-email and/or per-IP) to prevent email-bombing abuse
 
 ### Email Verification
 
@@ -67,15 +67,15 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMAIL-01 | Phase 10 | Pending |
-| EMAIL-02 | Phase 10 | Pending |
-| RECOV-01 | Phase 10 | Pending |
-| RECOV-02 | Phase 10 | Pending |
-| RECOV-03 | Phase 10 | Pending |
-| RECOV-04 | Phase 10 | Pending |
-| RECOV-05 | Phase 10 | Pending |
-| RECOV-06 | Phase 10 | Pending |
-| RECOV-07 | Phase 10 | Pending |
+| EMAIL-01 | Phase 10 | Complete |
+| EMAIL-02 | Phase 10 | Complete |
+| RECOV-01 | Phase 10 | Complete |
+| RECOV-02 | Phase 10 | Complete |
+| RECOV-03 | Phase 10 | Complete |
+| RECOV-04 | Phase 10 | Complete |
+| RECOV-05 | Phase 10 | Complete |
+| RECOV-06 | Phase 10 | Complete |
+| RECOV-07 | Phase 10 | Complete |
 | VERIFY-01 | Phase 11 | Pending |
 | VERIFY-02 | Phase 11 | Pending |
 | VERIFY-03 | Phase 11 | Pending |
@@ -88,6 +88,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ACCT-05 | Phase 12 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 19 total
 - Mapped to phases: 19 ✓
 - Unmapped: 0

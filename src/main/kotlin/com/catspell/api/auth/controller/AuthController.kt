@@ -1,10 +1,14 @@
 package com.catspell.api.auth.controller
 
 import com.catspell.api.auth.model.AuthResponse
+import com.catspell.api.auth.model.ForgotPasswordRequest
+import com.catspell.api.auth.model.GenericMessageResponse
 import com.catspell.api.auth.model.LoginRequest
 import com.catspell.api.auth.model.RefreshRequest
 import com.catspell.api.auth.model.RegisterRequest
+import com.catspell.api.auth.model.ResetPasswordRequest
 import com.catspell.api.auth.service.AuthService
+import com.catspell.api.auth.service.PasswordResetService
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -15,7 +19,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
-    private val authService: AuthService
+    private val authService: AuthService,
+    private val passwordResetService: PasswordResetService
 ) {
 
     @SecurityRequirements
@@ -37,6 +42,22 @@ class AuthController(
     fun refresh(@Valid @RequestBody request: RefreshRequest): ResponseEntity<AuthResponse> {
         val response = authService.refreshToken(request)
         return ResponseEntity.ok(response)
+    }
+
+    @SecurityRequirements
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@Valid @RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericMessageResponse> {
+        passwordResetService.requestReset(request.email)
+        return ResponseEntity.accepted().body(
+            GenericMessageResponse("If an account exists for that email, a password reset link has been sent.")
+        )
+    }
+
+    @SecurityRequirements
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Void> {
+        authService.resetPassword(request.token, request.newPassword)
+        return ResponseEntity.ok().build()
     }
 
     @GetMapping("/me")

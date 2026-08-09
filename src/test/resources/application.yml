@@ -38,6 +38,12 @@ management:
       exposure:
         include: health
 
+email:
+  enabled: false
+
+app:
+  reset-password-url: catspell://reset-password
+
 rate-limit:
   capacity: 10000
 

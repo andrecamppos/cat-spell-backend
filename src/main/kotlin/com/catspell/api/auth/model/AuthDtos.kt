@@ -24,3 +24,19 @@ data class AuthResponse(
     val accessToken: String,
     val refreshToken: String
 )
+
+data class ForgotPasswordRequest(
+    @field:Email(message = "must be a valid email address")
+    val email: String
+)
+
+data class ResetPasswordRequest(
+    val token: String,
+
+    @field:Size(min = 8, message = "must be at least 8 characters")
+    val newPassword: String
+)
+
+data class GenericMessageResponse(
+    val message: String
+)

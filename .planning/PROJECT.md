@@ -12,7 +12,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 **Shipped:** v2.0 Push Notifications (2026-07-29) — FCM push notifications for new matches and new chat messages, delivered when users are away from the app, behind a provider abstraction and dispatched asynchronously off domain events.
 
-**Next milestone:** v2.1 Account Recovery & Email Verification (in planning) — self-service password recovery and email verification, backed by reusable transactional email infrastructure.
+**In progress:** v2.1 Account Recovery & Email Verification — Phase 10 (Password Recovery) complete: reusable `EmailSender` seam + backend-rendered reset email, hashed single-use expiring reset tokens, enumeration-safe + rate-limited forgot/reset endpoints with session revocation. Next up: Phase 11 (Email Verification).
 
 ## Current Milestone: v2.1 Account Recovery & Email Verification
 
@@ -55,10 +55,11 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ FCM HTTP v1 delivery behind a `PushProvider` abstraction (APNs-ready) with fail-fast config + Firebase health indicator — v2.0 (Phase 8)
 - ✓ Async off-thread FCM sends (`AFTER_COMMIT` domain events) that never block or roll back persistence — v2.0 (Phase 9)
 - ✓ Backend-verifiable delivery — mocked-provider contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
+- ✓ Transactional email infrastructure — provider-abstracted `EmailSender` seam with default no-op/logging provider (no network sends in dev/tests) — v2.1 (Phase 10)
+- ✓ Password recovery — enumeration-safe forgot/reset via emailed link, hashed single-use token with short TTL, per-email/per-IP rate limiting, revokes all refresh tokens on reset — v2.1 (Phase 10)
 
 ### Active
-- [ ] Transactional email infrastructure (provider abstraction) — v2.1
-- [ ] Password recovery via emailed reset link — v2.1
+- [ ] Email verification on signup (hard gate, resend, grandfather existing users) — v2.1
 - [ ] Email verification on signup (hard gate, resend, grandfather existing users) — v2.1
 - [ ] Change email while logged in (password + new-address verification) — v2.1
 - [ ] Change password while logged in (password + revoke other sessions) — v2.1
@@ -141,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-07 — v2.1 Account Recovery & Email Verification milestone started via /gsd-new-milestone*
+*Last updated: 2026-08-08 — Phase 10 (Password Recovery) complete*
