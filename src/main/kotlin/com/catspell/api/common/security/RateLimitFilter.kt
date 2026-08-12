@@ -25,7 +25,8 @@ class RateLimitFilter(private val capacity: Long = 10) : Filter {
         "/api/auth/register",
         "/api/auth/login",
         "/api/auth/refresh",
-        "/api/auth/forgot-password"
+        "/api/auth/forgot-password",
+        "/api/auth/resend-verification"
     )
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
