@@ -99,7 +99,7 @@ Verification email on registration, hard-gate login until verified, resend flow 
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 11-05-PLAN.md — test-suite migration to the no-token register + login-gate contract + resend-verification per-IP rate-limit test + GrandfatherMigrationTest (VERIFY-03/04/05) [Wave 4]
+- [x] 11-05-PLAN.md — test-suite migration to the no-token register + login-gate contract + resend-verification per-IP rate-limit test + GrandfatherMigrationTest (VERIFY-03/04/05) [Wave 4]
 
 ### Phase 12: Account Credentials
 
@@ -126,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 4/5 | In Progress|  |
+| 11. Email Verification | v2.1 | 5/5 | In Progress|  |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---
