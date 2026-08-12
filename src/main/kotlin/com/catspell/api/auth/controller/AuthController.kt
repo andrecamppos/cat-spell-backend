@@ -6,8 +6,11 @@ import com.catspell.api.auth.model.GenericMessageResponse
 import com.catspell.api.auth.model.LoginRequest
 import com.catspell.api.auth.model.RefreshRequest
 import com.catspell.api.auth.model.RegisterRequest
+import com.catspell.api.auth.model.ResendVerificationRequest
 import com.catspell.api.auth.model.ResetPasswordRequest
+import com.catspell.api.auth.model.VerifyEmailRequest
 import com.catspell.api.auth.service.AuthService
+import com.catspell.api.auth.service.EmailVerificationService
 import com.catspell.api.auth.service.PasswordResetService
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import jakarta.validation.Valid
@@ -20,14 +23,17 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService,
-    private val passwordResetService: PasswordResetService
+    private val passwordResetService: PasswordResetService,
+    private val emailVerificationService: EmailVerificationService
 ) {
 
     @SecurityRequirements
     @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
-        val response = authService.register(request)
-        return ResponseEntity.status(HttpStatus.CREATED).body(response)
+    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<GenericMessageResponse> {
+        authService.register(request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            GenericMessageResponse("Registration received. Check your email to verify your account before logging in.")
+        )
     }
 
     @SecurityRequirements
@@ -58,6 +64,22 @@ class AuthController(
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Void> {
         authService.resetPassword(request.token, request.newPassword)
         return ResponseEntity.ok().build()
+    }
+
+    @SecurityRequirements
+    @PostMapping("/verify-email")
+    fun verifyEmail(@Valid @RequestBody request: VerifyEmailRequest): ResponseEntity<Void> {
+        authService.verifyEmail(request.token)
+        return ResponseEntity.ok().build()
+    }
+
+    @SecurityRequirements
+    @PostMapping("/resend-verification")
+    fun resendVerification(@Valid @RequestBody request: ResendVerificationRequest): ResponseEntity<GenericMessageResponse> {
+        emailVerificationService.resend(request.email)
+        return ResponseEntity.accepted().body(
+            GenericMessageResponse("If an unverified account exists for that email, a verification link has been sent.")
+        )
     }
 
     @GetMapping("/me")
