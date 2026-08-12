@@ -95,7 +95,7 @@ Verification email on registration, hard-gate login until verified, resend flow 
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 11-04-PLAN.md — verify-email/resend-verification endpoints + DTOs + register no-token 201 contract + EmailVerificationIntegrationTest (VERIFY-01/02/03/04) [Wave 3]
+- [x] 11-04-PLAN.md — verify-email/resend-verification endpoints + DTOs + register no-token 201 contract + EmailVerificationIntegrationTest (VERIFY-01/02/03/04) [Wave 3]
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -126,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 3/5 | In Progress|  |
+| 11. Email Verification | v2.1 | 4/5 | In Progress|  |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---
