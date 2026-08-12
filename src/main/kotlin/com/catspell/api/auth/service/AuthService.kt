@@ -2,6 +2,7 @@ package com.catspell.api.auth.service
 
 import com.catspell.api.auth.model.*
 import com.catspell.api.common.exception.DuplicateEmailException
+import com.catspell.api.common.exception.EmailNotVerifiedException
 import com.catspell.api.common.exception.InvalidCredentialsException
 import com.catspell.api.common.exception.InvalidTokenException
 import com.catspell.api.common.security.JwtService
@@ -20,6 +21,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
     @Value("\${jwt.refresh-token-expiry-days:30}") private val refreshTokenExpiryDays: Long
@@ -51,6 +53,13 @@ class AuthService(
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
             throw InvalidCredentialsException()
+        }
+
+        // Login hard-gate (VERIFY-03, D-03): evaluated AFTER the password check so an unknown email or a
+        // wrong password still yields a generic 401; only a correct-password-but-unverified attempt reveals
+        // the distinct EMAIL_NOT_VERIFIED (403) gate, which the app uses to route to the resend screen.
+        if (user.emailVerifiedAt == null) {
+            throw EmailNotVerifiedException()
         }
 
         val accessToken = jwtService.generateAccessToken(user.id!!, user.email)
@@ -113,6 +122,30 @@ class AuthService(
         userRepository.save(user)
 
         revokeAllUserTokens(user)
+    }
+
+    @Transactional
+    fun verifyEmail(rawToken: String) {
+        val tokenHash = hashToken(rawToken)
+        val verificationToken = emailVerificationTokenRepository.findByTokenHash(tokenHash)
+            ?: throw InvalidTokenException()
+
+        if (verificationToken.expiresAt.isBefore(Instant.now())) {
+            throw InvalidTokenException()
+        }
+
+        // Atomically claim the token. If another concurrent request already consumed it, the conditional
+        // update matches zero rows and we reject — enforcing single-use without a read-check-write race.
+        if (emailVerificationTokenRepository.markUsed(verificationToken.id!!, Instant.now()) == 0) {
+            throw InvalidTokenException()
+        }
+
+        // Stamp the account verified. Mint NO session and do NOT revoke refresh tokens (D-02):
+        // register created no session, so the user simply logs in fresh afterward.
+        val user = verificationToken.user
+        user.emailVerifiedAt = Instant.now()
+        user.updatedAt = Instant.now()
+        userRepository.save(user)
     }
 
     private fun hashToken(rawToken: String): String {
