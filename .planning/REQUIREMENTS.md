@@ -25,7 +25,7 @@ Requirements for milestone v2.1. Each maps to a roadmap phase.
 
 ### Email Verification
 
-- [ ] **VERIFY-01**: User receives a verification email upon registration
+- [x] **VERIFY-01**: User receives a verification email upon registration
 - [x] **VERIFY-02**: User can verify their email address by submitting the emailed verification token
 - [ ] **VERIFY-03**: A user whose email is not verified cannot log in until they verify (hard gate)
 - [ ] **VERIFY-04**: User can request the verification email be resent (rate-limited)
@@ -76,7 +76,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RECOV-05 | Phase 10 | Complete |
 | RECOV-06 | Phase 10 | Complete |
 | RECOV-07 | Phase 10 | Complete |
-| VERIFY-01 | Phase 11 | Pending |
+| VERIFY-01 | Phase 11 | Complete |
 | VERIFY-02 | Phase 11 | Complete |
 | VERIFY-03 | Phase 11 | Pending |
 | VERIFY-04 | Phase 11 | Pending |
