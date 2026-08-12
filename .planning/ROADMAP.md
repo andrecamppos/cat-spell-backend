@@ -86,7 +86,7 @@ Verification email on registration, hard-gate login until verified, resend flow 
 
 **Wave 1**
 
-- [ ] 11-01-PLAN.md — EmailVerificationToken entity + repository + V16 token table + V17 email_verified_at column & grandfather backfill (VERIFY-02, VERIFY-05) [Wave 1]
+- [x] 11-01-PLAN.md — EmailVerificationToken entity + repository + V16 token table + V17 email_verified_at column & grandfather backfill (VERIFY-02, VERIFY-05) [Wave 1]
 - [ ] 11-02-PLAN.md — EmailVerificationEmailRenderer + app.verify-email-url config, reusing the Phase 10 EmailSender seam (VERIFY-01) [Wave 1]
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -126,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 0/5 | 🔭 Planned | — |
+| 11. Email Verification | v2.1 | 1/5 | In Progress|  |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---
