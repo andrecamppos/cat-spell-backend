@@ -72,8 +72,15 @@ class PasswordResetIntegrationTest : BaseIntegrationTest() {
 
     private fun register(email: String, password: String = "password123"): Pair<String, String> {
         val body = mapOf("email" to email, "password" to password)
-        val result = mockMvc.perform(
+        mockMvc.perform(
             post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+        // Register no longer returns tokens (Phase 11); promote past the login gate and read tokens from login.
+        markEmailVerified(email)
+        val result = mockMvc.perform(
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body))
         ).andReturn()

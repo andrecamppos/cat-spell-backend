@@ -31,6 +31,7 @@ class AuthIntegrationTest : BaseIntegrationTest() {
         }
     }
 
+    /** POST /register (Phase 11 contract: 201, generic body, NO tokens). Returns the response body. */
     private fun registerUser(email: String = "test@example.com", password: String = "password123"): String {
         val body = mapOf("email" to email, "password" to password)
         val result = mockMvc.perform(
@@ -42,14 +43,27 @@ class AuthIntegrationTest : BaseIntegrationTest() {
         return result.response.contentAsString
     }
 
+    /** POST /login and return the response body (tokens live here now, not on register). */
+    private fun login(email: String, password: String = "password123"): String {
+        val body = mapOf("email" to email, "password" to password)
+        return mockMvc.perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+                .header("X-Forwarded-For", nextIp())
+        ).andReturn().response.contentAsString
+    }
+
+    /** Register, verify, log in, and return the access token from the LOGIN response. */
     private fun registerAndExtractToken(email: String, password: String = "password123"): String {
-        val responseBody = registerUser(email, password)
-        val json = objectMapper.readTree(responseBody)
+        registerUser(email, password)
+        markEmailVerified(email)
+        val json = objectMapper.readTree(login(email, password))
         return json["accessToken"].asText()
     }
 
     @Test
-    fun `register successfully`() {
+    fun `register successfully returns 201 with generic body and no tokens`() {
         val body = mapOf("email" to "register-success@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/register")
@@ -58,7 +72,9 @@ class AuthIntegrationTest : BaseIntegrationTest() {
                 .header("X-Forwarded-For", nextIp())
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.accessToken").isNotEmpty)
+            .andExpect(jsonPath("$.message").isNotEmpty)
+            .andExpect(jsonPath("$.accessToken").doesNotExist())
+            .andExpect(jsonPath("$.refreshToken").doesNotExist())
     }
 
     @Test
@@ -87,8 +103,23 @@ class AuthIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `login successfully`() {
+    fun `login before verification is forbidden with EMAIL_NOT_VERIFIED`() {
+        registerUser(email = "login-unverified@example.com", password = "password123")
+        val body = mapOf("email" to "login-unverified@example.com", "password" to "password123")
+        mockMvc.perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+                .header("X-Forwarded-For", nextIp())
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("EMAIL_NOT_VERIFIED"))
+    }
+
+    @Test
+    fun `login successfully after verification`() {
         registerUser(email = "login-success@example.com", password = "password123")
+        markEmailVerified("login-success@example.com")
         val body = mapOf("email" to "login-success@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/login")
@@ -103,6 +134,7 @@ class AuthIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `login invalid credentials`() {
         registerUser(email = "login-fail@example.com", password = "password123")
+        markEmailVerified("login-fail@example.com")
         val body = mapOf("email" to "login-fail@example.com", "password" to "wrongpassword")
         mockMvc.perform(
             post("/api/auth/login")
@@ -152,20 +184,6 @@ class AuthIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `register returns refresh token`() {
-        val body = mapOf("email" to "register-refresh@example.com", "password" to "password123")
-        mockMvc.perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body))
-                .header("X-Forwarded-For", nextIp())
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.accessToken").isNotEmpty)
-            .andExpect(jsonPath("$.refreshToken").isNotEmpty)
-    }
-
-    @Test
     fun `register with invalid email`() {
         val body = mapOf("email" to "not-an-email", "password" to "password123")
         mockMvc.perform(
@@ -178,8 +196,9 @@ class AuthIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `login returns refresh token`() {
+    fun `login returns access and refresh tokens after verification`() {
         registerUser(email = "login-refresh@example.com", password = "password123")
+        markEmailVerified("login-refresh@example.com")
         val body = mapOf("email" to "login-refresh@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/login")
@@ -194,8 +213,9 @@ class AuthIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token successfully`() {
-        val responseBody = registerUser(email = "refresh-success@example.com")
-        val json = objectMapper.readTree(responseBody)
+        registerUser(email = "refresh-success@example.com")
+        markEmailVerified("refresh-success@example.com")
+        val json = objectMapper.readTree(login("refresh-success@example.com"))
         val refreshToken = json["refreshToken"].asText()
 
         val body = mapOf("refreshToken" to refreshToken)
@@ -224,8 +244,9 @@ class AuthIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `refresh token reuse detection`() {
-        val responseBody = registerUser(email = "refresh-reuse@example.com")
-        val json = objectMapper.readTree(responseBody)
+        registerUser(email = "refresh-reuse@example.com")
+        markEmailVerified("refresh-reuse@example.com")
+        val json = objectMapper.readTree(login("refresh-reuse@example.com"))
         val refreshToken = json["refreshToken"].asText()
 
         val ip = nextIp()
