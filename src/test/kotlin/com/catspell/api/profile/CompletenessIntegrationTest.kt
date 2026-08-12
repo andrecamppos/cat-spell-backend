@@ -29,8 +29,14 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
 
     private fun registerAndGetToken(email: String): String {
         val body = mapOf("email" to email, "password" to "password123")
-        val result = mockMvc.perform(
+        mockMvc.perform(
             post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+        markEmailVerified(email)
+        val result = mockMvc.perform(
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body))
         ).andReturn()
