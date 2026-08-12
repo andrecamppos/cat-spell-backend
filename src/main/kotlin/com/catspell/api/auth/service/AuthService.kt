@@ -22,29 +22,26 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private val emailVerificationService: EmailVerificationService,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
     @Value("\${jwt.refresh-token-expiry-days:30}") private val refreshTokenExpiryDays: Long
 ) {
 
-    fun register(request: RegisterRequest): AuthResponse {
+    fun register(request: RegisterRequest) {
         if (userRepository.existsByEmail(request.email)) {
             throw DuplicateEmailException()
         }
 
+        // Create the account unverified (emailVerifiedAt = null) and send the first verification email.
+        // No session is minted — the user must verify then log in fresh (breaking contract, D-01, VERIFY-01).
         val user = User(
             email = request.email,
             passwordHash = passwordEncoder.encode(request.password)!!
         )
         val savedUser = userRepository.save(user)
 
-        val accessToken = jwtService.generateAccessToken(savedUser.id!!, savedUser.email)
-        val refreshToken = createRefreshToken(savedUser)
-
-        return AuthResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken
-        )
+        emailVerificationService.issueAndSend(savedUser)
     }
 
     fun login(request: LoginRequest): AuthResponse {
