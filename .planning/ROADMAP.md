@@ -42,7 +42,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 <summary>🔭 v2.1 Account Recovery & Email Verification (Phases 10-12) — PLANNED</summary>
 
 - [x] **Phase 10: Password Recovery** — email-based forgot/reset-password flow (completed 2026-08-08)
-- [ ] **Phase 11: Email Verification** — prove ownership of the signup email
+- [x] **Phase 11: Email Verification** — prove ownership of the signup email (completed 2026-08-12)
 - [ ] **Phase 12: Account Credentials** — self-service credential changes while logged in
 
 ### Phase 10: Password Recovery
@@ -126,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 5/5 | In Progress|  |
+| 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---
