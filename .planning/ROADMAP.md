@@ -91,7 +91,7 @@ Verification email on registration, hard-gate login until verified, resend flow 
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 11-03-PLAN.md — EmailVerificationService (issue/resend) + AuthService.verifyEmail + login hard-gate + EmailNotVerifiedException(403 EMAIL_NOT_VERIFIED) + three-place security whitelist (VERIFY-01/02/03/04) [Wave 2]
+- [x] 11-03-PLAN.md — EmailVerificationService (issue/resend) + AuthService.verifyEmail + login hard-gate + EmailNotVerifiedException(403 EMAIL_NOT_VERIFIED) + three-place security whitelist (VERIFY-01/02/03/04) [Wave 2]
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -126,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 2/5 | In Progress|  |
+| 11. Email Verification | v2.1 | 3/5 | In Progress|  |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---

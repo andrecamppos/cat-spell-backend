@@ -27,8 +27,8 @@ Requirements for milestone v2.1. Each maps to a roadmap phase.
 
 - [x] **VERIFY-01**: User receives a verification email upon registration
 - [x] **VERIFY-02**: User can verify their email address by submitting the emailed verification token
-- [ ] **VERIFY-03**: A user whose email is not verified cannot log in until they verify (hard gate)
-- [ ] **VERIFY-04**: User can request the verification email be resent (rate-limited)
+- [x] **VERIFY-03**: A user whose email is not verified cannot log in until they verify (hard gate)
+- [x] **VERIFY-04**: User can request the verification email be resent (rate-limited)
 - [x] **VERIFY-05**: Existing accounts are grandfathered as verified via data migration so no current user is locked out on rollout
 
 ### Account Credentials
@@ -78,8 +78,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RECOV-07 | Phase 10 | Complete |
 | VERIFY-01 | Phase 11 | Complete |
 | VERIFY-02 | Phase 11 | Complete |
-| VERIFY-03 | Phase 11 | Pending |
-| VERIFY-04 | Phase 11 | Pending |
+| VERIFY-03 | Phase 11 | Complete |
+| VERIFY-04 | Phase 11 | Complete |
 | VERIFY-05 | Phase 11 | Complete |
 | ACCT-01 | Phase 12 | Pending |
 | ACCT-02 | Phase 12 | Pending |
