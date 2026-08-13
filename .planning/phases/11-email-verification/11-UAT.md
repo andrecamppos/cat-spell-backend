@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 11-email-verification
 source: [11-01-SUMMARY.md, 11-02-SUMMARY.md, 11-03-SUMMARY.md, 11-04-SUMMARY.md, 11-05-SUMMARY.md]
 started: 2026-08-13T14:49:32Z
@@ -19,9 +19,8 @@ result: pass
 
 ### 2. Register sends a real verification email with a working deep link
 expected: POST /api/auth/register with a fresh email returns 201 and NO tokens/session. Exactly one verification email is sent to that address, containing a single-use deep link keyed on `app.verify-email-url` (e.g. `catspell://verify-email?token=...`). Opening/using the link verifies the account. (Tests stub the EmailSender, so real delivery + link formatting need a human check.)
-result: blocked
-blocked_by: third-party
-reason: "No real email transport exists in this milestone — the only EmailSender is the no-op LoggingEmailSender (email.enabled=false default), which does not log the token/link and masks the recipient. The raw token is never persisted or logged by design. Phase 11 built the email seam + renderer only; external email providers are OPT-OUT in 11-COVERAGE.md. Renderer→EmailMessage deep-link rendering is proven by auto-passed integration test 11-04-D1."
+result: skipped
+reason: "Deferred follow-up (out of scope for Phase 11, accepted by user): real email delivery + clickable deep link. No real email transport exists in this milestone — the only EmailSender is the no-op LoggingEmailSender (email.enabled=false default), which does not log the token/link and masks the recipient; the raw token is never persisted or logged by design. Real email transport was never a Phase 11 requirement (VERIFY-01..05 are all satisfied) and external email providers are explicitly OPT-OUT in 11-COVERAGE.md. Renderer→EmailMessage deep-link rendering is proven by auto-passed integration test 11-04-D1. Tracked for a future email-transport phase."
 
 ### 3. End-to-end verify-then-login happy path in a live environment
 expected: A newly registered (unverified) user CANNOT log in — login returns 403 with code EMAIL_NOT_VERIFIED after the password check (wrong password / unknown user still returns 401). After hitting POST /api/auth/verify-email with the emailed token (200, single-use — reusing or an expired/blank/unknown token is rejected), the same user can log in successfully and receives tokens.
@@ -81,9 +80,15 @@ total: 11
 passed: 10
 issues: 0
 pending: 0
-skipped: 0
-blocked: 1
+skipped: 1
+blocked: 0
 
 ## Gaps
 
-[none yet]
+[none — all Phase 11 requirements (VERIFY-01..05) satisfied]
+
+## Deferred Follow-Ups
+
+- test: 2
+  idea: "Real verification-email delivery + clickable deep link — requires a real EmailSender (SMTP/provider) behind the existing seam. Out of scope for Phase 11 (external email providers OPT-OUT in 11-COVERAGE.md); tracked for a future email-transport phase. Accepted by user 2026-08-13."
+  deferred_at: 2026-08-13

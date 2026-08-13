@@ -75,6 +75,14 @@ None — every observable truth is exercised by a passing automated integration 
 
 **No gaps found.** Phase goal achieved. Ready to proceed.
 
+## Acknowledged Gaps
+
+- item: "UAT Test 2 — real verification-email delivery + clickable deep link"
+  status: accepted (deferred)
+  accepted_by: user
+  accepted_at: 2026-08-13
+  rationale: "Out of scope for Phase 11. The phase's committed requirements (VERIFY-01..05) are all satisfied and covered by passing integration tests. No real email transport exists in this milestone — the only EmailSender is the no-op LoggingEmailSender, and external email providers are explicitly OPT-OUT in 11-COVERAGE.md. The verification token/link logic (renderer → EmailMessage) is proven by auto-passed integration test 11-04-D1. Real transport is tracked for a future email-transport phase and does not block Phase 11 completion."
+
 ## Verification Metadata
 
 **Verification approach:** Goal-backward (derived from phase goal + PLAN must_haves)
