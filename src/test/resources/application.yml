@@ -43,6 +43,7 @@ email:
 
 app:
   reset-password-url: catspell://reset-password
+  verify-email-url: catspell://verify-email
 
 rate-limit:
   capacity: 10000

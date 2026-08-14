@@ -29,13 +29,14 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     private fun registerAndGetTokens(email: String, password: String = "password123"): Pair<String, String> {
         val body = mapOf("email" to email, "password" to password)
-        val result = mockMvc.perform(
+        mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body))
-        ).andReturn()
-        val json = objectMapper.readTree(result.response.contentAsString)
-        return Pair(json["accessToken"].asText(), json["refreshToken"].asText())
+        )
+        // Register no longer returns tokens (Phase 11); promote past the login gate and read tokens from login.
+        markEmailVerified(email)
+        return loginAndGetTokens(email, password)
     }
 
     private fun loginAndGetTokens(email: String, password: String = "password123"): Pair<String, String> {
@@ -138,7 +139,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `register returns refresh token`() {
+    fun `register returns no tokens`() {
         val body = mapOf("email" to "rt-register-refresh@example.com", "password" to "password123")
         mockMvc.perform(
             post("/api/auth/register")
@@ -146,7 +147,8 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
                 .content(objectMapper.writeValueAsString(body))
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.refreshToken").isNotEmpty)
+            .andExpect(jsonPath("$.refreshToken").doesNotExist())
+            .andExpect(jsonPath("$.accessToken").doesNotExist())
     }
 
     @Test

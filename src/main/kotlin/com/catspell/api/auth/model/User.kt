@@ -21,7 +21,10 @@ class User(
     var createdAt: Instant = Instant.now(),
 
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant = Instant.now()
+    var updatedAt: Instant = Instant.now(),
+
+    @Column(name = "email_verified_at")
+    var emailVerifiedAt: Instant? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

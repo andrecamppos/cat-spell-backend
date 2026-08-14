@@ -64,6 +64,14 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(EmailNotVerifiedException::class)
+    fun handleEmailNotVerified(ex: EmailNotVerifiedException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message ?: "Email address not verified")
+        problem.title = "Forbidden"
+        problem.setProperty("code", "EMAIL_NOT_VERIFIED")
+        return problem
+    }
+
     @ExceptionHandler(ResourceNotFoundException::class)
     fun handleResourceNotFound(ex: ResourceNotFoundException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message ?: "Resource not found")

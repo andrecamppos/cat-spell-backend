@@ -43,8 +43,14 @@ class ChatIntegrationTest : BaseIntegrationTest() {
 
     private fun registerAndGetToken(email: String): String {
         val body = mapOf("email" to email, "password" to "password123")
-        val result = mockMvc.perform(
+        mockMvc.perform(
             post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        )
+        markEmailVerified(email)
+        val result = mockMvc.perform(
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body))
         ).andReturn()
@@ -343,6 +349,8 @@ class ChatIntegrationTest : BaseIntegrationTest() {
 
         // Send 5 messages
         val sessionA = connectStomp(tokenA)
+        // Settle so the first send is not dropped in the connect race.
+        Thread.sleep(500)
         val stompHeaders = StompHeaders()
         stompHeaders.destination = "/app/chat.send"
         for (i in 1..5) {
@@ -350,7 +358,6 @@ class ChatIntegrationTest : BaseIntegrationTest() {
             Thread.sleep(100)
         }
         Thread.sleep(1000)
-        sessionA.disconnect()
 
         // Get conversation ID from conversation list
         val listResult = mockMvc.perform(
@@ -358,6 +365,18 @@ class ChatIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $tokenA")
         ).andExpect(status().isOk).andReturn()
         val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
+
+        // STOMP send is fire-and-forget: poll WHILE STILL CONNECTED until all 5 messages are persisted,
+        // so the async outbound buffer drains before we disconnect (otherwise a frame can be dropped).
+        for (attempt in 1..60) {
+            val poll = mockMvc.perform(
+                get("/api/conversations/$convId/messages")
+                    .header("Authorization", "Bearer $tokenA")
+            ).andReturn().response.contentAsString
+            if (objectMapper.readTree(poll)["messages"].size() == 5) break
+            Thread.sleep(250)
+        }
+        sessionA.disconnect()
 
         // Fetch message history and verify newest-first order
         val histResult = mockMvc.perform(
@@ -386,14 +405,16 @@ class ChatIntegrationTest : BaseIntegrationTest() {
 
         // Send 35 messages to test pagination (page size 30)
         val sessionA = connectStomp(tokenA)
+        // The STOMP CONNECTED frame can arrive before the server-side session is fully wired; settle so the
+        // first send is not dropped in the connect race.
+        Thread.sleep(1000)
         val stompHeaders = StompHeaders()
         stompHeaders.destination = "/app/chat.send"
         for (i in 1..35) {
             sessionA.send(stompHeaders, mapOf("matchId" to matchId, "content" to "Msg $i"))
-            Thread.sleep(50)
+            Thread.sleep(100)
         }
-        Thread.sleep(2000)
-        sessionA.disconnect()
+        Thread.sleep(1000)
 
         // Get conversation ID from conversation list
         val listResult = mockMvc.perform(
@@ -401,6 +422,28 @@ class ChatIntegrationTest : BaseIntegrationTest() {
                 .header("Authorization", "Bearer $tokenA")
         ).andExpect(status().isOk).andReturn()
         val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
+
+        // STOMP send is fire-and-forget over an async outbound channel; disconnecting before every frame is
+        // flushed and persisted can drop a message. Poll WHILE STILL CONNECTED until all 35 are persisted,
+        // so the outbound buffer drains before we tear the session down.
+        for (attempt in 1..60) {
+            val poll = mockMvc.perform(
+                get("/api/conversations/$convId/messages")
+                    .header("Authorization", "Bearer $tokenA")
+            ).andReturn().response.contentAsString
+            val pj = objectMapper.readTree(poll)
+            if (pj["messages"].size() == 30 && pj["hasMore"].asBoolean()) {
+                val cursor = pj["nextCursor"].asText()
+                val p2 = mockMvc.perform(
+                    get("/api/conversations/$convId/messages")
+                        .param("cursor", cursor)
+                        .header("Authorization", "Bearer $tokenA")
+                ).andReturn().response.contentAsString
+                if (objectMapper.readTree(p2)["messages"].size() == 5) break
+            }
+            Thread.sleep(250)
+        }
+        sessionA.disconnect()
 
         // Page 1: should return 30 messages with hasMore=true
         val page1Result = mockMvc.perform(

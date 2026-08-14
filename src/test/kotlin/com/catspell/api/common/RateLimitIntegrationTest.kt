@@ -51,6 +51,11 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
         .content("""{"email":"rate-limit-forgot@example.com"}""")
         .header("X-Forwarded-For", ip)
 
+    private fun postResendVerification(ip: String) = post("/api/auth/resend-verification")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""{"email":"rate-limit-resend@example.com"}""")
+        .header("X-Forwarded-For", ip)
+
     @Test
     fun `should return rate limit headers on auth requests`() {
         mockMvcWithFilter.perform(postLogin("10.0.1.1"))
@@ -116,6 +121,14 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
         val ip = "10.0.10.1"
         repeat(10) { mockMvcWithFilter.perform(postForgotPassword(ip)) }
         mockMvcWithFilter.perform(postForgotPassword(ip))
+            .andExpect(status().isTooManyRequests)
+    }
+
+    @Test
+    fun `should rate limit resend-verification endpoint`() {
+        val ip = "10.0.11.1"
+        repeat(10) { mockMvcWithFilter.perform(postResendVerification(ip)) }
+        mockMvcWithFilter.perform(postResendVerification(ip))
             .andExpect(status().isTooManyRequests)
     }
 

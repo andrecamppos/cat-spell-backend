@@ -42,7 +42,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 <summary>🔭 v2.1 Account Recovery & Email Verification (Phases 10-12) — PLANNED</summary>
 
 - [x] **Phase 10: Password Recovery** — email-based forgot/reset-password flow (completed 2026-08-08)
-- [ ] **Phase 11: Email Verification** — prove ownership of the signup email
+- [x] **Phase 11: Email Verification** — prove ownership of the signup email (completed 2026-08-12)
 - [ ] **Phase 12: Account Credentials** — self-service credential changes while logged in
 
 ### Phase 10: Password Recovery
@@ -80,9 +80,26 @@ Introduces transactional email infrastructure (new dependency), a hashed single-
 **Goal**: Prove ownership of the signup email — hard-gate login until verified, with a resend flow and a migration that grandfathers existing accounts.
 **Depends on**: Phase 10 (reuses the email infrastructure)
 **Requirements**: VERIFY-01, VERIFY-02, VERIFY-03, VERIFY-04, VERIFY-05
-**Plans**: TBD
+**Plans**: 5 plans
 
 Verification email on registration, hard-gate login until verified, resend flow (rate-limited), and a migration that grandfathers existing accounts as verified so no current user is locked out.
+
+**Wave 1**
+
+- [x] 11-01-PLAN.md — EmailVerificationToken entity + repository + V16 token table + V17 email_verified_at column & grandfather backfill (VERIFY-02, VERIFY-05) [Wave 1]
+- [x] 11-02-PLAN.md — EmailVerificationEmailRenderer + app.verify-email-url config, reusing the Phase 10 EmailSender seam (VERIFY-01) [Wave 1]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 11-03-PLAN.md — EmailVerificationService (issue/resend) + AuthService.verifyEmail + login hard-gate + EmailNotVerifiedException(403 EMAIL_NOT_VERIFIED) + three-place security whitelist (VERIFY-01/02/03/04) [Wave 2]
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 11-04-PLAN.md — verify-email/resend-verification endpoints + DTOs + register no-token 201 contract + EmailVerificationIntegrationTest (VERIFY-01/02/03/04) [Wave 3]
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [x] 11-05-PLAN.md — test-suite migration to the no-token register + login-gate contract + resend-verification per-IP rate-limit test + GrandfatherMigrationTest (VERIFY-03/04/05) [Wave 4]
 
 ### Phase 12: Account Credentials
 
@@ -109,7 +126,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 8. Push Delivery Foundation | v2.0 | 3/3 | ✅ Complete | 2026-07-17 |
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
-| 11. Email Verification | v2.1 | 0/? | 🔭 Planned | — |
+| 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
 | 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
 
 ---

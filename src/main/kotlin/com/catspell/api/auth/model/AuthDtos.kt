@@ -37,6 +37,15 @@ data class ResetPasswordRequest(
     val newPassword: String
 )
 
+data class VerifyEmailRequest(
+    val token: String
+)
+
+data class ResendVerificationRequest(
+    @field:Email(message = "must be a valid email address")
+    val email: String
+)
+
 data class GenericMessageResponse(
     val message: String
 )

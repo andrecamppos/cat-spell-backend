@@ -13,7 +13,16 @@ import org.testcontainers.utility.DockerImageName
 abstract class BaseIntegrationTest {
 
     @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
+    protected lateinit var jdbcTemplate: JdbcTemplate
+
+    /**
+     * Promote a freshly-registered (unverified) user past the Phase 11 login hard-gate by stamping
+     * email_verified_at directly. Tests use this instead of bypassing the gate, so the real gate
+     * behavior stays exercised (VERIFY-03).
+     */
+    protected fun markEmailVerified(email: String) {
+        jdbcTemplate.update("UPDATE users SET email_verified_at = NOW() WHERE email = ?", email)
+    }
 
     @BeforeEach
     fun cleanDatabase() {
