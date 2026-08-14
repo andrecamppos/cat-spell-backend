@@ -4,16 +4,16 @@ milestone: v2.1
 milestone_name: Account Recovery & Email Verification
 current_phase: 12
 current_phase_name: Account Credentials
-status: planning
+status: "Phase 11 shipped — PR #11"
 stopped_at: Completed 11-05-PLAN.md
-last_updated: "2026-08-13T16:29:50.468Z"
-last_activity: 2026-08-13
-last_activity_desc: Phase 11 complete, transitioned to Phase 12
+last_updated: "2026-08-14T12:32:16.248Z"
+last_activity: 2026-08-14
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 9
   completed_plans: 9
+last_activity_desc: Phase 11 complete, transitioned to Phase 12
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 11 shipped — PR #11
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -58,7 +58,7 @@ Resume file: None
 Phase: 12 — Account Credentials
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-08-13 — Phase 11 complete, transitioned to Phase 12
+Last activity: 2026-08-14
 
 ## Operator Next Steps
 
