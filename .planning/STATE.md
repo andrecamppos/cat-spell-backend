@@ -5,8 +5,8 @@ milestone_name: Account Recovery & Email Verification
 current_phase: 12
 current_phase_name: Account Credentials
 status: "Phase 11 shipped — PR #11"
-stopped_at: Completed 11-05-PLAN.md
-last_updated: "2026-08-14T12:32:16.248Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-08-17T18:02:17.059Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 3
@@ -46,9 +46,9 @@ See `.planning/milestones/v2.0-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-08-12T22:40:54.366Z
-Stopped at: Completed 11-05-PLAN.md
-Resume file: None
+Last session: 2026-08-17T18:02:17.045Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-account-credentials/12-CONTEXT.md
 
 ---
 *Last updated: 2026-08-07 after completing the v2.1 roadmap*
