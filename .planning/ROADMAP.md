@@ -112,7 +112,7 @@ Change password (current password + revoke other sessions) and change email (cur
 
 **Wave 1**
 
-- [ ] 12-01-PLAN.md — EmailChangeRequest entity + repository + V18 email_change_requests migration (ACCT-03, ACCT-04) [Wave 1]
+- [x] 12-01-PLAN.md — EmailChangeRequest entity + repository + V18 email_change_requests migration (ACCT-03, ACCT-04) [Wave 1]
 - [ ] 12-02-PLAN.md — EmailChangeEmailRenderer + app.confirm-email-change-url config + InvalidCurrentPasswordException(403 INVALID_CURRENT_PASSWORD) handler (ACCT-01, ACCT-03) [Wave 1]
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -144,7 +144,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
-| 12. Account Credentials | v2.1 | 0/5 | 🔭 Planned | — |
+| 12. Account Credentials | v2.1 | 1/5 | In Progress|  |
 
 ---
 *Roadmap created: 2025-06-09*

@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Account Recovery & Email Verification
 current_phase: 12
-current_phase_name: Account Credentials
-status: "Phase 11 shipped — PR #11"
+current_phase_name: account-credentials
+status: executing
 stopped_at: Phase 12 context gathered
-last_updated: "2026-08-19T13:33:13.400Z"
+last_updated: "2026-08-19T14:03:27.409Z"
 last_activity: 2026-08-19
-last_activity_desc: Phase 12 planning complete
+last_activity_desc: Phase 12 execution started
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 14
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 11 — email-verification
+**Current focus:** Phase 12 — account-credentials
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 11 shipped — PR #11
+**Status:** Ready to execute
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -55,10 +55,10 @@ Resume file: .planning/phases/12-account-credentials/12-CONTEXT.md
 
 ## Current Position
 
-Phase: 12 — Account Credentials
-Plan: Not started
+Phase: 12 (account-credentials) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-08-19 — Phase 12 planning complete
+Last activity: 2026-08-19 — Phase 12 execution started
 
 ## Operator Next Steps
 
