@@ -43,7 +43,7 @@ _Full phase details: `.planning/milestones/v2.0-ROADMAP.md`_
 
 - [x] **Phase 10: Password Recovery** — email-based forgot/reset-password flow (completed 2026-08-08)
 - [x] **Phase 11: Email Verification** — prove ownership of the signup email (completed 2026-08-12)
-- [ ] **Phase 12: Account Credentials** — self-service credential changes while logged in
+- [x] **Phase 12: Account Credentials** — self-service credential changes while logged in (completed 2026-08-19)
 
 ### Phase 10: Password Recovery
 
@@ -144,7 +144,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
-| 12. Account Credentials | v2.1 | 5/5 | In Progress|  |
+| 12. Account Credentials | v2.1 | 5/5 | Complete    | 2026-08-19 |
 
 ---
 *Roadmap created: 2025-06-09*
