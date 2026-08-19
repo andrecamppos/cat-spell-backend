@@ -4,7 +4,9 @@ import com.catspell.api.auth.model.*
 import com.catspell.api.common.exception.DuplicateEmailException
 import com.catspell.api.common.exception.EmailNotVerifiedException
 import com.catspell.api.common.exception.InvalidCredentialsException
+import com.catspell.api.common.exception.InvalidCurrentPasswordException
 import com.catspell.api.common.exception.InvalidTokenException
+import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.common.security.JwtService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -22,6 +24,7 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private val emailChangeRequestRepository: EmailChangeRequestRepository,
     private val emailVerificationService: EmailVerificationService,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
@@ -143,6 +146,53 @@ class AuthService(
         user.emailVerifiedAt = Instant.now()
         user.updatedAt = Instant.now()
         userRepository.save(user)
+    }
+
+    @Transactional
+    fun changePassword(userId: UUID, currentPassword: String, newPassword: String) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User not found") }
+
+        // Re-verify the current password BEFORE any mutation (D-01/D-02, ACCT-01). A wrong password
+        // yields a distinct 403 INVALID_CURRENT_PASSWORD and leaves the hash + all sessions untouched.
+        if (!passwordEncoder.matches(currentPassword, user.passwordHash)) {
+            throw InvalidCurrentPasswordException()
+        }
+
+        user.passwordHash = passwordEncoder.encode(newPassword)!!
+        user.updatedAt = Instant.now()
+        userRepository.save(user)
+
+        // A credential change forces a fresh login (D-03, ACCT-02): revoke every active session and
+        // mint no new tokens.
+        revokeAllUserTokens(user)
+    }
+
+    @Transactional
+    fun confirmEmailChange(rawToken: String) {
+        val tokenHash = hashToken(rawToken)
+        val request = emailChangeRequestRepository.findByTokenHash(tokenHash)
+            ?: throw InvalidTokenException()
+
+        if (request.expiresAt.isBefore(Instant.now())) {
+            throw InvalidTokenException()
+        }
+
+        // Atomically claim the token. If another concurrent request already consumed it, the conditional
+        // update matches zero rows and we reject — the email swaps at most once (D-08).
+        if (emailChangeRequestRepository.markUsed(request.id!!, Instant.now()) == 0) {
+            throw InvalidTokenException()
+        }
+
+        // Only now — after a valid single-use claim — swap the account email, stamp it verified, and
+        // revoke ALL sessions so the identity change forces a fresh login (D-08, ACCT-04). Mint no tokens.
+        val user = request.user
+        user.email = request.newEmail
+        user.emailVerifiedAt = Instant.now()
+        user.updatedAt = Instant.now()
+        userRepository.save(user)
+
+        revokeAllUserTokens(user)
     }
 
     private fun hashToken(rawToken: String): String {
