@@ -38,6 +38,7 @@ email:
 app:
   reset-password-url: ${RESET_PASSWORD_URL:catspell://reset-password}
   verify-email-url: ${VERIFY_EMAIL_URL:catspell://verify-email}
+  confirm-email-change-url: ${CONFIRM_EMAIL_CHANGE_URL:catspell://confirm-email-change}
 
 springdoc:
   api-docs:
