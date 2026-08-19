@@ -117,7 +117,7 @@ Change password (current password + revoke other sessions) and change email (cur
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 12-03-PLAN.md — EmailChangeService (request path) + AuthService.changePassword + AuthService.confirmEmailChange (revoke-all, no-token, 409-on-taken, swap-on-confirm) (ACCT-01/02/03/04/05) [Wave 2]
+- [x] 12-03-PLAN.md — EmailChangeService (request path) + AuthService.changePassword + AuthService.confirmEmailChange (revoke-all, no-token, 409-on-taken, swap-on-confirm) (ACCT-01/02/03/04/05) [Wave 2]
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -144,7 +144,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
-| 12. Account Credentials | v2.1 | 2/5 | In Progress|  |
+| 12. Account Credentials | v2.1 | 3/5 | In Progress|  |
 
 ---
 *Roadmap created: 2025-06-09*
