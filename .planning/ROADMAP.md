@@ -121,7 +121,7 @@ Change password (current password + revoke other sessions) and change email (cur
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 12-04-PLAN.md — 3 endpoints + DTOs + extractUserId + three-place public whitelist for confirm-email-change (ACCT-01/02/03/04/05) [Wave 3]
+- [x] 12-04-PLAN.md — 3 endpoints + DTOs + extractUserId + three-place public whitelist for confirm-email-change (ACCT-01/02/03/04/05) [Wave 3]
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -144,7 +144,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
-| 12. Account Credentials | v2.1 | 3/5 | In Progress|  |
+| 12. Account Credentials | v2.1 | 4/5 | In Progress|  |
 
 ---
 *Roadmap created: 2025-06-09*
