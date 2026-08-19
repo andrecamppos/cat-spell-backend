@@ -168,4 +168,88 @@ class AccountCredentialsIntegrationTest : BaseIntegrationTest() {
         // No state change: the original password still logs in.
         login("acct01-short@example.com", "password123").andExpect(status().isOk)
     }
+
+    // --- ACCT-05: change-email to a taken address --------------------------
+
+    @Test
+    fun `ACCT-05 - change-email to an address owned by another account is 409 with no confirm email sent`() {
+        // A second account already owns the target address.
+        registerVerifyLogin("acct05-owner@example.com")
+        val (token, _) = registerVerifyLogin("acct05-requester@example.com")
+
+        val before = sentMessages.size
+        changeEmail(token, currentPassword = "password123", newEmail = "acct05-owner@example.com")
+            .andExpect(status().isConflict)
+
+        assertEquals(before, sentMessages.size, "no confirm email may be sent when the address is taken")
+        // No pending change was created.
+        val requester = userRepository.findByEmail("acct05-requester@example.com")!!
+        assertTrue(emailChangeRequestRepository.findAllByUserAndUsedAtIsNull(requester).isEmpty())
+    }
+
+    // --- ACCT-03 / ACCT-04: change-email request + confirm -----------------
+
+    @Test
+    fun `ACCT-03 ACCT-04 - change-email emails the new address, and confirm swaps the email and revokes sessions`() {
+        val (token, preConfirmRefresh) = registerVerifyLogin("acct03-old@example.com")
+        val newEmail = "acct03-new@example.com"
+
+        changeEmail(token, currentPassword = "password123", newEmail = newEmail)
+            .andExpect(status().isAccepted)
+
+        // The confirm email targets the NEW address, never the current account email.
+        val confirmMessage = sentMessages.last { it.to == newEmail }
+        assertEquals(newEmail, confirmMessage.to)
+        assertTrue(sentMessages.none { it.to == "acct03-old@example.com" && it.textBody.contains("confirm-email-change") })
+
+        // The account email is NOT changed until confirmation.
+        assertNotNull(userRepository.findByEmail("acct03-old@example.com"), "account email must be unchanged before confirm")
+        assertNull(userRepository.findByEmail(newEmail), "new email must not be active before confirm")
+
+        val rawToken = capturedConfirmToken(newEmail)
+        val confirmResult = confirmEmailChange(rawToken).andExpect(status().isOk).andReturn()
+        assertTrue(confirmResult.response.contentAsString.isBlank(), "confirm 200 body must be empty (no tokens)")
+
+        // The email is now swapped and stamped verified.
+        assertNull(userRepository.findByEmail("acct03-old@example.com"), "old email must no longer resolve after confirm")
+        val swapped = userRepository.findByEmail(newEmail)!!
+        assertNotNull(swapped.emailVerifiedAt, "email_verified_at must be stamped on confirm")
+
+        // Login works with the new email; sessions minted before confirm are revoked.
+        login(newEmail, "password123").andExpect(status().isOk)
+        refresh(preConfirmRefresh).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `ACCT-04 - reused, unknown, and expired confirm tokens are rejected with no further swap`() {
+        val (token, _) = registerVerifyLogin("acct04-old@example.com")
+        val newEmail = "acct04-new@example.com"
+
+        changeEmail(token, currentPassword = "password123", newEmail = newEmail)
+            .andExpect(status().isAccepted)
+        val rawToken = capturedConfirmToken(newEmail)
+
+        // First confirm succeeds.
+        confirmEmailChange(rawToken).andExpect(status().isOk)
+        // Reused (already-claimed) token is rejected — no second swap.
+        confirmEmailChange(rawToken).andExpect(status().isUnauthorized)
+        assertNotNull(userRepository.findByEmail(newEmail), "email stays swapped exactly once")
+
+        // Unknown token is rejected.
+        confirmEmailChange("totally-unknown-token").andExpect(status().isUnauthorized)
+
+        // A fresh request whose token is force-expired via the repository is rejected, with no swap.
+        val (token2, _) = registerVerifyLogin("acct04-exp-old@example.com")
+        val expEmail = "acct04-exp-new@example.com"
+        changeEmail(token2, currentPassword = "password123", newEmail = expEmail)
+            .andExpect(status().isAccepted)
+        val expRaw = capturedConfirmToken(expEmail)
+        val expUser = userRepository.findByEmail("acct04-exp-old@example.com")!!
+        val stored = emailChangeRequestRepository.findAllByUserAndUsedAtIsNull(expUser).first()
+        stored.expiresAt = Instant.now().minusSeconds(3600)
+        emailChangeRequestRepository.save(stored)
+
+        confirmEmailChange(expRaw).andExpect(status().isUnauthorized)
+        assertNull(userRepository.findByEmail(expEmail), "expired confirm must not swap the email")
+    }
 }
