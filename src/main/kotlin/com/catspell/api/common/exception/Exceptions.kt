@@ -8,6 +8,8 @@ class InvalidTokenException(message: String = "Invalid or expired token") : Runt
 
 class EmailNotVerifiedException(message: String = "Email address not verified") : RuntimeException(message)
 
+class InvalidCurrentPasswordException(message: String = "Current password is incorrect") : RuntimeException(message)
+
 class ResourceNotFoundException(message: String) : RuntimeException(message)
 
 class PhotoLimitExceededException(message: String = "Maximum 6 photos allowed") : RuntimeException(message)
