@@ -12,7 +12,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 **Shipped:** v2.0 Push Notifications (2026-07-29) — FCM push notifications for new matches and new chat messages, delivered when users are away from the app, behind a provider abstraction and dispatched asynchronously off domain events.
 
-**In progress:** v2.1 Account Recovery & Email Verification — Phase 10 (Password Recovery) complete: reusable `EmailSender` seam + backend-rendered reset email, hashed single-use expiring reset tokens, enumeration-safe + rate-limited forgot/reset endpoints with session revocation. Next up: Phase 11 (Email Verification).
+**In progress:** v2.1 Account Recovery & Email Verification — Phase 10 (Password Recovery), Phase 11 (Email Verification), and Phase 12 (Account Credentials) all complete: reusable `EmailSender` seam, hashed single-use expiring tokens, enumeration-safe + rate-limited flows with session revocation, login hard-gate until verified, and self-service change-password/change-email (verify new address before it takes effect). All v2.1 phases (10–12) are complete.
 
 ## Current Milestone: v2.1 Account Recovery & Email Verification
 
@@ -57,12 +57,11 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Backend-verifiable delivery — mocked-provider contract tests + `validate_only` dry-run smoke test — v2.0 (Phase 8)
 - ✓ Transactional email infrastructure — provider-abstracted `EmailSender` seam with default no-op/logging provider (no network sends in dev/tests) — v2.1 (Phase 10)
 - ✓ Password recovery — enumeration-safe forgot/reset via emailed link, hashed single-use token with short TTL, per-email/per-IP rate limiting, revokes all refresh tokens on reset — v2.1 (Phase 10)
+- ✓ Email verification on signup — hard-gate login until verified (403 EMAIL_NOT_VERIFIED), enumeration-safe resend, migration grandfathers existing accounts — v2.1 (Phase 11)
+- ✓ Change password while logged in — requires current password (403 INVALID_CURRENT_PASSWORD on mismatch), revokes all sessions, mints no tokens — v2.1 (Phase 12)
+- ✓ Change email while logged in — requires current password, confirm the new address via emailed single-use token before it becomes active, 409 if already in use, revokes all sessions on confirm — v2.1 (Phase 12)
 
 ### Active
-- [ ] Email verification on signup (hard gate, resend, grandfather existing users) — v2.1
-- [ ] Email verification on signup (hard gate, resend, grandfather existing users) — v2.1
-- [ ] Change email while logged in (password + new-address verification) — v2.1
-- [ ] Change password while logged in (password + revoke other sessions) — v2.1
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
 - [ ] Lifestyle signal scoring from cat ownership patterns
 - [ ] Primary/featured cat designation for swipe feed
@@ -142,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-08 — Phase 10 (Password Recovery) complete*
+*Last updated: 2026-08-19 — Phase 12 (Account Credentials) complete*
