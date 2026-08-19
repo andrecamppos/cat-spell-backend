@@ -22,6 +22,7 @@ class JwtAuthenticationFilter(
                 path.startsWith("/api/auth/reset-password") ||
                 path.startsWith("/api/auth/verify-email") ||
                 path.startsWith("/api/auth/resend-verification") ||
+                path.startsWith("/api/auth/confirm-email-change") ||
                 path.startsWith("/v3/api-docs")
     }
 
