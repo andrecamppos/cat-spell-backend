@@ -106,9 +106,26 @@ Verification email on registration, hard-gate login until verified, resend flow 
 **Goal**: Self-service credential changes while logged in — change password and change email (with verification of the new address).
 **Depends on**: Phase 11 (reuses email verification)
 **Requirements**: ACCT-01, ACCT-02, ACCT-03, ACCT-04, ACCT-05
-**Plans**: TBD
+**Plans**: 5 plans
 
 Change password (current password + revoke other sessions) and change email (current password + verify the new address before it takes effect, reject if already in use).
+
+**Wave 1**
+
+- [ ] 12-01-PLAN.md — EmailChangeRequest entity + repository + V18 email_change_requests migration (ACCT-03, ACCT-04) [Wave 1]
+- [ ] 12-02-PLAN.md — EmailChangeEmailRenderer + app.confirm-email-change-url config + InvalidCurrentPasswordException(403 INVALID_CURRENT_PASSWORD) handler (ACCT-01, ACCT-03) [Wave 1]
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 12-03-PLAN.md — EmailChangeService (request path) + AuthService.changePassword + AuthService.confirmEmailChange (revoke-all, no-token, 409-on-taken, swap-on-confirm) (ACCT-01/02/03/04/05) [Wave 2]
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 12-04-PLAN.md — 3 endpoints + DTOs + extractUserId + three-place public whitelist for confirm-email-change (ACCT-01/02/03/04/05) [Wave 3]
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 12-05-PLAN.md — AccountCredentialsIntegrationTest covering ACCT-01..05 (ACCT-01/02/03/04/05) [Wave 4]
 
 </details>
 
@@ -127,7 +144,7 @@ Change password (current password + revoke other sessions) and change email (cur
 | 9. Notification Triggers & Smart Delivery | v2.0 | 3/3 | ✅ Complete | 2026-07-29 |
 | 10. Password Recovery | v2.1 | 4/4 | Complete    | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | Complete    | 2026-08-12 |
-| 12. Account Credentials | v2.1 | 0/? | 🔭 Planned | — |
+| 12. Account Credentials | v2.1 | 0/5 | 🔭 Planned | — |
 
 ---
 *Roadmap created: 2025-06-09*
