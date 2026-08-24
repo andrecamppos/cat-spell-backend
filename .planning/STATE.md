@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Account Recovery & Email Verification
 current_phase: 12
-status: completed
+status: "Phase 12 shipped — PR #12"
 stopped_at: Phase 12 context gathered
-last_updated: "2026-08-24T09:59:16.198Z"
+last_updated: "2026-08-24T12:13:15.976Z"
 last_activity: 2026-08-24
-last_activity_desc: Phase 12 complete
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 14
   completed_plans: 14
 current_phase_name: account-credentials
+last_activity_desc: Phase 12 complete
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** All phases complete
+**Status:** Phase 12 shipped — PR #12
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -58,7 +58,7 @@ Resume file: .planning/phases/12-account-credentials/12-CONTEXT.md
 Phase: 12
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-08-24 — Phase 12 complete
+Last activity: 2026-08-24
 
 ## Operator Next Steps
 
