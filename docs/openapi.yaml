@@ -1,24 +1,52 @@
 openapi: 3.1.0
 info:
   title: Cat Spell API
-  version: 1.0.0
+  version: 2.1.0
   description: |
     Cat-first dating app backend API.
 
-    Users register, build a profile, optionally add their cats, and discover
-    nearby profiles via a mixed geolocation-based feed. Cat owners appear as
-    **CAT** cards (cat-first), while users without cats appear as **HUMAN**
-    cards. Swipe to match and chat in real time.
+    Users register, verify their email, build a profile, optionally add their
+    cats, and discover nearby profiles via a mixed geolocation-based feed. Cat
+    owners appear as **CAT** cards (cat-first), while users without cats appear
+    as **HUMAN** cards. Swipe to match and chat in real time.
 
     ## Authentication
     All endpoints (except those tagged **public**) require a Bearer JWT in the
-    `Authorization` header. Obtain tokens via `/api/auth/register` or
-    `/api/auth/login`, and rotate them via `/api/auth/refresh`.
+    `Authorization` header. Register with `/api/auth/register`, verify your
+    email, then obtain tokens via `/api/auth/login` and rotate them via
+    `/api/auth/refresh`.
 
     When the token is missing, malformed, expired, or invalid, secured
     endpoints respond with `401` and an `application/problem+json` body
     (see the `Unauthorized` response). This applies globally to every
     secured operation and is not repeated per-endpoint below.
+
+    ## Email verification
+    Registration does **not** return tokens and does **not** log the user in.
+    A verification email is sent, and login is hard-gated until the address is
+    verified: `/api/auth/login` returns `403` with `code: EMAIL_NOT_VERIFIED`
+    for an unverified account. Use `/api/auth/verify-email` to verify and
+    `/api/auth/resend-verification` to request a new link.
+
+    ## Account recovery & credentials
+    - **Password recovery** (public): `/api/auth/forgot-password` →
+      `/api/auth/reset-password`. The forgot endpoint is enumeration-safe
+      (always `202`, identical body regardless of whether the email exists).
+    - **Change password** (authenticated): `/api/auth/change-password`
+      requires the current password and revokes all other sessions.
+    - **Change email** (authenticated + public confirm):
+      `/api/auth/change-email` → `/api/auth/confirm-email-change`. The new
+      address only becomes active after the emailed link is confirmed.
+
+    All email-bearing tokens (reset, verify, confirm-email-change) are single
+    use, stored hashed, and expire after a short TTL; reused or expired tokens
+    are rejected.
+
+    ## Rate limiting
+    The auth endpoints `register`, `login`, `refresh`, `forgot-password`,
+    `resend-verification`, and `change-email` are per-IP rate-limited. When the
+    limit is exceeded they respond `429` with `application/problem+json` and a
+    `Retry-After` header (see the `RateLimited` response).
 
     ## Real-time Chat
     Chat messages are sent and received over **STOMP-over-WebSocket** at
@@ -33,7 +61,7 @@ servers:
 
 tags:
   - name: Auth
-    description: Registration, login, and token management
+    description: Registration, login, token management, email verification, password recovery, and credential changes
   - name: Profile
     description: User profile CRUD and location
   - name: Photos
@@ -61,6 +89,10 @@ paths:
       operationId: register
       tags: [Auth]
       summary: Register a new user
+      description: |
+        Creates the account and sends a verification email. Does **not** return
+        tokens and does **not** log the user in — the account must verify its
+        email before it can log in (see `/api/auth/verify-email`).
       security: []
       requestBody:
         required: true
@@ -70,11 +102,11 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
-          description: User created
+          description: Account created; verification email sent (no tokens returned)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/GenericMessageResponse'
         '400':
           $ref: '#/components/responses/ValidationError'
         '409':
@@ -83,12 +115,18 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /api/auth/login:
     post:
       operationId: login
       tags: [Auth]
       summary: Log in with email and password
+      description: |
+        Returns a token pair on success. If the account exists and the password
+        is correct but the email is not yet verified, responds `403` with
+        `code: EMAIL_NOT_VERIFIED` so clients can route to the resend screen.
       security: []
       requestBody:
         required: true
@@ -109,6 +147,21 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Email address not verified
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/CodedProblemDetail'
+              examples:
+                emailNotVerified:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    detail: Email address not verified
+                    code: EMAIL_NOT_VERIFIED
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /api/auth/refresh:
     post:
@@ -135,6 +188,236 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Expired, invalid, or reused refresh token
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [Auth]
+      summary: Request a password reset link
+      description: |
+        Enumeration-safe: always responds `202` with an identical body whether
+        or not an account exists for the email. If the account exists, a
+        single-use, time-limited reset link is emailed.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '202':
+          description: Request accepted (generic response, no account disclosure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericMessageResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [Auth]
+      summary: Set a new password using a reset token
+      description: |
+        Consumes a single-use reset token and sets the new password. On success
+        all of the user's refresh tokens are revoked. Returns no body and mints
+        no tokens. Reused or expired tokens are rejected with `401`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password updated; all sessions revoked
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid or expired reset token
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/auth/verify-email:
+    post:
+      operationId: verifyEmail
+      tags: [Auth]
+      summary: Verify an email address using a verification token
+      description: |
+        Consumes a single-use verification token and marks the account's email
+        verified, unlocking login. Returns no body and mints no tokens. Reused
+        or expired tokens are rejected with `401`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Email verified
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid or expired verification token
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/auth/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [Auth]
+      summary: Resend the email verification link
+      description: |
+        Enumeration-safe: always responds `202` with an identical body. If an
+        unverified account exists for the email, a new verification link is
+        emailed.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequest'
+      responses:
+        '202':
+          description: Request accepted (generic response, no account disclosure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericMessageResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [Auth]
+      summary: Change the current user's password
+      description: |
+        Authenticated. Requires the current password; on success the password
+        is updated and **all other** sessions are revoked. Returns no body and
+        mints no tokens (the caller's current session remains valid). A wrong
+        current password yields `403` with `code: INVALID_CURRENT_PASSWORD`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed; other sessions revoked
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Current password is incorrect
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/CodedProblemDetail'
+              examples:
+                invalidCurrentPassword:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    detail: Current password is incorrect
+                    code: INVALID_CURRENT_PASSWORD
+
+  /api/auth/change-email:
+    post:
+      operationId: changeEmail
+      tags: [Auth]
+      summary: Request a change to the current user's email
+      description: |
+        Authenticated. Requires the current password and a new email. Sends a
+        confirmation link to the **new** address; the account email is not
+        changed until that link is confirmed (see `/api/auth/confirm-email-change`).
+        A wrong current password yields `403` with `code: INVALID_CURRENT_PASSWORD`;
+        a new address already in use yields `409`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+      responses:
+        '202':
+          description: Confirmation link sent to the new address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericMessageResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Current password is incorrect
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/CodedProblemDetail'
+              examples:
+                invalidCurrentPassword:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    detail: Current password is incorrect
+                    code: INVALID_CURRENT_PASSWORD
+        '409':
+          description: New email address already in use
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/auth/confirm-email-change:
+    post:
+      operationId: confirmEmailChange
+      tags: [Auth]
+      summary: Confirm a pending email change using a token
+      description: |
+        Consumes a single-use token emailed to the new address, swaps the
+        account email, marks it verified, and revokes **all** sessions (forcing
+        a fresh login). Returns no body and mints no tokens. Reused or expired
+        tokens are rejected with `401`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmEmailChangeRequest'
+      responses:
+        '200':
+          description: Email changed; all sessions revoked
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid or expired confirmation token
           content:
             application/problem+json:
               schema:
@@ -789,7 +1072,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: HS512-signed access token from `/api/auth/register` or `/api/auth/login`
+      description: HS512-signed access token from `/api/auth/login` (or `/api/auth/refresh`)
 
   parameters:
     photoId:
@@ -860,6 +1143,29 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
 
+    RateLimited:
+      description: |
+        Per-IP rate limit exceeded for this auth endpoint. Includes a
+        `Retry-After` header (seconds) plus `X-RateLimit-Remaining` and
+        `X-RateLimit-Reset` headers.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          description: Requests remaining in the current window
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          description: Seconds until the limit resets
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
   schemas:
     # ── Auth ──────────────────────────────────────────────────────────
     RegisterRequest:
@@ -902,6 +1208,92 @@ components:
           type: string
           format: uuid
           description: Single-use refresh token (30-day expiry)
+
+    GenericMessageResponse:
+      type: object
+      required: [message]
+      description: |
+        A neutral human-readable message. Used by endpoints that intentionally
+        avoid disclosing account state (enumeration-safe flows) or that simply
+        acknowledge acceptance.
+      properties:
+        message:
+          type: string
+
+    CodedProblemDetail:
+      description: |
+        RFC 7807 Problem Detail with an additional machine-readable `code`
+        (e.g. `EMAIL_NOT_VERIFIED`, `INVALID_CURRENT_PASSWORD`) for precise
+        client handling.
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetail'
+        - type: object
+          properties:
+            code:
+              type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+          description: Single-use reset token from the emailed link
+        newPassword:
+          type: string
+          minLength: 8
+
+    VerifyEmailRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: Single-use verification token from the emailed link
+
+    ResendVerificationRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    ChangeEmailRequest:
+      type: object
+      required: [currentPassword, newEmail]
+      properties:
+        currentPassword:
+          type: string
+        newEmail:
+          type: string
+          format: email
+
+    ConfirmEmailChangeRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: Single-use token from the link sent to the new address
 
     # ── Profile ───────────────────────────────────────────────────────
     CreateProfileRequest:
