@@ -1,5 +1,23 @@
 # Milestones
 
+## v2.1 Account Recovery & Email Verification (Shipped: 2026-08-24)
+
+**Phases completed:** 3 phases (10-12), 14 plans, 36 tasks
+**Stats:** 73 commits, 12,774 LOC Kotlin, 260 test methods (36 test files)
+**Timeline:** 2026-08-08 → 2026-08-19
+**Requirements:** 19/19 v2.1 requirements complete (EMAIL-01/02, RECOV-01→07, VERIFY-01→05, ACCT-01→05)
+
+**Key accomplishments:**
+
+- Reusable transactional-email infrastructure — provider-abstracted `EmailSender` seam with a no-op logging default (no network sends in dev/CI), backend-rendered email bodies, mirroring the existing push-provider pattern (Phase 10).
+- Password recovery — enumeration-safe forgot/reset flow with SHA-256 hashed single-use 30-min tokens, per-email + per-IP Bucket4j rate limiting, and full session revocation on reset, wired through all three security tiers (Phase 10).
+- Email verification on signup — hashed single-use 24h tokens, a hard `EMAIL_NOT_VERIFIED` 403 login gate, enumeration-safe resend, and a V17 migration grandfathering all existing accounts as verified (Phase 11).
+- Account credential self-service — change-password (requires current password, revokes all other sessions) and change-email (requires current password, confirm the new address before it takes effect, 409 if already in use) (Phase 12).
+- Consistent security posture across all flows — distinct `403 INVALID_CURRENT_PASSWORD` ProblemDetail, atomic single-use token claims, and confirm-only email swaps, with three-place public-endpoint whitelisting (Phases 10-12).
+- Full Testcontainers integration coverage — recovery, verification, and credential-change suites against real Postgres + a mocked EmailSender; entire suite migrated to the no-token register + login-gate contract (`./gradlew test` green).
+
+---
+
 ## v2.0 Push Notifications (Shipped: 2026-07-30)
 
 **Phases completed:** 2 phases, 6 plans, 20 tasks

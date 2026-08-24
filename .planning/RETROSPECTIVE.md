@@ -89,6 +89,49 @@
 
 ---
 
+## Milestone: v2.1 — Account Recovery & Email Verification
+
+**Shipped:** 2026-08-24
+**Phases:** 3 (10-12) | **Plans:** 14 | **Timeline:** 2026-08-08 → 2026-08-19
+
+### What Was Built
+- Reusable, provider-abstracted `EmailSender` seam with a no-op logging default (no network sends in dev/CI)
+- Password recovery — enumeration-safe forgot/reset with SHA-256 hashed single-use 30-min tokens, per-email + per-IP Bucket4j rate limiting, and full session revocation on reset
+- Email verification on signup — hashed single-use 24h tokens, `403 EMAIL_NOT_VERIFIED` hard login gate, enumeration-safe resend, and a V17 migration grandfathering existing accounts
+- Account credential self-service — change-password (revoke all other sessions) and change-email (confirm the new address before it takes effect, 409 if already in use)
+- Full Testcontainers integration coverage; entire suite migrated to the no-token register + login-gate contract
+
+### What Worked
+- **Pattern reuse across the milestone** — Phase 10's `EmailSender` seam and hashed-token layer were reused essentially unchanged by Phases 11 and 12, keeping each later phase small
+- **Mirroring proven patterns** — the token store mirrored the existing `RefreshToken` pattern and the email seam mirrored the `PushProvider` abstraction, so there was little novel design risk
+- **Enumeration-safety as a first-class requirement** — designing generic responses and rate limiting up front avoided retrofitting security later
+- **No-op logging email provider** — kept dev/CI free of network dependencies while still exercising the full send path via a mocked sender in tests
+- **Reusing Bucket4j** — explicitly choosing to reuse existing rate-limiting infra (an Out-of-Scope decision) avoided new infrastructure
+
+### What Was Inefficient
+- **Three-place security whitelist repetition** — each public endpoint had to be whitelisted in exactly three security places; easy to miss one and a recurring source of friction across Phases 10-12
+- **Test-suite migration cost** — flipping register to the no-token + login-gate contract (Phase 11) required a sweeping update across the whole integration suite via a shared `markEmailVerified` helper
+- **Retrospective/state drift** — v2.0's retrospective section was never appended before this milestone close (backfilled into the trend tables here)
+
+### Patterns Established
+- **Provider-abstracted seam + no-op default** — same shape as `PushProvider`; concrete provider swappable, stubbed in tests
+- **Hashed single-use expiring token** — SHA-256 at rest, atomic single-use claim, short TTL, reused/expired rejected — one model across reset, verify, and email-change
+- **Confirm-before-swap** — sensitive changes (email) are staged in a separate table and only applied after the new address is verified
+- **Distinct ProblemDetail codes** — `403 EMAIL_NOT_VERIFIED`, `403 INVALID_CURRENT_PASSWORD` for precise client handling
+- **Session revocation on credential change** — reset / change-password / confirm-email-change all revoke refresh tokens
+
+### Key Lessons
+1. **Establish the reusable seam first** — building the email/token foundation in Phase 10 made Phases 11-12 thin; front-load shared infrastructure
+2. **Codify the security-whitelist checklist** — the "three places" for public-endpoint whitelisting should be a documented step to avoid repeated misses
+3. **Grandfather migrations for hard gates** — introducing a login gate on existing users requires a backfill (V17) so no current user is locked out on rollout
+4. **Contract changes ripple through tests** — a change to a core contract (register response) can require a suite-wide migration; isolate via a shared helper
+
+### Cost Observations
+- Sessions: multi-session across ~11 days (2026-08-08 → 2026-08-19)
+- Notable: heavy pattern reuse kept later phases small despite 14 plans total
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -97,6 +140,8 @@
 |-----------|----------|--------|------------|
 | v1.0 | 8 days | 6 | Initial vertical MVP delivery |
 | v1.1 | 2 days | 1 | Compact feature phase — schema + query + tests |
+| v2.0 | ~5 weeks | 2 | Provider abstraction + async event-driven delivery |
+| v2.1 | ~11 days | 3 | Reusable seam front-loaded, then thin dependent phases |
 
 ### Cumulative Quality
 
@@ -104,9 +149,13 @@
 |-----------|-------|-----|------------|
 | v1.0 | 163 | 8,433 | 19 |
 | v1.1 | 180 | 8,880 | 19 |
+| v2.0 | 221 | 10,608 | — |
+| v2.1 | 260 | 12,774 | 36 |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Vertical slicing (DB → API → tests) per phase enables clean incremental delivery
 2. Real database testing (Testcontainers) catches issues that in-memory DBs hide
 3. Test data isolation (unique coordinates, unique emails) prevents cross-test interference
+4. Front-load reusable seams/abstractions (`PushProvider`, `EmailSender`) so dependent phases stay thin
+5. Keep planning bookkeeping (REQUIREMENTS/STATE/RETROSPECTIVE) in sync at phase close, not deferred to milestone close

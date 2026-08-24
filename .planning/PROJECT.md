@@ -10,20 +10,11 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 ## Current State
 
-**Shipped:** v2.0 Push Notifications (2026-07-29) — FCM push notifications for new matches and new chat messages, delivered when users are away from the app, behind a provider abstraction and dispatched asynchronously off domain events.
+**Shipped:** v2.1 Account Recovery & Email Verification (2026-08-24) — reusable provider-abstracted `EmailSender` infrastructure, password recovery (enumeration-safe forgot/reset with hashed single-use tokens, rate limiting, session revocation), email verification on signup (hard-gate login until verified, resend, grandfather migration), and self-service change-password / change-email (verify the new address before it takes effect).
 
-**In progress:** v2.1 Account Recovery & Email Verification — Phase 10 (Password Recovery), Phase 11 (Email Verification), and Phase 12 (Account Credentials) all complete: reusable `EmailSender` seam, hashed single-use expiring tokens, enumeration-safe + rate-limited flows with session revocation, login hard-gate until verified, and self-service change-password/change-email (verify new address before it takes effect). All v2.1 phases (10–12) are complete.
+**Previously shipped:** v2.0 Push Notifications (2026-07-30), v1.1 Mixed Discovery (2026-06-23), v1.0 MVP Backend (2026-06-16).
 
-## Current Milestone: v2.1 Account Recovery & Email Verification
-
-**Goal:** Give users a self-service way to recover access and prove ownership of their email, backed by reusable transactional email infrastructure.
-
-**Target features:**
-- Transactional email infrastructure — provider-abstracted email sending (new dependency; reusable across features)
-- Password recovery — forgot/reset via emailed tokenized link (hashed single-use token, short TTL, enumeration-safe, rate-limited; revokes all refresh tokens on reset)
-- Email verification on signup — hard gate (unverified users cannot log in), resend-verification flow, existing users grandfathered as verified via migration
-- Change email (logged in) — requires current password + verification of the new address before the switch takes effect
-- Change password (logged in) — requires current password; revokes all other sessions on success
+**Next milestone:** Not yet defined — start with `/gsd-new-milestone`. Likely candidates from Active requirements: safety & moderation (block/report/unmatch), compatibility scoring, chat UX (typing/read receipts), notification preferences, or direct APNs hardening.
 
 ## Requirements
 
@@ -82,7 +73,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 ## Context
 
-- **Current state:** v2.0 shipped (2026-07-29). 10,608 LOC Kotlin, 221 test methods. Three milestones complete (v1.0, v1.1, v2.0).
+- **Current state:** v2.1 shipped (2026-08-24). 12,774 LOC Kotlin, 260 test methods across 36 test files. Four milestones complete (v1.0, v1.1, v2.0, v2.1).
 - **Tech stack:** Kotlin + Spring Boot 4.0, PostgreSQL + PostGIS, S3 (MinIO local), WebSocket STOMP, Flyway, Testcontainers
 - **Domain:** Niche dating app targeting cat lovers/owners
 - **Architecture:** Backend-only REST + WebSocket API. Mobile app is a separate project.
@@ -90,6 +81,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - **Multi-cat:** Users can register up to 5 cats. Cat owners appear as cat cards in discovery (one card per owner, first-created cat). Users without cats appear as human cards.
 - **Chat:** WebSocket STOMP messaging with lazy conversation creation, offline delivery, and unread tracking. Unlocked after mutual match.
 - **Push:** FCM push for matches and messages behind a `PushProvider` abstraction (APNs-ready), "offline + inactive" send decision via STOMP presence, async `AFTER_COMMIT` dispatch, dead-token pruning.
+- **Account/email:** Provider-abstracted `EmailSender` seam (no-op logging default, no network sends in dev/CI). Password recovery, email verification (hard-gate login), and self-service change-password/change-email all use hashed single-use expiring tokens, enumeration-safe responses, Bucket4j rate limiting, and session revocation.
 - **Testing:** Full Testcontainers-based integration tests (PostgreSQL + PostGIS + MinIO). No H2.
 - **Next focus:** Safety & moderation, compatibility scoring, direct APNs hardening, or mobile app integration.
 
@@ -122,6 +114,11 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Async AFTER_COMMIT push dispatch | Domain-event listeners run off-thread after commit so a slow/failing FCM call never blocks or rolls back message persistence | ✓ Good — v2.0 (Phase 9), verified persistence is never blocked |
 | In-memory single-instance presence registry | ConcurrentHashMap-backed STOMP presence/active-conversation is sufficient for single-instance; Redis-backed shared store deferred until horizontal scaling | ✓ Good — v2.0 (Phase 9); scaling caveat documented as future work |
 | iOS client uses the FCM SDK (client-owned FCM token) | Backend delivers only via FCM (`FirebaseMessaging.send(setToken(...))`), which requires an FCM registration token, not a raw APNs token; iOS app adds Firebase Messaging SDK and registers its FCM token via `POST /api/devices`. Keeps the shipped contract unchanged; direct APNs stays deferred | — Decided 2026-07-30 (cross-repo); FCM payload shapes documented in `docs/openapi.yaml` (`x-push-notifications`) |
+| Provider-abstracted `EmailSender` seam (no-op logging default) | Mirrors the proven `PushProvider` pattern; concrete provider swappable, no real network sends in dev/CI | ✓ Good — v2.1 (Phase 10); reused unchanged across recovery, verification, and email-change |
+| Hashed single-use expiring tokens for all email flows | SHA-256 at rest, atomic single-use claim, short TTL (reset 30 min, verify 24 h); reused/expired tokens rejected | ✓ Good — v2.1 (Phases 10-12); consistent, low-risk token model |
+| Enumeration-safe responses + reuse of Bucket4j rate limiting | Generic responses on forgot/resend, per-email + per-IP throttling on existing infra (no new dependency) | ✓ Good — v2.1 (Phases 10-11) |
+| Hard-gate login until email verified + grandfather migration | Unverified users get `403 EMAIL_NOT_VERIFIED`; V17 backfill marks existing accounts verified so no current user is locked out on rollout | ✓ Good — v2.1 (Phase 11) |
+| Confirm-before-swap for email changes (separate `email_change_requests` table) | New address is verified via emailed single-use token before it becomes active; 409 if already in use; revoke all sessions on confirm | ✓ Good — v2.1 (Phase 12) |
 
 ## Evolution
 
@@ -141,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-19 — Phase 12 (Account Credentials) complete*
+*Last updated: 2026-08-24 after v2.1 milestone*
