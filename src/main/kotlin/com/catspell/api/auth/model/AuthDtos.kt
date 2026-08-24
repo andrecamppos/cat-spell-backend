@@ -49,3 +49,21 @@ data class ResendVerificationRequest(
 data class GenericMessageResponse(
     val message: String
 )
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+
+    @field:Size(min = 8, message = "must be at least 8 characters")
+    val newPassword: String
+)
+
+data class ChangeEmailRequest(
+    val currentPassword: String,
+
+    @field:Email(message = "must be a valid email address")
+    val newEmail: String
+)
+
+data class ConfirmEmailChangeRequest(
+    val token: String
+)

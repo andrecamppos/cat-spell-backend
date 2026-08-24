@@ -72,6 +72,14 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(InvalidCurrentPasswordException::class)
+    fun handleInvalidCurrentPassword(ex: InvalidCurrentPasswordException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message ?: "Current password is incorrect")
+        problem.title = "Forbidden"
+        problem.setProperty("code", "INVALID_CURRENT_PASSWORD")
+        return problem
+    }
+
     @ExceptionHandler(ResourceNotFoundException::class)
     fun handleResourceNotFound(ex: ResourceNotFoundException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message ?: "Resource not found")

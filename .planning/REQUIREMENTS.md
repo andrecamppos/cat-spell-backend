@@ -33,11 +33,11 @@ Requirements for milestone v2.1. Each maps to a roadmap phase.
 
 ### Account Credentials
 
-- [ ] **ACCT-01**: A logged-in user can change their password by supplying their current password and a new password
-- [ ] **ACCT-02**: On a successful password change, all of the user's other active sessions (refresh tokens) are revoked
-- [ ] **ACCT-03**: A logged-in user can initiate an email change by supplying their current password and the new email
-- [ ] **ACCT-04**: A newly requested email address must be verified before it becomes the account's active email
-- [ ] **ACCT-05**: An email change is rejected if the new address already belongs to another account
+- [x] **ACCT-01**: A logged-in user can change their password by supplying their current password and a new password
+- [x] **ACCT-02**: On a successful password change, all of the user's other active sessions (refresh tokens) are revoked
+- [x] **ACCT-03**: A logged-in user can initiate an email change by supplying their current password and the new email
+- [x] **ACCT-04**: A newly requested email address must be verified before it becomes the account's active email
+- [x] **ACCT-05**: An email change is rejected if the new address already belongs to another account
 
 ## v2 Requirements
 
@@ -81,11 +81,11 @@ Which phases cover which requirements. Populated during roadmap creation.
 | VERIFY-03 | Phase 11 | Complete |
 | VERIFY-04 | Phase 11 | Complete |
 | VERIFY-05 | Phase 11 | Complete |
-| ACCT-01 | Phase 12 | Pending |
-| ACCT-02 | Phase 12 | Pending |
-| ACCT-03 | Phase 12 | Pending |
-| ACCT-04 | Phase 12 | Pending |
-| ACCT-05 | Phase 12 | Pending |
+| ACCT-01 | Phase 12 | Complete |
+| ACCT-02 | Phase 12 | Complete |
+| ACCT-03 | Phase 12 | Complete |
+| ACCT-04 | Phase 12 | Complete |
+| ACCT-05 | Phase 12 | Complete |
 
 **Coverage:**
 
