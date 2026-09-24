@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Account Recovery & Email Verification
-status: completed
-stopped_at: Phase 12 context gathered
-last_updated: "2026-08-24T12:18:10.062Z"
-last_activity: 2026-08-24
-last_activity_desc: Milestone v2.1 completed and archived
+milestone: v2.2
+milestone_name: Safety, Moderation & Gated Access
+status: planning
+last_updated: "2026-09-24T10:44:14.546Z"
+last_activity: 2026-09-24
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 14
-  completed_plans: 14
-current_phase: 12
-current_phase_name: account-credentials
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -62,10 +59,10 @@ Resume file: — (start next milestone with /gsd-new-milestone)
 
 ## Current Position
 
-Phase: Milestone v2.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-24 — Milestone v2.1 completed and archived
+Status: Defining requirements
+Last activity: 2026-09-24 — Milestone v2.2 started
 
 ## Operator Next Steps
 
