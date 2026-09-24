@@ -58,6 +58,10 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Primary/featured cat designation for swipe feed
 - [ ] Typing indicators and read receipts in chat
 - [ ] Block/report/unmatch safety features
+- [ ] Age verification — self-attested DOB at signup, hard-block under-18 (vendor-based check deferred; see seed)
+- [ ] Invite-only access — waitlist to bootstrap, then member referrals (invite quotas + referral attribution)
+- [ ] Waitlist / invite-request capture API (backend for the separate-repo landing page)
+- [ ] Report user — persist reports + notify owner to act manually (no admin panel yet)
 - [ ] Per-type notification toggles + quiet hours (deferred from v2.0)
 - [ ] Direct APNs integration for iOS delivery reliability (deferred from v2.0)
 
