@@ -74,6 +74,22 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 
 Introduces a `blocks` table (PK on the pair + reverse index) and a bidirectional block predicate consulted synchronously on every read/send path. Reuses soft-state teardown (retain messages, lock conversation). New Flyway migration (V19+).
 
+**Plans:** 4 plans across 3 waves
+
+Plans:
+**Wave 1**
+
+- [ ] 13-01-PLAN.md — Data foundation: V19 `blocks` table + V20 `matches` soft-state columns, Block entity/repository, feed block filter (both UNION branches), teardown primitives
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 13-02-PLAN.md — Service layer: SelfBlockException (400), MatchService endMatch/unmatch/reactivation, BlockService (block/unblock/list + bidirectional predicate)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 13-03-PLAN.md — Enforcement fan-out: profile-detail + swipe 404 guards, chat send/open guards + conversation hiding, BlockEnforcementIntegrationTest
+- [ ] 13-04-PLAN.md — HTTP surface: BlockController (block/unblock/list) + MatchController unmatch endpoint, BlockEndpointIntegrationTest
+
 ### Phase 14: Report a User
 
 **Goal**: Users can report others with a structured reason; reports are persisted and the operator is notified out-of-band, with an optional block in the same action.
