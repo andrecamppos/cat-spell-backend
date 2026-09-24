@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-09-24T10:44:14.546Z"
 last_activity: 2026-09-24
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** None — v2.1 shipped; next milestone not yet defined (`/gsd-new-milestone`)
+**Current focus:** v2.2 Safety, Moderation & Gated Access — Phase 13 (Blocking & Unmatch) next
 
 ## Milestone v1.0 — MVP Backend
 
@@ -59,17 +59,18 @@ Resume file: — (start next milestone with /gsd-new-milestone)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 13 — Blocking & Unmatch (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-09-24 — Milestone v2.2 started
+Status: Roadmap created; ready to plan Phase 13
+Last activity: 2026-09-24 — Milestone v2.2 roadmap created (Phases 13-17)
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- `/gsd-discuss-phase 13` to gather context, or `/gsd-plan-phase 13` to plan directly
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- 2026-09-24: v2.2 roadmap created — Phases 13 (Blocking & Unmatch), 14 (Report a User), 15 (Age Verification), 16 (Invite-Only Access & Referral), 17 (Waitlist / Landing-Page API). All 20 v2.2 requirements mapped. Research-driven ordering: block first (report + read-path enforcement depend on it), invite before waitlist (waitlist converts into invites).
 - 2026-08-07: v2.1 roadmap completed — added Phase 11 (Email Verification) and Phase 12 (Account Credentials) alongside existing Phase 10 (Password Recovery). All 19 v2.1 requirements mapped to phases (email infra bundled into Phase 10 per seed guidance).

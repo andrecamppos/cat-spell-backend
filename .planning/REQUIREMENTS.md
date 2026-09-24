@@ -80,33 +80,33 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOD-01 | — | Pending |
-| MOD-02 | — | Pending |
-| MOD-03 | — | Pending |
-| MOD-04 | — | Pending |
-| MOD-05 | — | Pending |
-| MOD-06 | — | Pending |
-| MOD-07 | — | Pending |
-| MOD-08 | — | Pending |
-| AGE-01 | — | Pending |
-| AGE-02 | — | Pending |
-| AGE-03 | — | Pending |
-| INV-01 | — | Pending |
-| INV-02 | — | Pending |
-| INV-03 | — | Pending |
-| INV-04 | — | Pending |
-| INV-05 | — | Pending |
-| WAIT-01 | — | Pending |
-| WAIT-02 | — | Pending |
-| WAIT-03 | — | Pending |
-| WAIT-04 | — | Pending |
+| MOD-01 | Phase 13 | Pending |
+| MOD-02 | Phase 13 | Pending |
+| MOD-03 | Phase 13 | Pending |
+| MOD-04 | Phase 13 | Pending |
+| MOD-05 | Phase 13 | Pending |
+| MOD-06 | Phase 14 | Pending |
+| MOD-07 | Phase 14 | Pending |
+| MOD-08 | Phase 14 | Pending |
+| AGE-01 | Phase 15 | Pending |
+| AGE-02 | Phase 15 | Pending |
+| AGE-03 | Phase 15 | Pending |
+| INV-01 | Phase 16 | Pending |
+| INV-02 | Phase 16 | Pending |
+| INV-03 | Phase 16 | Pending |
+| INV-04 | Phase 16 | Pending |
+| INV-05 | Phase 16 | Pending |
+| WAIT-01 | Phase 17 | Pending |
+| WAIT-02 | Phase 17 | Pending |
+| WAIT-03 | Phase 17 | Pending |
+| WAIT-04 | Phase 17 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 20 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 20
+- Mapped to phases: 20 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-09-24*
-*Last updated: 2026-09-24 — requirements defined, roadmap pending*
+*Last updated: 2026-09-24 — mapped all 20 requirements to Phases 13-17 (roadmap created)*
