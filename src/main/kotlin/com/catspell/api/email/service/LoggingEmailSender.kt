@@ -2,16 +2,25 @@ package com.catspell.api.email.service
 
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.core.env.Environment
 import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnProperty(name = ["email.enabled"], havingValue = "false", matchIfMissing = true)
-class LoggingEmailSender : EmailSender {
+class LoggingEmailSender(environment: Environment) : EmailSender {
 
     private val log = LoggerFactory.getLogger(LoggingEmailSender::class.java)
 
+    // Only surface the raw email body (which contains single-use auth tokens) under the
+    // "dev" profile, so mobile-app testers can grab the link locally without leaking
+    // tokens into logs in any shared/prod environment.
+    private val logRawBody = environment.activeProfiles.contains("dev")
+
     override fun send(message: EmailMessage): EmailResult {
         log.info("[no-op email] to={} subject='{}'", maskEmail(message.to), message.subject)
+        if (logRawBody) {
+            log.warn("[DEV-ONLY email body] to={}\n{}", message.to, message.textBody)
+        }
         return EmailResult(EmailSendStatus.SUCCESS, messageId = "logged")
     }
 

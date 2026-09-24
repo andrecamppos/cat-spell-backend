@@ -5,11 +5,12 @@ import com.catspell.api.email.service.EmailSendStatus
 import com.catspell.api.email.service.LoggingEmailSender
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.mock.env.MockEnvironment
 import java.util.concurrent.CompletableFuture
 
 class EmailSenderContractTest {
 
-    private val sender = LoggingEmailSender()
+    private val sender = LoggingEmailSender(MockEnvironment())
 
     private fun sampleMessage() = EmailMessage(
         to = "someone@example.com",
