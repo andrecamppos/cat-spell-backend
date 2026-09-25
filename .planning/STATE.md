@@ -5,11 +5,11 @@ milestone_name: Safety, Moderation & Gated Access
 current_phase: 14
 current_phase_name: Report a User
 status: "Phase 13 shipped — PR #13"
-stopped_at: Phase 13 context gathered
-last_updated: "2026-09-25T10:32:04.514Z"
+stopped_at: Phase 14 context gathered
+last_updated: "2026-09-25T11:01:22.542Z"
 last_activity: 2026-09-25
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
   total_plans: 4
   completed_plans: 4
@@ -53,9 +53,9 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-09-24T13:23:26.114Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-blocking-unmatch/13-CONTEXT.md
+Last session: 2026-09-25T11:01:22.507Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-report-a-user/14-CONTEXT.md
 
 ---
 *Last updated: 2026-08-24 after completing the v2.1 milestone*
