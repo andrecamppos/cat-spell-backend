@@ -4,16 +4,16 @@ milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
 current_phase: 14
 current_phase_name: Report a User
-status: planning
+status: "Phase 13 shipped — PR #13"
 stopped_at: Phase 13 context gathered
-last_updated: "2026-09-25T10:22:04.890Z"
+last_updated: "2026-09-25T10:32:04.514Z"
 last_activity: 2026-09-25
-last_activity_desc: Phase 13 complete, transitioned to Phase 14
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 4
   completed_plans: 4
+last_activity_desc: Phase 13 complete, transitioned to Phase 14
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 13 shipped — PR #13
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -65,7 +65,7 @@ Resume file: .planning/phases/13-blocking-unmatch/13-CONTEXT.md
 Phase: 14 — Report a User
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-09-25 — Phase 13 complete, transitioned to Phase 14
+Last activity: 2026-09-25
 
 ## Operator Next Steps
 
