@@ -166,7 +166,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 11. Email Verification | v2.1 | 5/5 | ✅ Complete | 2026-08-12 |
 | 12. Account Credentials | v2.1 | 5/5 | ✅ Complete | 2026-08-19 |
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
-| 14. Report a User | v2.2 | — | Not started | — |
+| 14. Report a User | v2.2 | 4/4 | In Progress|  |
 | 15. Age Verification | v2.2 | — | Not started | — |
 | 16. Invite-Only Access & Referral | v2.2 | — | Not started | — |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
