@@ -148,6 +148,13 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(SelfBlockException::class)
+    fun handleSelfBlock(ex: SelfBlockException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Cannot block yourself")
+        problem.title = "Bad Request"
+        return problem
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid argument")
