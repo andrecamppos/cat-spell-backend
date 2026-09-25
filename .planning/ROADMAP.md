@@ -83,7 +83,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 13-02-PLAN.md — Service layer: SelfBlockException (400), MatchService endMatch/unmatch/reactivation, BlockService (block/unblock/list + bidirectional predicate)
+- [x] 13-02-PLAN.md — Service layer: SelfBlockException (400), MatchService endMatch/unmatch/reactivation, BlockService (block/unblock/list + bidirectional predicate)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -165,7 +165,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 10. Password Recovery | v2.1 | 4/4 | ✅ Complete | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | ✅ Complete | 2026-08-12 |
 | 12. Account Credentials | v2.1 | 5/5 | ✅ Complete | 2026-08-19 |
-| 13. Blocking & Unmatch | v2.2 | 1/4 | In Progress|  |
+| 13. Blocking & Unmatch | v2.2 | 2/4 | In Progress|  |
 | 14. Report a User | v2.2 | — | Not started | — |
 | 15. Age Verification | v2.2 | — | Not started | — |
 | 16. Invite-Only Access & Referral | v2.2 | — | Not started | — |
