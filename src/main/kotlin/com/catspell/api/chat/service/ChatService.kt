@@ -9,6 +9,7 @@ import com.catspell.api.match.model.Match
 import com.catspell.api.match.model.MatchCatSummary
 import com.catspell.api.match.model.MatchRepository
 import com.catspell.api.match.model.MatchUserSummary
+import com.catspell.api.moderation.service.BlockService
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
 import com.catspell.api.push.event.MessageSentEvent
@@ -32,6 +33,7 @@ class ChatService(
     private val catProfileRepository: CatProfileRepository,
     private val catPhotoRepository: CatPhotoRepository,
     private val messagingTemplate: SimpMessagingTemplate,
+    private val blockService: BlockService,
     private val eventPublisher: ApplicationEventPublisher
 ) {
 
@@ -57,6 +59,16 @@ class ChatService(
                 findOrCreateConversation(match)
             }
             else -> throw IllegalArgumentException("Either conversationId or matchId must be provided")
+        }
+
+        // Enforce block + ended-match lock on BOTH entry paths (covered here after conversation
+        // resolution). Both return the pretend-not-exist 404 shape, revealing nothing (D-02/D-03).
+        val otherUserId = getOtherUserId(conversation, senderId)
+        if (blockService.isBlockedEitherWay(senderId, otherUserId)) {
+            throw ResourceNotFoundException("Conversation not found")
+        }
+        if (conversation.match.endedAt != null) {
+            throw ResourceNotFoundException("Conversation not found")
         }
 
         val sender = userRepository.getReferenceById(senderId)
@@ -85,7 +97,6 @@ class ChatService(
 
         messagingTemplate.convertAndSend("/topic/chat/${conversation.id}", response)
 
-        val otherUserId = getOtherUserId(conversation, senderId)
         messagingTemplate.convertAndSendToUser(
             otherUserId.toString(),
             "/queue/notifications",
@@ -117,6 +128,19 @@ class ChatService(
     fun getMessages(userId: UUID, conversationId: UUID, cursor: Instant?, size: Int = 30): MessagePageResponse {
         if (!conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId)) {
             throw IllegalArgumentException("Not a participant of this conversation")
+        }
+
+        // A locked/hidden thread's history is not shown to either party: block + ended-match
+        // guards mirror sendMessage, returning the pretend-not-exist 404 shape (D-04).
+        val conversation = conversationRepository.findById(conversationId).orElseThrow {
+            ResourceNotFoundException("Conversation not found")
+        }
+        val otherUserId = getOtherUserId(conversation, userId)
+        if (blockService.isBlockedEitherWay(userId, otherUserId)) {
+            throw ResourceNotFoundException("Conversation not found")
+        }
+        if (conversation.match.endedAt != null) {
+            throw ResourceNotFoundException("Conversation not found")
         }
 
         val pageable = PageRequest.of(0, size)

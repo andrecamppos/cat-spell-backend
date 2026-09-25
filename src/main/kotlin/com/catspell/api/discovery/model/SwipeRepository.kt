@@ -1,6 +1,7 @@
 package com.catspell.api.discovery.model
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.util.UUID
@@ -48,6 +49,7 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = rc.user_id AND uph2.status = 'ACTIVE')
                   AND EXISTS (SELECT 1 FROM cat_photos cph2 WHERE cph2.cat_profile_id = rc.id AND cph2.status = 'ACTIVE')
                   AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = rc.user_id)
+                  AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id = :requesterId AND b.blocked_id = rc.user_id) OR (b.blocker_id = rc.user_id AND b.blocked_id = :requesterId))
 
                 UNION ALL
 
@@ -75,6 +77,7 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                   AND up.location IS NOT NULL
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = up.user_id AND uph2.status = 'ACTIVE')
                   AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = up.user_id)
+                  AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id = :requesterId AND b.blocked_id = up.user_id) OR (b.blocker_id = up.user_id AND b.blocked_id = :requesterId))
             ) AS feed
             ORDER BY random()
             LIMIT :pageSize OFFSET :offset
@@ -89,4 +92,8 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
         @Param("pageSize") pageSize: Int,
         @Param("offset") offset: Int
     ): List<FeedProjection>
+
+    @Modifying
+    @Query("DELETE FROM Swipe s WHERE (s.swiper.id = :a AND s.targetUser.id = :bId) OR (s.swiper.id = :bId AND s.targetUser.id = :a)")
+    fun deleteSwipesBetween(@Param("a") a: UUID, @Param("bId") bId: UUID): Int
 }

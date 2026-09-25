@@ -8,13 +8,26 @@ The backend API for Cat Spell — a dating app for cat lovers and cat owners. It
 
 Cat-preferred discovery — users with cats show cat-first (fall for the cat, then meet the person). Users without cats appear as human cards. The app is for all cat lovers, not just cat owners. The reveal mechanic works for cat cards; human cards show the person directly.
 
+## Current Milestone: v2.2 Safety, Moderation & Gated Access
+
+**Goal:** Make the app safe and controlled enough for a real launch — give users protective tools, gate signup behind age + invites, and capture demand via a waitlist.
+
+**Target features:**
+- Block a user — mutual hide from discovery, prevent new contact; existing conversation history retained but read-only/inaccessible (no new messages, no rediscovery)
+- Block management — list blocked users and unblock (re-enables rediscovery)
+- Unmatch — end a match/conversation without a full block; the other user can reappear in discovery
+- Report a user — fixed category enum + required details, persisted and emailed to the operator; optional "also block" flag on the report
+- Age verification — self-attested DOB at signup, hard-block under-18 (vendor-based check deferred)
+- Invite-only access — global on/off gate enforcing invite-required signup, operator-issued invite codes to bootstrap, referral attribution (referrer → invitee)
+- Waitlist / landing-page API — public unauthenticated join endpoint with email confirmation + rate-limiting/dedupe anti-abuse, and an operator flow to convert a waitlisted email into an invite (sends invite email)
+
 ## Current State
 
 **Shipped:** v2.1 Account Recovery & Email Verification (2026-08-24) — reusable provider-abstracted `EmailSender` infrastructure, password recovery (enumeration-safe forgot/reset with hashed single-use tokens, rate limiting, session revocation), email verification on signup (hard-gate login until verified, resend, grandfather migration), and self-service change-password / change-email (verify the new address before it takes effect).
 
 **Previously shipped:** v2.0 Push Notifications (2026-07-30), v1.1 Mixed Discovery (2026-06-23), v1.0 MVP Backend (2026-06-16).
 
-**Next milestone:** Not yet defined — start with `/gsd-new-milestone`. Likely candidates from Active requirements: safety & moderation (block/report/unmatch), compatibility scoring, chat UX (typing/read receipts), notification preferences, or direct APNs hardening.
+**Next milestone:** v2.2 Safety, Moderation & Gated Access — in planning (block/unmatch/report, age verification, invite-only access, waitlist/landing-page API). Continues phase numbering from Phase 13.
 
 ## Requirements
 
@@ -142,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-24 after v2.1 milestone*
+*Last updated: 2026-09-24 at start of v2.2 milestone*

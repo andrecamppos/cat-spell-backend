@@ -28,3 +28,5 @@ class ProfileIncompleteException(
 class DuplicateSwipeException(message: String = "Already swiped on this profile") : RuntimeException(message)
 
 class SelfSwipeException(message: String = "Cannot swipe on yourself") : RuntimeException(message)
+
+class SelfBlockException(message: String = "Cannot block yourself") : RuntimeException(message)

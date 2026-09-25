@@ -4,7 +4,9 @@ import com.catspell.api.match.model.MatchListResponse
 import com.catspell.api.match.service.MatchService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
@@ -20,6 +22,12 @@ class MatchController(
         val userId = extractUserId()
         val response = matchService.getMatches(userId)
         return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{targetUserId}")
+    fun unmatch(@PathVariable targetUserId: UUID): ResponseEntity<Void> {
+        matchService.unmatch(extractUserId(), targetUserId)
+        return ResponseEntity.noContent().build()
     }
 
     private fun extractUserId(): UUID {

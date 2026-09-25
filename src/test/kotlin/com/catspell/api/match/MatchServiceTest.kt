@@ -4,6 +4,7 @@ import com.catspell.api.auth.model.User
 import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.CatPhotoRepository
 import com.catspell.api.cat.model.CatProfileRepository
+import com.catspell.api.discovery.model.SwipeRepository
 import com.catspell.api.match.model.Match
 import com.catspell.api.match.model.MatchRepository
 import com.catspell.api.match.service.MatchService
@@ -33,6 +34,7 @@ class MatchServiceTest {
     private val userPhotoRepository = mockk<UserPhotoRepository>()
     private val catProfileRepository = mockk<CatProfileRepository>()
     private val catPhotoRepository = mockk<CatPhotoRepository>()
+    private val swipeRepository = mockk<SwipeRepository>(relaxed = true)
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
     private val service = MatchService(
@@ -42,6 +44,7 @@ class MatchServiceTest {
         userPhotoRepository,
         catProfileRepository,
         catPhotoRepository,
+        swipeRepository,
         eventPublisher
     )
 

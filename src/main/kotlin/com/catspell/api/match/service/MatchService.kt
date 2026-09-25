@@ -3,6 +3,8 @@ package com.catspell.api.match.service
 import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.CatPhotoRepository
 import com.catspell.api.cat.model.CatProfileRepository
+import com.catspell.api.common.exception.ResourceNotFoundException
+import com.catspell.api.discovery.model.SwipeRepository
 import com.catspell.api.match.model.*
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
@@ -11,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -21,6 +24,7 @@ class MatchService(
     private val userPhotoRepository: UserPhotoRepository,
     private val catProfileRepository: CatProfileRepository,
     private val catPhotoRepository: CatPhotoRepository,
+    private val swipeRepository: SwipeRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) {
 
@@ -30,7 +34,18 @@ class MatchService(
         val u2 = if (userId1 < userId2) userId2 else userId1
 
         val existing = matchRepository.findByUserPair(u1, u2)
-        if (existing != null) return existing
+        if (existing != null) {
+            // Reactivate an ended (blocked/unmatched) match on a fresh mutual re-like rather
+            // than inserting a duplicate row that violates the pair unique index (D-08). Do NOT
+            // re-timestamp matchedAt — it is @Column(updatable = false), so a write is a silent no-op.
+            if (existing.endedAt != null) {
+                existing.endedAt = null
+                existing.endedReason = null
+                matchRepository.save(existing)
+                eventPublisher.publishEvent(MatchCreatedEvent(existing.id!!, u1, u2))
+            }
+            return existing
+        }
 
         val user1 = userRepository.getReferenceById(u1)
         val user2 = userRepository.getReferenceById(u2)
@@ -44,6 +59,40 @@ class MatchService(
         } catch (e: DataIntegrityViolationException) {
             matchRepository.findByUserPair(u1, u2)
         }
+    }
+
+    /**
+     * Shared soft-state teardown for both block and unmatch (D-11): flip the active match to
+     * ended (ended_at/ended_reason) and clear both-direction swipe history so the pair can
+     * re-swipe cleanly (D-08). Soft state only — never a hard delete (D-07). No-op-safe: block
+     * calls this whether or not an active match exists.
+     */
+    @Transactional
+    fun endMatch(userA: UUID, userB: UUID, reason: String) {
+        val u1 = if (userA < userB) userA else userB
+        val u2 = if (userA < userB) userB else userA
+
+        val match = matchRepository.findByUserPair(u1, u2)
+        if (match != null && match.endedAt == null) {
+            match.endedAt = Instant.now()
+            match.endedReason = reason
+            matchRepository.save(match)
+        }
+        swipeRepository.deleteSwipesBetween(userA, userB)
+    }
+
+    /**
+     * Participant-scoped unmatch: only an ACTIVE match the caller is part of can be torn down
+     * (404 otherwise). Writes NO blocks row, so the pair can reappear in each other's feed
+     * afterward (MOD-05, D-06, D-09).
+     */
+    @Transactional
+    fun unmatch(userId: UUID, targetUserId: UUID) {
+        val match = matchRepository.findByUserPair(userId, targetUserId)
+        if (match == null || match.endedAt != null) {
+            throw ResourceNotFoundException("Match not found")
+        }
+        endMatch(userId, targetUserId, "UNMATCH")
     }
 
     fun findExistingMatch(userId1: UUID, userId2: UUID): Match? {

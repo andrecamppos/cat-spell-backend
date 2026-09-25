@@ -1,0 +1,2 @@
+ALTER TABLE matches ADD COLUMN ended_at TIMESTAMPTZ;
+ALTER TABLE matches ADD COLUMN ended_reason VARCHAR(20);
