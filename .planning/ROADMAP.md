@@ -79,7 +79,7 @@ Introduces a `blocks` table (PK on the pair + reverse index) and a bidirectional
 Plans:
 **Wave 1**
 
-- [ ] 13-01-PLAN.md — Data foundation: V19 `blocks` table + V20 `matches` soft-state columns, Block entity/repository, feed block filter (both UNION branches), teardown primitives
+- [x] 13-01-PLAN.md — Data foundation: V19 `blocks` table + V20 `matches` soft-state columns, Block entity/repository, feed block filter (both UNION branches), teardown primitives
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -165,7 +165,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 10. Password Recovery | v2.1 | 4/4 | ✅ Complete | 2026-08-08 |
 | 11. Email Verification | v2.1 | 5/5 | ✅ Complete | 2026-08-12 |
 | 12. Account Credentials | v2.1 | 5/5 | ✅ Complete | 2026-08-19 |
-| 13. Blocking & Unmatch | v2.2 | — | Not started | — |
+| 13. Blocking & Unmatch | v2.2 | 1/4 | In Progress|  |
 | 14. Report a User | v2.2 | — | Not started | — |
 | 15. Age Verification | v2.2 | — | Not started | — |
 | 16. Invite-Only Access & Referral | v2.2 | — | Not started | — |
