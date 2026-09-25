@@ -9,6 +9,7 @@ import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.common.exception.SelfSwipeException
 import com.catspell.api.discovery.model.*
 import com.catspell.api.match.service.MatchService
+import com.catspell.api.moderation.service.BlockService
 import com.catspell.api.profile.model.ProfileCompleteness
 import com.catspell.api.profile.model.UserPhotoRepository
 import com.catspell.api.profile.model.UserProfileRepository
@@ -25,6 +26,7 @@ class DiscoveryService(
     private val userProfileRepository: UserProfileRepository,
     private val userRepository: UserRepository,
     private val matchService: MatchService,
+    private val blockService: BlockService,
     private val entityManager: EntityManager,
     private val userPhotoRepository: UserPhotoRepository,
     private val catPhotoRepository: CatPhotoRepository
@@ -108,6 +110,11 @@ class DiscoveryService(
             .orElseThrow { ResourceNotFoundException("Cat not found") }
 
         val ownerId = cat.user.id!!
+        // Bidirectional block → pretend-not-exist 404, indistinguishable from a genuinely absent
+        // resource; discloses nothing about the block to either party (D-01/D-02/D-03).
+        if (blockService.isBlockedEitherWay(requesterId, ownerId)) {
+            throw ResourceNotFoundException("Cat not found")
+        }
         val profile = userProfileRepository.findByUserId(ownerId)
             ?: throw ResourceNotFoundException("Owner profile not found")
 
@@ -144,6 +151,11 @@ class DiscoveryService(
     fun getUserProfile(requesterId: UUID, userId: UUID): OwnerProfileResponse {
         val profile = userProfileRepository.findByUserId(userId)
             ?: throw ResourceNotFoundException("User profile not found")
+
+        // Bidirectional block → pretend-not-exist 404 (D-01/D-02/D-03).
+        if (blockService.isBlockedEitherWay(requesterId, userId)) {
+            throw ResourceNotFoundException("User profile not found")
+        }
 
         val age = java.time.Period.between(profile.dateOfBirth, java.time.LocalDate.now()).years
 
@@ -199,6 +211,13 @@ class DiscoveryService(
                 throw SelfSwipeException()
             }
 
+            // Block guard at the top of the branch: a blocked pair can neither form nor reactivate
+            // a match, so the reverse-like → createMatch path below is never reached (MOD-02, D-03).
+            // Pretend-not-exist 404 reusing the missing-cat message (D-01/D-02).
+            if (blockService.isBlockedEitherWay(userId, catOwnerId)) {
+                throw ResourceNotFoundException("Cat not found")
+            }
+
             if (swipeRepository.existsBySwiperIdAndCatProfileId(userId, request.catId)) {
                 throw DuplicateSwipeException()
             }
@@ -238,6 +257,11 @@ class DiscoveryService(
 
             if (targetUserId == userId) {
                 throw SelfSwipeException()
+            }
+
+            // Block guard at the top of the branch (MOD-02, D-03) — pretend-not-exist 404 (D-01/D-02).
+            if (blockService.isBlockedEitherWay(userId, targetUserId)) {
+                throw ResourceNotFoundException("User not found")
             }
 
             if (swipeRepository.existsBySwiperIdAndTargetUserIdAndCatProfileIsNull(userId, targetUserId)) {
