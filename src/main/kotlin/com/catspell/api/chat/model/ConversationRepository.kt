@@ -8,6 +8,6 @@ import java.util.UUID
 interface ConversationRepository : JpaRepository<Conversation, UUID> {
     fun findByMatchId(matchId: UUID): Conversation?
 
-    @Query("SELECT c FROM Conversation c JOIN ConversationParticipant cp ON cp.conversation = c WHERE cp.user.id = :userId ORDER BY c.lastMessageAt DESC NULLS LAST")
+    @Query("SELECT c FROM Conversation c JOIN ConversationParticipant cp ON cp.conversation = c WHERE cp.user.id = :userId AND c.match.endedAt IS NULL ORDER BY c.lastMessageAt DESC NULLS LAST")
     fun findConversationsByUserId(@Param("userId") userId: UUID): List<Conversation>
 }
