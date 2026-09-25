@@ -12,7 +12,7 @@ Requirements for milestone v2.2. Each maps to a roadmap phase.
 
 - [x] **MOD-01**: A user can block another user
 - [x] **MOD-02**: A block is enforced bidirectionally on every surface — discovery feed, profile/owner detail, chat send, and match lookup (neither party sees or can contact the other)
-- [ ] **MOD-03**: Blocking a matched user retains existing conversation history but locks it (no new messages either way; no rediscovery)
+- [x] **MOD-03**: Blocking a matched user retains existing conversation history but locks it (no new messages either way; no rediscovery)
 - [x] **MOD-04**: A user can view their block list and unblock a user; unblocking re-enables rediscovery
 - [x] **MOD-05**: A user can unmatch another user, ending the match/conversation without banning rediscovery (the other user can reappear in the feed)
 - [ ] **MOD-06**: A user can report another user with a fixed category (harassment, spam, fake profile, inappropriate content, other) plus a required free-text details field
@@ -82,7 +82,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 |-------------|-------|--------|
 | MOD-01 | Phase 13 | Complete |
 | MOD-02 | Phase 13 | Complete |
-| MOD-03 | Phase 13 | Pending |
+| MOD-03 | Phase 13 | Complete |
 | MOD-04 | Phase 13 | Complete |
 | MOD-05 | Phase 13 | Complete |
 | MOD-06 | Phase 14 | Pending |
