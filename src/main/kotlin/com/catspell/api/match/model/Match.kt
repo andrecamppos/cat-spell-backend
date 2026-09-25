@@ -21,7 +21,13 @@ class Match(
     var user2: User,
 
     @Column(name = "matched_at", nullable = false, updatable = false)
-    var matchedAt: Instant = Instant.now()
+    var matchedAt: Instant = Instant.now(),
+
+    @Column(name = "ended_at")
+    var endedAt: Instant? = null,
+
+    @Column(name = "ended_reason", length = 20)
+    var endedReason: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
