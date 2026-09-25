@@ -45,6 +45,8 @@ app:
   reset-password-url: catspell://reset-password
   verify-email-url: catspell://verify-email
   confirm-email-change-url: catspell://confirm-email-change
+  report:
+    operator-email: ops@catspell.example
 
 rate-limit:
   capacity: 10000
