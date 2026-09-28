@@ -4,16 +4,16 @@ milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
 current_phase: 15
 current_phase_name: Age Verification
-status: planning
+status: "Phase 14 shipped — PR #14"
 stopped_at: Phase 14 context gathered
-last_updated: "2026-09-28T12:04:50.773Z"
+last_updated: "2026-09-28T12:12:16.959Z"
 last_activity: 2026-09-28
-last_activity_desc: Phase 14 complete, transitioned to Phase 15
 progress:
   total_phases: 2
   completed_phases: 2
   total_plans: 8
   completed_plans: 8
+last_activity_desc: Phase 14 complete, transitioned to Phase 15
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 14 shipped — PR #14
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -65,7 +65,7 @@ Resume file: .planning/phases/14-report-a-user/14-CONTEXT.md
 Phase: 15 — Age Verification
 Plan: Not started
 Status: Awaiting verification (full test suite green)
-Last activity: 2026-09-28 — Phase 14 complete, transitioned to Phase 15
+Last activity: 2026-09-28
 
 ## Operator Next Steps
 
