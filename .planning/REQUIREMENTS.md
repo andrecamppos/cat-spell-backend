@@ -15,9 +15,9 @@ Requirements for milestone v2.2. Each maps to a roadmap phase.
 - [x] **MOD-03**: Blocking a matched user retains existing conversation history but locks it (no new messages either way; no rediscovery)
 - [x] **MOD-04**: A user can view their block list and unblock a user; unblocking re-enables rediscovery
 - [x] **MOD-05**: A user can unmatch another user, ending the match/conversation without banning rediscovery (the other user can reappear in the feed)
-- [ ] **MOD-06**: A user can report another user with a fixed category (harassment, spam, fake profile, inappropriate content, other) plus a required free-text details field
-- [ ] **MOD-07**: A report is persisted and the operator is notified out-of-band (async / AFTER_COMMIT) — a slow or failing email never blocks or rolls back the report
-- [ ] **MOD-08**: The reporter can optionally block the reported user in the same action ("also block" flag)
+- [x] **MOD-06**: A user can report another user with a fixed category (harassment, spam, fake profile, inappropriate content, other) plus a required free-text details field
+- [x] **MOD-07**: A report is persisted and the operator is notified out-of-band (async / AFTER_COMMIT) — a slow or failing email never blocks or rolls back the report
+- [x] **MOD-08**: The reporter can optionally block the reported user in the same action ("also block" flag)
 
 ### Age Verification
 
@@ -85,9 +85,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | MOD-03 | Phase 13 | Complete |
 | MOD-04 | Phase 13 | Complete |
 | MOD-05 | Phase 13 | Complete |
-| MOD-06 | Phase 14 | Pending |
-| MOD-07 | Phase 14 | Pending |
-| MOD-08 | Phase 14 | Pending |
+| MOD-06 | Phase 14 | Complete |
+| MOD-07 | Phase 14 | Complete |
+| MOD-08 | Phase 14 | Complete |
 | AGE-01 | Phase 15 | Pending |
 | AGE-02 | Phase 15 | Pending |
 | AGE-03 | Phase 15 | Pending |

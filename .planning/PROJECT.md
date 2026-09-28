@@ -64,6 +64,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Email verification on signup — hard-gate login until verified (403 EMAIL_NOT_VERIFIED), enumeration-safe resend, migration grandfathers existing accounts — v2.1 (Phase 11)
 - ✓ Change password while logged in — requires current password (403 INVALID_CURRENT_PASSWORD on mismatch), revokes all sessions, mints no tokens — v2.1 (Phase 12)
 - ✓ Change email while logged in — requires current password, confirm the new address via emailed single-use token before it becomes active, 409 if already in use, revokes all sessions on confirm — v2.1 (Phase 12)
+- ✓ Report a user — fixed category enum + required details, persisted with no dedupe; operator notified out-of-band (async `AFTER_COMMIT`, survives email-send failure); self-report rejected and reporter identity never exposed; optional atomic "also block" via Phase 13 BlockService — v2.2 (Phase 14) [MOD-06, MOD-07, MOD-08]
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -155,4 +156,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-24 at start of v2.2 milestone*
+*Last updated: 2026-09-28 — Phase 14 (Report a User) complete*

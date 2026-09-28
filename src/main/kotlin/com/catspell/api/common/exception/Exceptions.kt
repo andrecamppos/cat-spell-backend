@@ -30,3 +30,5 @@ class DuplicateSwipeException(message: String = "Already swiped on this profile"
 class SelfSwipeException(message: String = "Cannot swipe on yourself") : RuntimeException(message)
 
 class SelfBlockException(message: String = "Cannot block yourself") : RuntimeException(message)
+
+class SelfReportException(message: String = "Cannot report yourself") : RuntimeException(message)
