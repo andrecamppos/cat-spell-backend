@@ -5,11 +5,11 @@ milestone_name: Safety, Moderation & Gated Access
 current_phase: 15
 current_phase_name: Age Verification
 status: "Phase 14 shipped — PR #14"
-stopped_at: Phase 14 context gathered
-last_updated: "2026-09-28T12:12:16.959Z"
+stopped_at: Phase 15 context gathered
+last_updated: "2026-09-28T15:47:24.443Z"
 last_activity: 2026-09-28
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
   total_plans: 8
   completed_plans: 8
@@ -53,9 +53,9 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-09-25T11:01:22.507Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-report-a-user/14-CONTEXT.md
+Last session: 2026-09-28T15:47:24.419Z
+Stopped at: Phase 15 context gathered
+Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
 
 ---
 *Last updated: 2026-08-24 after completing the v2.1 milestone*
