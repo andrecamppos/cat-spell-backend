@@ -20,6 +20,7 @@ import java.util.UUID
 
 @Service
 class AuthService(
+    private val ageVerifier: com.catspell.api.age.AgeVerifier,
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
@@ -32,6 +33,11 @@ class AuthService(
 ) {
 
     fun register(request: RegisterRequest) {
+        // Hard age gate FIRST (D-01/D-02): a cheap, always-on server-side <18 check via the AgeVerifier
+        // seam runs before the duplicate-email check and before any row is written, so no under-18 account
+        // is ever persisted and the 422 rejection reveals nothing about account existence.
+        ageVerifier.requireAdult(request.dateOfBirth)
+
         if (userRepository.existsByEmail(request.email)) {
             throw DuplicateEmailException()
         }
@@ -40,7 +46,8 @@ class AuthService(
         // No session is minted — the user must verify then log in fresh (breaking contract, D-01, VERIFY-01).
         val user = User(
             email = request.email,
-            passwordHash = passwordEncoder.encode(request.password)!!
+            passwordHash = passwordEncoder.encode(request.password)!!,
+            dateOfBirth = request.dateOfBirth
         )
         val savedUser = userRepository.save(user)
 
