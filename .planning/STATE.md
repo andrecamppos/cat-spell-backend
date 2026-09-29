@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
-current_phase: 15
-current_phase_name: Age Verification
-status: "Phase 14 shipped — PR #14"
-stopped_at: Phase 15 plans complete — awaiting verification
-last_updated: "2026-09-29T12:22:14Z"
+current_phase: 16
+current_phase_name: Invite-Only Access & Referral
+status: planning
+stopped_at: Phase 15 context gathered
+last_updated: "2026-09-29T12:27:47.301Z"
 last_activity: 2026-09-29
-last_activity_desc: Phase 15 plans 15-01 and 15-02 complete (full suite green)
+last_activity_desc: Phase 15 complete, transitioned to Phase 16
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 3
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 14 shipped — PR #14
+**Status:** Ready to plan
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -62,10 +62,10 @@ Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
 
 ## Current Position
 
-Phase: 15 — Age Verification
-Plan: 15-01 + 15-02 complete (2/2)
+Phase: 16 — Invite-Only Access & Referral
+Plan: Not started
 Status: Plans complete, full test suite green — awaiting phase verification
-Last activity: 2026-09-29 — Phase 15 plan 15-02 (DOB relocation + register age gate) complete
+Last activity: 2026-09-29 — Phase 15 complete, transitioned to Phase 16
 
 ## Operator Next Steps
 

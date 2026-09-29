@@ -55,7 +55,7 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 
 - [x] **Phase 13: Blocking & Unmatch** — block/unblock/list + unmatch, enforced across all surfaces (completed 2026-09-25)
 - [x] **Phase 14: Report a User** — report with category + details, persisted and operator-notified (completed 2026-09-28)
-- [ ] **Phase 15: Age Verification** — server-side 18+ hard gate at signup
+- [x] **Phase 15: Age Verification** — server-side 18+ hard gate at signup (completed 2026-09-29)
 - [ ] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution
 - [ ] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites
 
@@ -167,7 +167,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 12. Account Credentials | v2.1 | 5/5 | ✅ Complete | 2026-08-19 |
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
-| 15. Age Verification | v2.2 | 2/2 | In Progress|  |
+| 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
 | 16. Invite-Only Access & Referral | v2.2 | — | Not started | — |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
 
