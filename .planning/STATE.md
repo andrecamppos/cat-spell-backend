@@ -5,10 +5,10 @@ milestone_name: Safety, Moderation & Gated Access
 current_phase: 15
 current_phase_name: Age Verification
 status: "Phase 14 shipped — PR #14"
-stopped_at: Phase 15 context gathered
-last_updated: "2026-09-28T16:41:48.254Z"
-last_activity: 2026-09-28
-last_activity_desc: Phase 15 planning complete
+stopped_at: Phase 15 plan 15-01 complete
+last_updated: "2026-09-29T09:29:15Z"
+last_activity: 2026-09-29
+last_activity_desc: Phase 15 plan 15-01 (AgeVerifier seam) complete
 progress:
   total_phases: 3
   completed_phases: 2
@@ -63,9 +63,9 @@ Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
 ## Current Position
 
 Phase: 15 — Age Verification
-Plan: Not started
-Status: Awaiting verification (full test suite green)
-Last activity: 2026-09-28 — Phase 15 planning complete
+Plan: 15-01 complete (1/2); 15-02 next
+Status: In progress — AgeVerifier seam + 422 error contract landed
+Last activity: 2026-09-29 — Phase 15 plan 15-01 complete
 
 ## Operator Next Steps
 
