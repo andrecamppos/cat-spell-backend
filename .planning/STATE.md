@@ -5,11 +5,11 @@ milestone_name: Safety, Moderation & Gated Access
 current_phase: 16
 current_phase_name: Invite-Only Access & Referral
 status: "Phase 15 shipped — PR #15"
-stopped_at: Phase 15 context gathered
-last_updated: "2026-09-29T15:57:55.113Z"
+stopped_at: Phase 16 context gathered
+last_updated: "2026-09-29T16:18:09.906Z"
 last_activity: 2026-09-29
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
   total_plans: 10
   completed_plans: 10
@@ -53,9 +53,9 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-09-28T15:47:24.419Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
+Last session: 2026-09-29T16:18:09.846Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-invite-only-access-referral/16-CONTEXT.md
 
 ---
 *Last updated: 2026-08-24 after completing the v2.1 milestone*
