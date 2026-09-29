@@ -72,6 +72,17 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(UnderMinimumAgeException::class)
+    fun handleUnderMinimumAge(ex: UnderMinimumAgeException): ProblemDetail {
+        val problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            ex.message ?: "You must be at least 18 years old to sign up"
+        )
+        problem.title = "Unprocessable Entity"
+        problem.setProperty("code", "UNDER_MINIMUM_AGE")
+        return problem
+    }
+
     @ExceptionHandler(InvalidCurrentPasswordException::class)
     fun handleInvalidCurrentPassword(ex: InvalidCurrentPasswordException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message ?: "Current password is incorrect")
