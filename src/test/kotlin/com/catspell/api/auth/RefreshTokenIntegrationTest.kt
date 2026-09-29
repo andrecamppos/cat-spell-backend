@@ -28,7 +28,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
     lateinit var refreshTokenRepository: RefreshTokenRepository
 
     private fun registerAndGetTokens(email: String, password: String = "password123"): Pair<String, String> {
-        val body = mapOf("email" to email, "password" to password)
+        val body = mapOf("email" to email, "password" to password, "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -140,7 +140,7 @@ class RefreshTokenIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `register returns no tokens`() {
-        val body = mapOf("email" to "rt-register-refresh@example.com", "password" to "password123")
+        val body = mapOf("email" to "rt-register-refresh@example.com", "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

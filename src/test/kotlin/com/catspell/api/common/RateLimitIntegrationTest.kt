@@ -38,7 +38,7 @@ class RateLimitIntegrationTest : BaseIntegrationTest() {
 
     private fun postRegister(email: String, ip: String) = post("/api/auth/register")
         .contentType(MediaType.APPLICATION_JSON)
-        .content("""{"email":"$email","password":"password123"}""")
+        .content("""{"email":"$email","password":"password123","dateOfBirth":"2000-01-15"}""")
         .header("X-Forwarded-For", ip)
 
     private fun postRefresh(ip: String) = post("/api/auth/refresh")

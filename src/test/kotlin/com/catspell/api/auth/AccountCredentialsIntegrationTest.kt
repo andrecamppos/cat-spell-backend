@@ -69,7 +69,7 @@ class AccountCredentialsIntegrationTest : BaseIntegrationTest() {
     private fun register(email: String, password: String = "password123") = mockMvc.perform(
         post("/api/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(mapOf("email" to email, "password" to password)))
+            .content(objectMapper.writeValueAsString(mapOf("email" to email, "password" to password, "dateOfBirth" to "2000-01-15")))
     )
 
     private fun login(email: String, password: String) = mockMvc.perform(

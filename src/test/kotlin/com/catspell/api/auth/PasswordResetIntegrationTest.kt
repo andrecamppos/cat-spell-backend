@@ -71,7 +71,7 @@ class PasswordResetIntegrationTest : BaseIntegrationTest() {
     }
 
     private fun register(email: String, password: String = "password123"): Pair<String, String> {
-        val body = mapOf("email" to email, "password" to password)
+        val body = mapOf("email" to email, "password" to password, "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
