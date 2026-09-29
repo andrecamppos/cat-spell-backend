@@ -118,7 +118,11 @@ class DiscoveryService(
         val profile = userProfileRepository.findByUserId(ownerId)
             ?: throw ResourceNotFoundException("Owner profile not found")
 
-        val age = java.time.Period.between(profile.dateOfBirth, java.time.LocalDate.now()).years
+        // DOB now lives on users (single source of truth, D-05). Grandfathered accounts may have a
+        // null DOB; compute age only when present rather than throwing on a viewable profile.
+        val owner = userRepository.findById(ownerId)
+            .orElseThrow { ResourceNotFoundException("Owner profile not found") }
+        val age = owner.dateOfBirth?.let { java.time.Period.between(it, java.time.LocalDate.now()).years } ?: 0
 
         val photos = userPhotoRepository.findByUserIdOrderByDisplayOrderAsc(ownerId)
             .filter { it.status == "ACTIVE" }
@@ -157,7 +161,10 @@ class DiscoveryService(
             throw ResourceNotFoundException("User profile not found")
         }
 
-        val age = java.time.Period.between(profile.dateOfBirth, java.time.LocalDate.now()).years
+        // DOB sourced from users (D-05); guard the nullable grandfathered case without throwing.
+        val user = userRepository.findById(userId)
+            .orElseThrow { ResourceNotFoundException("User profile not found") }
+        val age = user.dateOfBirth?.let { java.time.Period.between(it, java.time.LocalDate.now()).years } ?: 0
 
         val photos = userPhotoRepository.findByUserIdOrderByDisplayOrderAsc(userId)
             .filter { it.status == "ACTIVE" }

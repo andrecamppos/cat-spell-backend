@@ -35,16 +35,18 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                        CAST(ROUND(ST_Distance(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000) AS INTEGER) AS distance_km
                 FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at ASC) AS rn FROM cat_profiles) rc
                 JOIN user_profiles up ON up.user_id = rc.user_id
+                JOIN users u ON u.id = up.user_id
                 JOIN user_profiles requester ON requester.user_id = :requesterId
+                JOIN users ru ON ru.id = :requesterId
                 WHERE rc.rn = 1
                   AND rc.user_id != :requesterId
                   AND ST_DWithin(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :maxDistanceMeters)
                   AND (requester.gender_preference = 'EVERYONE' OR requester.gender_preference = up.gender)
                   AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
-                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
-                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, ru.date_of_birth)) BETWEEN up.age_min AND up.age_max
                   AND up.display_name IS NOT NULL
-                  AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
+                  AND u.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
                   AND up.location IS NOT NULL
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = rc.user_id AND uph2.status = 'ACTIVE')
                   AND EXISTS (SELECT 1 FROM cat_photos cph2 WHERE cph2.cat_profile_id = rc.id AND cph2.status = 'ACTIVE')
@@ -64,16 +66,18 @@ interface SwipeRepository : JpaRepository<Swipe, UUID> {
                         ORDER BY uph.display_order ASC LIMIT 1) AS user_photo_thumbnail,
                        CAST(ROUND(ST_Distance(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000) AS INTEGER) AS distance_km
                 FROM user_profiles up
+                JOIN users u ON u.id = up.user_id
                 JOIN user_profiles requester ON requester.user_id = :requesterId
+                JOIN users ru ON ru.id = :requesterId
                 WHERE up.user_id != :requesterId
                   AND NOT EXISTS (SELECT 1 FROM cat_profiles WHERE user_id = up.user_id)
                   AND ST_DWithin(up.location::geography, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :maxDistanceMeters)
                   AND (requester.gender_preference = 'EVERYONE' OR requester.gender_preference = up.gender)
                   AND (up.gender_preference = 'EVERYONE' OR up.gender_preference = requester.gender)
-                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, up.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
-                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, requester.date_of_birth)) BETWEEN up.age_min AND up.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth)) BETWEEN requester.age_min AND requester.age_max
+                  AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, ru.date_of_birth)) BETWEEN up.age_min AND up.age_max
                   AND up.display_name IS NOT NULL
-                  AND up.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
+                  AND u.date_of_birth IS NOT NULL AND up.gender IS NOT NULL
                   AND up.location IS NOT NULL
                   AND EXISTS (SELECT 1 FROM user_photos uph2 WHERE uph2.user_id = up.user_id AND uph2.status = 'ACTIVE')
                   AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = :requesterId AND s.target_user_id = up.user_id)
