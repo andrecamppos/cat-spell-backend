@@ -22,7 +22,7 @@ class ProfileIntegrationTest : BaseIntegrationTest() {
     lateinit var objectMapper: ObjectMapper
 
     private fun registerAndGetToken(email: String = "profile-test@example.com"): String {
-        val body = mapOf("email" to email, "password" to "password123")
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -41,7 +41,6 @@ class ProfileIntegrationTest : BaseIntegrationTest() {
     private fun createProfileBody(
         displayName: String = "Test User",
         bio: String? = "Hello world",
-        dateOfBirth: String = "2000-01-15",
         gender: String = "MALE",
         genderPreference: String = "FEMALE",
         ageMin: Int = 18,
@@ -50,7 +49,6 @@ class ProfileIntegrationTest : BaseIntegrationTest() {
     ): Map<String, Any?> = mapOf(
         "displayName" to displayName,
         "bio" to bio,
-        "dateOfBirth" to dateOfBirth,
         "gender" to gender,
         "genderPreference" to genderPreference,
         "ageMin" to ageMin,
@@ -164,19 +162,6 @@ class ProfileIntegrationTest : BaseIntegrationTest() {
                 .content(objectMapper.writeValueAsString(createProfileBody()))
         )
             .andExpect(status().isConflict)
-    }
-
-    @Test
-    fun `create profile underage returns bad request`() {
-        val token = registerAndGetToken("underage@example.com")
-        val body = createProfileBody(dateOfBirth = "2015-01-15")
-        mockMvc.perform(
-            post("/api/profile")
-                .header("Authorization", "Bearer $token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body))
-        )
-            .andExpect(status().isBadRequest)
     }
 
     @Test

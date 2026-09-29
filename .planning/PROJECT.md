@@ -65,6 +65,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Change password while logged in — requires current password (403 INVALID_CURRENT_PASSWORD on mismatch), revokes all sessions, mints no tokens — v2.1 (Phase 12)
 - ✓ Change email while logged in — requires current password, confirm the new address via emailed single-use token before it becomes active, 409 if already in use, revokes all sessions on confirm — v2.1 (Phase 12)
 - ✓ Report a user — fixed category enum + required details, persisted with no dedupe; operator notified out-of-band (async `AFTER_COMMIT`, survives email-send failure); self-report rejected and reporter identity never exposed; optional atomic "also block" via Phase 13 BlockService — v2.2 (Phase 14) [MOD-06, MOD-07, MOD-08]
+- ✓ Age verification — self-attested DOB collected at signup, server-side hard-block under-18 (422 `UNDER_MINIMUM_AGE`) evaluated before the account row is created, behind a swappable `AgeVerifier` seam; DOB relocated to `users` (single source of truth, immutable after signup) via V22 with backfill + grandfathering of existing accounts; vendor age-check deferred — v2.2 (Phase 15) [AGE-01, AGE-02, AGE-03]
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -72,7 +73,6 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Primary/featured cat designation for swipe feed
 - [ ] Typing indicators and read receipts in chat
 - [ ] Block/report/unmatch safety features
-- [ ] Age verification — self-attested DOB at signup, hard-block under-18 (vendor-based check deferred; see seed)
 - [ ] Invite-only access — waitlist to bootstrap, then member referrals (invite quotas + referral attribution)
 - [ ] Waitlist / invite-request capture API (backend for the separate-repo landing page)
 - [ ] Report user — persist reports + notify owner to act manually (no admin panel yet)
@@ -156,4 +156,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-28 — Phase 14 (Report a User) complete*
+*Last updated: 2026-09-29 — Phase 15 (Age Verification) complete*

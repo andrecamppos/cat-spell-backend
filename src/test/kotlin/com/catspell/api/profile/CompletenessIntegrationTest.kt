@@ -28,7 +28,7 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
     lateinit var s3Client: S3Client
 
     private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -48,7 +48,6 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
         val body = mapOf(
             "displayName" to "Test User",
             "bio" to "Hello world",
-            "dateOfBirth" to "2000-01-15",
             "gender" to "MALE",
             "genderPreference" to "FEMALE",
             "ageMin" to 18,
@@ -171,7 +170,6 @@ class CompletenessIntegrationTest : BaseIntegrationTest() {
         val token = registerAndGetToken("completeness-no-bio@example.com")
         val body = mapOf(
             "displayName" to "Test User",
-            "dateOfBirth" to "2000-01-15",
             "gender" to "MALE",
             "genderPreference" to "FEMALE",
             "ageMin" to 18,

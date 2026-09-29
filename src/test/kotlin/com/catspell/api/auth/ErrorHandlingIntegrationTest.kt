@@ -22,7 +22,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
     lateinit var objectMapper: ObjectMapper
 
     private fun registerUser(email: String, password: String = "password123") {
-        val body = mapOf("email" to email, "password" to password)
+        val body = mapOf("email" to email, "password" to password, "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -32,7 +32,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `validation error format - invalid email`() {
-        val body = mapOf("email" to "not-an-email", "password" to "password123")
+        val body = mapOf("email" to "not-an-email", "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -48,7 +48,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `validation error - password too short`() {
-        val body = mapOf("email" to "short-pass@example.com", "password" to "short")
+        val body = mapOf("email" to "short-pass@example.com", "password" to "short", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -62,7 +62,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `validation error - multiple fields`() {
-        val body = mapOf("email" to "bad", "password" to "short")
+        val body = mapOf("email" to "bad", "password" to "short", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -76,7 +76,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `duplicate email error`() {
         registerUser("dup-error@example.com")
-        val body = mapOf("email" to "dup-error@example.com", "password" to "password123")
+        val body = mapOf("email" to "dup-error@example.com", "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -123,7 +123,7 @@ class ErrorHandlingIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `error response content type is application problem+json`() {
-        val body = mapOf("email" to "content-type@example.com", "password" to "short")
+        val body = mapOf("email" to "content-type@example.com", "password" to "short", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

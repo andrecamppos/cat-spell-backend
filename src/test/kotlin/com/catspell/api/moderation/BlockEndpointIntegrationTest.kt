@@ -24,7 +24,7 @@ class BlockEndpointIntegrationTest : BaseIntegrationTest() {
     @Autowired lateinit var s3Client: S3Client
 
     private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
         markEmailVerified(email)
         val result = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body))).andReturn()
@@ -33,7 +33,7 @@ class BlockEndpointIntegrationTest : BaseIntegrationTest() {
 
     private fun createProfile(token: String, displayName: String, gender: String) {
         val body = mapOf(
-            "displayName" to displayName, "bio" to "Hello world", "dateOfBirth" to "2000-01-15",
+            "displayName" to displayName, "bio" to "Hello world",
             "gender" to gender, "genderPreference" to "EVERYONE", "ageMin" to 18, "ageMax" to 50, "maxDistanceKm" to 100
         )
         mockMvc.perform(post("/api/profile").header("Authorization", "Bearer $token").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body))).andExpect(status().isCreated)

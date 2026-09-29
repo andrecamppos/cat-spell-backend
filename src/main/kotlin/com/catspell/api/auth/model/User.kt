@@ -2,6 +2,7 @@ package com.catspell.api.auth.model
 
 import jakarta.persistence.*
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -24,7 +25,10 @@ class User(
     var updatedAt: Instant = Instant.now(),
 
     @Column(name = "email_verified_at")
-    var emailVerifiedAt: Instant? = null
+    var emailVerifiedAt: Instant? = null,
+
+    @Column(name = "date_of_birth")
+    var dateOfBirth: LocalDate? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

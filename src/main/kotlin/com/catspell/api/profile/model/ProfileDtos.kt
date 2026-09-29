@@ -1,7 +1,6 @@
 package com.catspell.api.profile.model
 
 import jakarta.validation.constraints.*
-import java.time.LocalDate
 
 data class CreateProfileRequest(
     @field:NotBlank
@@ -10,9 +9,6 @@ data class CreateProfileRequest(
 
     @field:Size(max = 1000)
     val bio: String? = null,
-
-    @field:NotNull
-    val dateOfBirth: LocalDate,
 
     @field:NotBlank
     val gender: String,
@@ -41,8 +37,6 @@ data class UpdateProfileRequest(
 
     @field:Size(max = 1000)
     val bio: String? = null,
-
-    val dateOfBirth: LocalDate? = null,
 
     val gender: String? = null,
 
@@ -75,7 +69,6 @@ data class UpdateLocationRequest(
 data class ProfileResponse(
     val displayName: String,
     val bio: String?,
-    val dateOfBirth: LocalDate,
     val gender: String,
     val genderPreference: String,
     val ageMin: Int,

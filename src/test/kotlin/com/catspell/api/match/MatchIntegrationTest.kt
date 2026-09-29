@@ -28,7 +28,7 @@ class MatchIntegrationTest : BaseIntegrationTest() {
     lateinit var s3Client: S3Client
 
     private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

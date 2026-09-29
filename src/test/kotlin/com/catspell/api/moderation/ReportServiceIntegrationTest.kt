@@ -35,7 +35,7 @@ class ReportServiceIntegrationTest : BaseIntegrationTest() {
 
     /** Register a verified user and return its id. Service-layer tests only need the user row to exist. */
     private fun registerUser(email: String): UUID {
-        val body = mapOf("email" to email, "password" to "password123")
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to "2000-01-15")
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

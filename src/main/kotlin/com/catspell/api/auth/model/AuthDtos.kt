@@ -1,14 +1,21 @@
 package com.catspell.api.auth.model
 
 import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Past
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 
 data class RegisterRequest(
     @field:Email(message = "must be a valid email address")
     val email: String,
 
     @field:Size(min = 8, message = "must be at least 8 characters")
-    val password: String
+    val password: String,
+
+    @field:NotNull
+    @field:Past(message = "date of birth must be in the past")
+    val dateOfBirth: LocalDate
 )
 
 data class LoginRequest(

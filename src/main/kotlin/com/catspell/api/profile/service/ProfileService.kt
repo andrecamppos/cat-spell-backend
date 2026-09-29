@@ -9,8 +9,6 @@ import org.locationtech.jts.geom.PrecisionModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.time.LocalDate
-import java.time.Period
 import java.util.UUID
 
 @Service
@@ -29,7 +27,6 @@ class ProfileService(
             throw IllegalStateException("Profile already exists")
         }
 
-        validateAge(request.dateOfBirth)
         validateAgeRange(request.ageMin, request.ageMax)
         validateGender(request.gender)
         validateGenderPreference(request.genderPreference)
@@ -38,7 +35,6 @@ class ProfileService(
             user = user,
             displayName = request.displayName,
             bio = request.bio,
-            dateOfBirth = request.dateOfBirth,
             gender = request.gender,
             genderPreference = request.genderPreference,
             ageMin = request.ageMin,
@@ -63,10 +59,6 @@ class ProfileService(
 
         request.displayName?.let { profile.displayName = it }
         request.bio?.let { profile.bio = it }
-        request.dateOfBirth?.let {
-            validateAge(it)
-            profile.dateOfBirth = it
-        }
         request.gender?.let { profile.gender = it }
         request.genderPreference?.let { profile.genderPreference = it }
         request.ageMin?.let { profile.ageMin = it }
@@ -91,13 +83,6 @@ class ProfileService(
         profile.updatedAt = Instant.now()
         val saved = userProfileRepository.save(profile)
         return toResponse(saved)
-    }
-
-    private fun validateAge(dateOfBirth: LocalDate) {
-        val age = Period.between(dateOfBirth, LocalDate.now()).years
-        if (age < 18) {
-            throw IllegalArgumentException("User must be at least 18 years old")
-        }
     }
 
     private fun validateAgeRange(ageMin: Int, ageMax: Int) {
@@ -133,7 +118,6 @@ class ProfileService(
         return ProfileResponse(
             displayName = profile.displayName,
             bio = profile.bio,
-            dateOfBirth = profile.dateOfBirth,
             gender = profile.gender,
             genderPreference = profile.genderPreference,
             ageMin = profile.ageMin,

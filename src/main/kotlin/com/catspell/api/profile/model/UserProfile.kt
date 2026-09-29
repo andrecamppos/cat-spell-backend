@@ -4,7 +4,6 @@ import com.catspell.api.auth.model.User
 import jakarta.persistence.*
 import org.locationtech.jts.geom.Point
 import java.time.Instant
-import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -23,9 +22,6 @@ class UserProfile(
 
     @Column(length = 1000)
     var bio: String? = null,
-
-    @Column(name = "date_of_birth", nullable = false)
-    var dateOfBirth: LocalDate,
 
     @Column(nullable = false, length = 20)
     var gender: String,

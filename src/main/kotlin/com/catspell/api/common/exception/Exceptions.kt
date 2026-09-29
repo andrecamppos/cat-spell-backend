@@ -8,6 +8,8 @@ class InvalidTokenException(message: String = "Invalid or expired token") : Runt
 
 class EmailNotVerifiedException(message: String = "Email address not verified") : RuntimeException(message)
 
+class UnderMinimumAgeException(message: String = "You must be at least 18 years old to sign up") : RuntimeException(message)
+
 class InvalidCurrentPasswordException(message: String = "Current password is incorrect") : RuntimeException(message)
 
 class ResourceNotFoundException(message: String) : RuntimeException(message)
