@@ -4,16 +4,16 @@ milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
 current_phase: 16
 current_phase_name: Invite-Only Access & Referral
-status: planning
+status: "Phase 15 shipped — PR #15"
 stopped_at: Phase 15 context gathered
-last_updated: "2026-09-29T14:38:47.779Z"
+last_updated: "2026-09-29T15:57:55.113Z"
 last_activity: 2026-09-29
-last_activity_desc: Phase 15 complete, transitioned to Phase 16
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 10
   completed_plans: 10
+last_activity_desc: Phase 15 complete, transitioned to Phase 16
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 15 shipped — PR #15
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -65,7 +65,7 @@ Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
 Phase: 16 — Invite-Only Access & Referral
 Plan: Not started
 Status: Plans complete, full test suite green — awaiting phase verification
-Last activity: 2026-09-29 — Phase 15 complete, transitioned to Phase 16
+Last activity: 2026-09-29
 
 ## Operator Next Steps
 
