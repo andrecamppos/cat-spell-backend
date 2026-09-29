@@ -27,8 +27,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
     @Autowired
     lateinit var s3Client: S3Client
 
-    private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+    private fun registerAndGetToken(email: String, dateOfBirth: String = "2000-01-15"): String {
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to dateOfBirth)
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -48,7 +48,6 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         token: String,
         displayName: String = "Test User",
         bio: String = "Hello world",
-        dateOfBirth: String = "2000-01-15",
         gender: String = "MALE",
         genderPreference: String = "EVERYONE",
         ageMin: Int = 18,
@@ -58,7 +57,6 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         val body = mapOf(
             "displayName" to displayName,
             "bio" to bio,
-            "dateOfBirth" to dateOfBirth,
             "gender" to gender,
             "genderPreference" to genderPreference,
             "ageMin" to ageMin,
@@ -181,8 +179,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         maxDistanceKm: Int = 100,
         catName: String = "TestCat"
     ): Triple<String, String, String> {
-        val token = registerAndGetToken(email)
-        createProfile(token, displayName, "Bio for $displayName", dateOfBirth, gender, genderPreference, ageMin, ageMax, maxDistanceKm)
+        val token = registerAndGetToken(email, dateOfBirth)
+        createProfile(token, displayName, "Bio for $displayName", gender, genderPreference, ageMin, ageMax, maxDistanceKm)
         setLocation(token, lat, lng)
         addUserPhoto(token)
         val catId = createCat(token, catName)
@@ -202,8 +200,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         ageMax: Int = 50,
         maxDistanceKm: Int = 100
     ): Pair<String, String> {
-        val token = registerAndGetToken(email)
-        createProfile(token, displayName, "Bio for $displayName", dateOfBirth, gender, genderPreference, ageMin, ageMax, maxDistanceKm)
+        val token = registerAndGetToken(email, dateOfBirth)
+        createProfile(token, displayName, "Bio for $displayName", gender, genderPreference, ageMin, ageMax, maxDistanceKm)
         setLocation(token, lat, lng)
         addUserPhoto(token)
         return Pair(token, email)
@@ -384,7 +382,6 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
         val tokenB = registerAndGetToken("disc-nobio-b@example.com")
         val noBioBody = mapOf(
             "displayName" to "NoBio",
-            "dateOfBirth" to "2000-01-15",
             "gender" to "MALE",
             "genderPreference" to "EVERYONE",
             "ageMin" to 18,
@@ -416,8 +413,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
     fun `feed only shows cats with active photo`() {
         val (tokenA, _, _) = setupCompleteUser("disc-nophoto-a@example.com", "NoPhotoA", "FEMALE")
         // User B with complete profile but cat has no photo
-        val tokenB = registerAndGetToken("disc-nophoto-b@example.com")
-        createProfile(tokenB, "NoPhotoCatUser", "Bio", "2000-01-15", "MALE", "EVERYONE")
+        val tokenB = registerAndGetToken("disc-nophoto-b@example.com", "2000-01-15")
+        createProfile(tokenB, "NoPhotoCatUser", "Bio", "MALE", "EVERYONE")
         setLocation(tokenB, 40.7128, -74.0060)
         addUserPhoto(tokenB)
         createCat(tokenB, "NoPhotoCat")  // No photo added to cat
@@ -501,8 +498,8 @@ class DiscoveryIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `feed returns empty list when no eligible cats exist`() {
         // User with complete profile but no other users in the system nearby
-        val token = registerAndGetToken("disc-empty-feed@example.com")
-        createProfile(token, "LonelyUser", "Bio", "2000-01-15", "FEMALE", "MALE")
+        val token = registerAndGetToken("disc-empty-feed@example.com", "2000-01-15")
+        createProfile(token, "LonelyUser", "Bio", "FEMALE", "MALE")
         setLocation(token, 0.0, 0.0) // Remote location with no other users
         addUserPhoto(token)
         val catId = createCat(token, "LonelyCat")

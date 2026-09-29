@@ -66,7 +66,6 @@ class BlockServiceIntegrationTest : BaseIntegrationTest() {
         val body = mapOf(
             "displayName" to displayName,
             "bio" to "Hello world",
-            "dateOfBirth" to "2000-01-15",
             "gender" to gender,
             "genderPreference" to "EVERYONE",
             "ageMin" to 18,

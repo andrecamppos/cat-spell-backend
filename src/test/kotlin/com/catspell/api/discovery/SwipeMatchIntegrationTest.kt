@@ -27,8 +27,8 @@ class SwipeMatchIntegrationTest : BaseIntegrationTest() {
     @Autowired
     lateinit var s3Client: S3Client
 
-    private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+    private fun registerAndGetToken(email: String, dateOfBirth: String = "2000-01-15"): String {
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to dateOfBirth)
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -53,7 +53,6 @@ class SwipeMatchIntegrationTest : BaseIntegrationTest() {
         val body = mapOf(
             "displayName" to displayName,
             "bio" to "Hello world",
-            "dateOfBirth" to "2000-01-15",
             "gender" to gender,
             "genderPreference" to genderPreference,
             "ageMin" to 18,

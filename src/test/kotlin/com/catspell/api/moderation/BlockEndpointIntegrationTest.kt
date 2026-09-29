@@ -33,7 +33,7 @@ class BlockEndpointIntegrationTest : BaseIntegrationTest() {
 
     private fun createProfile(token: String, displayName: String, gender: String) {
         val body = mapOf(
-            "displayName" to displayName, "bio" to "Hello world", "dateOfBirth" to "2000-01-15",
+            "displayName" to displayName, "bio" to "Hello world",
             "gender" to gender, "genderPreference" to "EVERYONE", "ageMin" to 18, "ageMax" to 50, "maxDistanceKm" to 100
         )
         mockMvc.perform(post("/api/profile").header("Authorization", "Bearer $token").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body))).andExpect(status().isCreated)

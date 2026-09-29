@@ -27,8 +27,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
     @Autowired
     lateinit var s3Client: S3Client
 
-    private fun registerAndGetToken(email: String): String {
-        val body = mapOf("email" to email, "password" to "password123")
+    private fun registerAndGetToken(email: String, dateOfBirth: String = "2000-01-15"): String {
+        val body = mapOf("email" to email, "password" to "password123", "dateOfBirth" to dateOfBirth)
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -48,14 +48,12 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
         token: String,
         displayName: String = "Test User",
         bio: String = "Hello world",
-        dateOfBirth: String = "2000-01-15",
         gender: String = "MALE",
         genderPreference: String = "EVERYONE"
     ) {
         val body = mapOf(
             "displayName" to displayName,
             "bio" to bio,
-            "dateOfBirth" to dateOfBirth,
             "gender" to gender,
             "genderPreference" to genderPreference,
             "ageMin" to 18,
@@ -168,8 +166,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `owner profile returns displayName bio age gender`() {
-        val ownerToken = registerAndGetToken("owner-profile-a@example.com")
-        createProfile(ownerToken, "OwnerAlice", "Cat lover", "2000-01-15", "FEMALE")
+        val ownerToken = registerAndGetToken("owner-profile-a@example.com", "2000-01-15")
+        createProfile(ownerToken, "OwnerAlice", "Cat lover", "FEMALE")
         setLocation(ownerToken)
         addUserPhoto(ownerToken)
         val catId = createCat(ownerToken, "MyCat")
@@ -190,8 +188,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `owner profile age is calculated from DOB`() {
-        val ownerToken = registerAndGetToken("owner-age-calc@example.com")
-        createProfile(ownerToken, "AgeCalcOwner", "Bio", "2000-06-15", "MALE")
+        val ownerToken = registerAndGetToken("owner-age-calc@example.com", "2000-06-15")
+        createProfile(ownerToken, "AgeCalcOwner", "Bio", "MALE")
         setLocation(ownerToken)
         addUserPhoto(ownerToken)
         val catId = createCat(ownerToken, "AgeCat")
@@ -211,8 +209,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `owner profile includes photos`() {
-        val ownerToken = registerAndGetToken("owner-photos@example.com")
-        createProfile(ownerToken, "PhotoOwner", "Bio", "2000-01-15", "MALE")
+        val ownerToken = registerAndGetToken("owner-photos@example.com", "2000-01-15")
+        createProfile(ownerToken, "PhotoOwner", "Bio", "MALE")
         setLocation(ownerToken)
         addUserPhoto(ownerToken)
         addUserPhoto(ownerToken)
@@ -234,8 +232,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `owner profile includes all cats`() {
-        val ownerToken = registerAndGetToken("owner-allcats@example.com")
-        createProfile(ownerToken, "MultiCatOwner", "Bio", "2000-01-15", "FEMALE")
+        val ownerToken = registerAndGetToken("owner-allcats@example.com", "2000-01-15")
+        createProfile(ownerToken, "MultiCatOwner", "Bio", "FEMALE")
         setLocation(ownerToken)
         addUserPhoto(ownerToken)
         val cat1Id = createCat(ownerToken, "CatOne", "Siamese")
@@ -276,8 +274,8 @@ class OwnerProfileIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `owner profile accessible by any authenticated user`() {
-        val ownerToken = registerAndGetToken("owner-access-a@example.com")
-        createProfile(ownerToken, "AccessOwner", "Bio", "2000-01-15", "MALE")
+        val ownerToken = registerAndGetToken("owner-access-a@example.com", "2000-01-15")
+        createProfile(ownerToken, "AccessOwner", "Bio", "MALE")
         setLocation(ownerToken)
         addUserPhoto(ownerToken)
         val catId = createCat(ownerToken, "AccessCat")
