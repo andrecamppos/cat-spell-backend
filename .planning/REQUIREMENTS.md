@@ -21,9 +21,9 @@ Requirements for milestone v2.2. Each maps to a roadmap phase.
 
 ### Age Verification
 
-- [ ] **AGE-01**: A self-attested date of birth is collected at signup
+- [x] **AGE-01**: A self-attested date of birth is collected at signup
 - [x] **AGE-02**: Signup is hard-blocked server-side for anyone under 18 (not client-only); an `AgeVerifier` seam keeps a future vendor check swappable
-- [ ] **AGE-03**: Existing accounts are handled via migration (DOB backfill / grandfather) so no current user is broken on rollout
+- [x] **AGE-03**: Existing accounts are handled via migration (DOB backfill / grandfather) so no current user is broken on rollout
 
 ### Invite-Only Access & Referral
 
@@ -88,9 +88,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | MOD-06 | Phase 14 | Complete |
 | MOD-07 | Phase 14 | Complete |
 | MOD-08 | Phase 14 | Complete |
-| AGE-01 | Phase 15 | Pending |
+| AGE-01 | Phase 15 | Complete |
 | AGE-02 | Phase 15 | Complete |
-| AGE-03 | Phase 15 | Pending |
+| AGE-03 | Phase 15 | Complete |
 | INV-01 | Phase 16 | Pending |
 | INV-02 | Phase 16 | Pending |
 | INV-03 | Phase 16 | Pending |
