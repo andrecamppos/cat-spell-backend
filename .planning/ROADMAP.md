@@ -131,7 +131,15 @@ Resolves the DOB-placement decision (DOB currently lives on `user_profiles`, not
   4. Codes are high-entropy, stored hashed, and single-use; invalid vs consumed codes return an identical generic error
   5. Referral attribution (referrer → invitee) is recorded when an invite is consumed
 
-Introduces `invites` + `referrals` tables, SecureRandom code generation hashed at rest, and single-use consumption. New Flyway migration (V19+).
+Introduces `invites` + `referrals` tables, SecureRandom code generation hashed at rest, and single-use consumption. New Flyway migration (V23).
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — Data layer: V23 migration, Invite/Referral entities + repositories (atomic single-use claim), app.invite.* config keys, migration test (Wave 1)
+- [ ] 16-02-PLAN.md — InviteService (create/validate/consume) + generic invite/admin exceptions + issuance DTOs + single-use/referral tests (Wave 2)
+- [ ] 16-03-PLAN.md — Shared-secret admin issuance endpoint (POST /api/admin/invites) + SecurityConfig permitAll + admin endpoint test (Wave 3)
+- [ ] 16-04-PLAN.md — Register gate composition: RegisterRequest.inviteCode + @Transactional AuthService.register + gate/public-mode/enumeration tests (Wave 3)
 
 ### Phase 17: Waitlist / Landing-Page API
 
