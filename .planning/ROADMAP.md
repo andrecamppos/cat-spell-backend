@@ -136,8 +136,16 @@ Introduces `invites` + `referrals` tables, SecureRandom code generation hashed a
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 16-01-PLAN.md — Data layer: V23 migration, Invite/Referral entities + repositories (atomic single-use claim), app.invite.* config keys, migration test (Wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 16-02-PLAN.md — InviteService (create/validate/consume) + generic invite/admin exceptions + issuance DTOs + single-use/referral tests (Wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 16-03-PLAN.md — Shared-secret admin issuance endpoint (POST /api/admin/invites) + SecurityConfig permitAll + admin endpoint test (Wave 3)
 - [ ] 16-04-PLAN.md — Register gate composition: RegisterRequest.inviteCode + @Transactional AuthService.register + gate/public-mode/enumeration tests (Wave 3)
 

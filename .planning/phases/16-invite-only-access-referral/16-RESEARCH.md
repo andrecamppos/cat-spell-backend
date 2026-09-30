@@ -472,18 +472,21 @@ fun handleAdminAuth(ex: AdminAuthException): ProblemDetail {
 
 **All other claims are `[VERIFIED: in-repo]` or `[CITED: CONTEXT.md / research/*]`.**
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`app.invite.admin-token` default vs. fail-fast (D-03 discretion).**
    - What we know: Existing secrets like `jwt.secret` ship with a dev default; but this route is `permitAll`, so a default = an open mint endpoint.
    - What's unclear: Whether the operator wants a no-default (app fails/denies without the env var) or a clearly-dev-only default.
    - Recommendation: **Deny-by-default** — `@Value("\${app.invite.admin-token:}")` (empty), and reject all admin requests when blank. No usable default reaches prod. (Aligns with security intent; low friction — set the env var to enable issuance.)
+   - **— RESOLVED: deny-by-default empty token.** The plans implement `@Value("\${app.invite.admin-token:}")` (empty default) in both application.yml files (16-01) and `InviteAdminController` denies all requests when the configured token is blank (16-03).
 
 2. **Status for a bad/missing admin token: `401` vs `403` (D-03 discretion).**
    - Recommendation: `401 Unauthorized` (missing/invalid credential). Either satisfies D-03; keep the body generic.
+   - **— RESOLVED: 401.** `AdminAuthException` maps to HTTP 401 (title 'Unauthorized', no code hint) in `GlobalExceptionHandler` (16-02), returned by the admin controller for a missing/wrong token (16-03).
 
 3. **Human-friendly code vs. Base64url (D-07 discretion).**
    - Recommendation: Base64url for zero new code and consistency with existing tokens. Revisit only if Phase 17 needs codes typed by hand from an email (that phase emails a link, so likely unnecessary).
+   - **— RESOLVED: Base64url.** `InviteService.create` reuses the in-repo SecureRandom 32-byte + `Base64.getUrlEncoder().withoutPadding()` generator (16-02).
 
 ## Environment Availability
 
