@@ -5,11 +5,11 @@ milestone_name: Safety, Moderation & Gated Access
 current_phase: 17
 current_phase_name: Waitlist / Landing-Page API
 status: "Phase 16 shipped — PR #16"
-stopped_at: Phase 16 context gathered
-last_updated: "2026-10-01T13:48:42.858Z"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-10-01T14:08:43.322Z"
 last_activity: 2026-10-01
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
   total_plans: 14
   completed_plans: 14
@@ -53,9 +53,9 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-10-01
-Stopped at: Phase 16 complete (UAT passed, 14/14), ready to plan Phase 17
-Resume file: None
+Last session: 2026-10-01T14:08:43.303Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-waitlist-landing-page-api/17-CONTEXT.md
 
 ---
 *Last updated: 2026-10-01 after Phase 16 (Invite-Only Access & Referral)*
