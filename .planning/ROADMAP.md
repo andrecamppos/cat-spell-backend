@@ -142,7 +142,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 16-02-PLAN.md — InviteService (create/validate/consume) + generic invite/admin exceptions + issuance DTOs + single-use/referral tests (Wave 2)
+- [x] 16-02-PLAN.md — InviteService (create/validate/consume) + generic invite/admin exceptions + issuance DTOs + single-use/referral tests (Wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -184,7 +184,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
-| 16. Invite-Only Access & Referral | v2.2 | 1/4 | In Progress|  |
+| 16. Invite-Only Access & Referral | v2.2 | 2/4 | In Progress|  |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
 
 ---
