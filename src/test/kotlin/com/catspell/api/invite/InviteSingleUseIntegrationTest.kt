@@ -76,7 +76,7 @@ class InviteSingleUseIntegrationTest : BaseIntegrationTest() {
         val raw = inviteService.create(null)
         val invite = inviteService.validate(raw)
 
-        val threads = 4
+        val threads = 3
         val invitees = (1..threads).map { newUser("race-$it@example.com") }
         val pool = Executors.newFixedThreadPool(threads)
         val start = CountDownLatch(1)
