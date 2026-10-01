@@ -47,6 +47,9 @@ app:
   confirm-email-change-url: catspell://confirm-email-change
   report:
     operator-email: ops@catspell.example
+  invite:
+    enabled: ${INVITE_ENABLED:false}
+    admin-token: ${INVITE_ADMIN_TOKEN:}
 
 rate-limit:
   capacity: 10000
