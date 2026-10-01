@@ -72,6 +72,24 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(InviteRequiredException::class)
+    fun handleInviteRequired(ex: InviteRequiredException): ProblemDetail {
+        // ONE body for invalid, consumed, AND missing-when-gated invite codes — no enumeration channel
+        // (D-10, Pitfall 1). Do not branch on the failure reason.
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message ?: "A valid invite is required to sign up")
+        problem.title = "Forbidden"
+        problem.setProperty("code", "INVITE_REQUIRED")
+        return problem
+    }
+
+    @ExceptionHandler(AdminAuthException::class)
+    fun handleAdminAuth(ex: AdminAuthException): ProblemDetail {
+        // Generic 401 — no `code` property that hints whether the token was missing, malformed, or wrong (D-03).
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Not authorized")
+        problem.title = "Unauthorized"
+        return problem
+    }
+
     @ExceptionHandler(UnderMinimumAgeException::class)
     fun handleUnderMinimumAge(ex: UnderMinimumAgeException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(
