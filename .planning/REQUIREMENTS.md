@@ -30,8 +30,8 @@ Requirements for milestone v2.2. Each maps to a roadmap phase.
 - [ ] **INV-01**: A global config gate enforces invite-required signup and can be flipped off to go fully public
 - [ ] **INV-02**: The operator can issue invite codes to bootstrap the first users
 - [ ] **INV-03**: When the gate is on, signup requires a valid, unconsumed invite code
-- [ ] **INV-04**: Invite codes are high-entropy, stored hashed, and single-use; invalid vs consumed codes return an identical generic error (no enumeration)
-- [ ] **INV-05**: Referral attribution (referrer → invitee) is recorded when an invite is consumed
+- [x] **INV-04**: Invite codes are high-entropy, stored hashed, and single-use; invalid vs consumed codes return an identical generic error (no enumeration)
+- [x] **INV-05**: Referral attribution (referrer → invitee) is recorded when an invite is consumed
 
 ### Waitlist / Landing-Page API
 
@@ -94,8 +94,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | INV-01 | Phase 16 | Pending |
 | INV-02 | Phase 16 | Pending |
 | INV-03 | Phase 16 | Pending |
-| INV-04 | Phase 16 | Pending |
-| INV-05 | Phase 16 | Pending |
+| INV-04 | Phase 16 | Complete |
+| INV-05 | Phase 16 | Complete |
 | WAIT-01 | Phase 17 | Pending |
 | WAIT-02 | Phase 17 | Pending |
 | WAIT-03 | Phase 17 | Pending |

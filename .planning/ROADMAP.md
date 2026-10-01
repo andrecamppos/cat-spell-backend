@@ -138,7 +138,7 @@ Introduces `invites` + `referrals` tables, SecureRandom code generation hashed a
 Plans:
 **Wave 1**
 
-- [ ] 16-01-PLAN.md — Data layer: V23 migration, Invite/Referral entities + repositories (atomic single-use claim), app.invite.* config keys, migration test (Wave 1)
+- [x] 16-01-PLAN.md — Data layer: V23 migration, Invite/Referral entities + repositories (atomic single-use claim), app.invite.* config keys, migration test (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -184,7 +184,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
-| 16. Invite-Only Access & Referral | v2.2 | — | Not started | — |
+| 16. Invite-Only Access & Referral | v2.2 | 1/4 | In Progress|  |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
 
 ---

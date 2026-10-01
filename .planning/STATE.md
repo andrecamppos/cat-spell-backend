@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
 current_phase: 16
-current_phase_name: Invite-Only Access & Referral
-status: "Phase 15 shipped — PR #15"
+current_phase_name: invite-only-access-referral
+status: executing
 stopped_at: Phase 16 context gathered
-last_updated: "2026-09-30T11:12:41.374Z"
-last_activity: 2026-09-30
-last_activity_desc: Phase 16 planning complete
+last_updated: "2026-10-01T09:17:56.441Z"
+last_activity: 2026-10-01
+last_activity_desc: Phase 16 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 14
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 14 — report-a-user
+**Current focus:** Phase 16 — invite-only-access-referral
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 15 shipped — PR #15
+**Status:** Ready to execute
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -62,10 +62,10 @@ Resume file: .planning/phases/16-invite-only-access-referral/16-CONTEXT.md
 
 ## Current Position
 
-Phase: 16 — Invite-Only Access & Referral
-Plan: Not started
-Status: Plans complete, full test suite green — awaiting phase verification
-Last activity: 2026-09-30 — Phase 16 planning complete
+Phase: 16 (invite-only-access-referral) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-10-01 — Phase 16 execution started
 
 ## Operator Next Steps
 
