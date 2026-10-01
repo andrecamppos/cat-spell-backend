@@ -15,7 +15,11 @@ data class RegisterRequest(
 
     @field:NotNull
     @field:Past(message = "date of birth must be in the past")
-    val dateOfBirth: LocalDate
+    val dateOfBirth: LocalDate,
+
+    // Optional at the DTO layer — requiredness is enforced in AuthService only when app.invite.enabled=true,
+    // so public mode (gate off) never rejects a registration that omits it (D-08/D-09, Pitfall 5).
+    val inviteCode: String? = null
 )
 
 data class LoginRequest(
