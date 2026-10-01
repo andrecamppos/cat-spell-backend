@@ -56,7 +56,7 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 - [x] **Phase 13: Blocking & Unmatch** — block/unblock/list + unmatch, enforced across all surfaces (completed 2026-09-25)
 - [x] **Phase 14: Report a User** — report with category + details, persisted and operator-notified (completed 2026-09-28)
 - [x] **Phase 15: Age Verification** — server-side 18+ hard gate at signup (completed 2026-09-29)
-- [ ] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution
+- [x] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution (completed 2026-10-01)
 - [ ] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites
 
 ### Phase 13: Blocking & Unmatch
@@ -133,7 +133,7 @@ Resolves the DOB-placement decision (DOB currently lives on `user_profiles`, not
 
 Introduces `invites` + `referrals` tables, SecureRandom code generation hashed at rest, and single-use consumption. New Flyway migration (V23).
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1**
@@ -184,7 +184,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
-| 16. Invite-Only Access & Referral | v2.2 | 4/4 | In Progress|  |
+| 16. Invite-Only Access & Referral | v2.2 | 4/4 | Complete    | 2026-10-01 |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
 
 ---
