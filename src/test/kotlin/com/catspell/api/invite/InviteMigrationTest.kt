@@ -3,18 +3,31 @@ package com.catspell.api.invite
 import com.catspell.api.BaseIntegrationTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.TestPropertySource
+import java.sql.DriverManager
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
 /**
  * Proves the V23 schema (INV-04 schema): boots with Flyway ENABLED and Hibernate ddl-auto=validate so
- * the real V23 DDL runs against the Testcontainers Postgres and the Invite/Referral entities are
- * validated against it (mirrors how DobMigrationTest exercises the real schema). The default test
- * profile disables Flyway and uses create-drop, so this test overrides both via @TestPropertySource.
+ * the real V23 DDL runs against a Postgres database and the Invite/Referral entities are validated
+ * against it. The default test profile disables Flyway and uses create-drop, so this test overrides
+ * both via @TestPropertySource.
+ *
+ * ISOLATION: every other integration context shares the one `catspell` database on the Testcontainers
+ * Postgres using Hibernate ddl-auto=create-drop. A Flyway-enabled context pointed at that same database
+ * is order-dependent — if a create-drop context populates `public` first, Flyway refuses to migrate
+ * ("non-empty schema but no schema history table"), and running Flyway's own clean on the shared DB
+ * would wipe schema out from under the other cached contexts. To stay deterministic AND leave the
+ * shared DB untouched, this test runs against a dedicated, freshly (re)created database on the SAME
+ * container; Flyway migrates it from empty (V3 installs PostGIS there), so no clean is ever needed.
  *
  * Column/constraint shape is introspected via jdbcTemplate; the referrals UNIQUE(invitee_id) and
  * chk_referrals_no_self CHECK are proven by asserting violating inserts are rejected.
@@ -26,7 +39,38 @@ import java.util.UUID
         "spring.jpa.hibernate.ddl-auto=validate"
     ]
 )
-class InviteMigrationTest : BaseIntegrationTest() {
+class InviteMigrationTest {
+
+    @Autowired
+    private lateinit var jdbcTemplate: JdbcTemplate
+
+    companion object {
+        private const val MIGRATION_DB = "invite_migration_test"
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun migrationDatasource(registry: DynamicPropertyRegistry) {
+            // Reuse the shared container but point this context at a private, pristine database so the
+            // real migration set applies from empty without touching (or being disturbed by) `catspell`.
+            val base = BaseIntegrationTest.postgres
+            DriverManager.getConnection(base.jdbcUrl, base.username, base.password).use { conn ->
+                conn.createStatement().use { st ->
+                    st.execute("DROP DATABASE IF EXISTS $MIGRATION_DB")
+                    st.execute("CREATE DATABASE $MIGRATION_DB")
+                }
+            }
+            val migrationUrl = base.jdbcUrl.replaceFirst("/${base.databaseName}", "/$MIGRATION_DB")
+            registry.add("spring.datasource.url") { migrationUrl }
+            registry.add("spring.datasource.username", base::getUsername)
+            registry.add("spring.datasource.password", base::getPassword)
+            // The full application context still needs the S3/MinIO config to start.
+            registry.add("storage.s3.endpoint") {
+                "http://${BaseIntegrationTest.minio.host}:${BaseIntegrationTest.minio.getMappedPort(9000)}"
+            }
+            registry.add("storage.s3.access-key") { "catspell" }
+            registry.add("storage.s3.secret-key") { "catspell123" }
+        }
+    }
 
     private fun insertUser(id: UUID, email: String) {
         val now = Instant.now()
