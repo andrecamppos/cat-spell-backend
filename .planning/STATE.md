@@ -6,7 +6,7 @@ current_phase: 17
 current_phase_name: Waitlist / Landing-Page API
 status: planning
 stopped_at: Phase 16 context gathered
-last_updated: "2026-10-01T10:57:40.620Z"
+last_updated: "2026-10-01T13:31:15.635Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 16 complete, transitioned to Phase 17
 progress:
@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-23)
+See: .planning/PROJECT.md (updated 2026-10-01)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 16 — invite-only-access-referral
+**Current focus:** Phase 17 — Waitlist / Landing-Page API
 
 ## Milestone v1.0 — MVP Backend
 
@@ -53,24 +53,24 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-09-29T16:18:09.846Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-invite-only-access-referral/16-CONTEXT.md
+Last session: 2026-10-01
+Stopped at: Phase 16 complete (UAT passed, 14/14), ready to plan Phase 17
+Resume file: None
 
 ---
-*Last updated: 2026-08-24 after completing the v2.1 milestone*
+*Last updated: 2026-10-01 after Phase 16 (Invite-Only Access & Referral)*
 
 ## Current Position
 
 Phase: 17 — Waitlist / Landing-Page API
 Plan: Not started
-Status: Phase complete — ready for verification
+Status: Ready to plan
 Last activity: 2026-10-01 — Phase 16 complete, transitioned to Phase 17
 
 ## Operator Next Steps
 
-- `/gsd-verify-work 14` to run UAT verification for the report-a-user feature
-- `/gsd-ship 14` to open the PR once verification passes
+- `/gsd-discuss-phase 17` to gather context for the waitlist / landing-page API
+- `/gsd-plan-phase 17` to plan Phase 17 directly
 
 ## Accumulated Context
 
