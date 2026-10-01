@@ -146,7 +146,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 16-03-PLAN.md — Shared-secret admin issuance endpoint (POST /api/admin/invites) + SecurityConfig permitAll + admin endpoint test (Wave 3)
+- [x] 16-03-PLAN.md — Shared-secret admin issuance endpoint (POST /api/admin/invites) + SecurityConfig permitAll + admin endpoint test (Wave 3)
 - [ ] 16-04-PLAN.md — Register gate composition: RegisterRequest.inviteCode + @Transactional AuthService.register + gate/public-mode/enumeration tests (Wave 3)
 
 ### Phase 17: Waitlist / Landing-Page API
@@ -184,7 +184,7 @@ Introduces a `waitlist_entries` table, reuses the hashed single-use token model 
 | 13. Blocking & Unmatch | v2.2 | 4/4 | Complete    | 2026-09-25 |
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
-| 16. Invite-Only Access & Referral | v2.2 | 2/4 | In Progress|  |
+| 16. Invite-Only Access & Referral | v2.2 | 3/4 | In Progress|  |
 | 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
 
 ---
