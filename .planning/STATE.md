@@ -4,16 +4,16 @@ milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
 current_phase: 17
 current_phase_name: Waitlist / Landing-Page API
-status: planning
+status: "Phase 16 shipped — PR #16"
 stopped_at: Phase 16 context gathered
-last_updated: "2026-10-01T13:31:15.635Z"
+last_updated: "2026-10-01T13:48:42.858Z"
 last_activity: 2026-10-01
-last_activity_desc: Phase 16 complete, transitioned to Phase 17
 progress:
   total_phases: 4
   completed_phases: 4
   total_plans: 14
   completed_plans: 14
+last_activity_desc: Phase 16 complete, transitioned to Phase 17
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-01)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to plan
+**Status:** Phase 16 shipped — PR #16
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -65,7 +65,7 @@ Resume file: None
 Phase: 17 — Waitlist / Landing-Page API
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-10-01 — Phase 16 complete, transitioned to Phase 17
+Last activity: 2026-10-01
 
 ## Operator Next Steps
 
