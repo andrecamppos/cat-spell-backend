@@ -27,16 +27,26 @@ class AuthService(
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val emailChangeRequestRepository: EmailChangeRequestRepository,
     private val emailVerificationService: EmailVerificationService,
+    private val inviteService: com.catspell.api.invite.service.InviteService,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
-    @Value("\${jwt.refresh-token-expiry-days:30}") private val refreshTokenExpiryDays: Long
+    @Value("\${jwt.refresh-token-expiry-days:30}") private val refreshTokenExpiryDays: Long,
+    @Value("\${app.invite.enabled:false}") private val inviteEnabled: Boolean
 ) {
 
+    // @Transactional so validate → save → consume are atomic: a raced/failed consume rolls back the user
+    // insert, leaving no orphan account (D-08, Pitfall 3).
+    @Transactional
     fun register(request: RegisterRequest) {
         // Hard age gate FIRST (D-01/D-02): a cheap, always-on server-side <18 check via the AgeVerifier
         // seam runs before the duplicate-email check and before any row is written, so no under-18 account
         // is ever persisted and the 422 rejection reveals nothing about account existence.
         ageVerifier.requireAdult(request.dateOfBirth)
+
+        // Invite gate (INV-01/INV-03, D-08/D-09): only when enabled server-side. When the gate is off the
+        // invite path never runs, so a missing/empty/garbage inviteCode is ignored. A missing/invalid/
+        // consumed code when gated throws the single generic InviteRequiredException (403, INVITE_REQUIRED).
+        val invite = if (inviteEnabled) inviteService.validate(request.inviteCode) else null
 
         if (userRepository.existsByEmail(request.email)) {
             throw DuplicateEmailException()
@@ -50,6 +60,10 @@ class AuthService(
             dateOfBirth = request.dateOfBirth
         )
         val savedUser = userRepository.save(user)
+
+        // Claim the invite (and write referral attribution) only after the account exists. A failed claim
+        // throws the generic 403 and rolls back the whole transaction (INV-04, D-07).
+        invite?.let { inviteService.consume(it, savedUser) }
 
         emailVerificationService.issueAndSend(savedUser)
     }
