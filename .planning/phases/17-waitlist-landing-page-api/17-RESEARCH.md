@@ -569,20 +569,26 @@ Pull the raw token out of `sentMessages.last().textBody` with a regex on `token=
 | A8 | `PathPattern` `/api/admin/waitlist/**` also matches the bare `/api/admin/waitlist` | Pattern 1 | None if both patterns are listed, as recommended. |
 | A9 | All config URL defaults (localhost landing-page paths) | Config block | Low. Placeholders; the operator sets env vars. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Mail-scanner token burn vs D-01/D-08 (GET + single-use)**
+All four questions were settled during planning (plans 17-01..17-06). None is open; Q1 leaves one variant deferred pending user approval because adopting it would change locked decision D-08.
+
+1. **Mail-scanner token burn vs D-01/D-08 (GET + single-use)** — RESOLVED
    - What we know: scanners will spend tokens before the human clicks. Data stays correct (the entry is CONFIRMED); only the click UX fails.
    - What's unclear: whether the user accepts error-page copy as the only mitigation.
    - Recommendation: honor D-08 as locked, and have the landing-page error copy cover "already confirmed". Optional, and **needs user confirmation because it changes D-08**: when the claim matches 0 rows but the hash belongs to an entry already `CONFIRMED`/`INVITED`, redirect to the success URL instead. The on-row hash is kept (Pattern 4), so no schema change is needed. The stronger GET-interstitial-then-POST fix contradicts D-01 and should go to a later phase.
-2. **CORS / landing-page integration mode**
+   - **RESOLVED: D-08 kept as locked.** Plan 17-02 redirects every 0-row claim, including a token a scanner already spent, to the error URL. The mitigation in this repo is a line in the confirmation email: if the page says the link was used, the recipient's spot is still confirmed. The landing-page error copy lives in the separate web repo and is a manual-only check in 17-VALIDATION.md. The "already CONFIRMED/INVITED → success URL" variant is **deferred pending user approval** (it changes D-08) and is not implemented. Because `confirm_token_hash` stays on the row, adopting it later needs no schema change. The GET-interstitial-then-POST fix contradicts D-01 and stays out of this phase.
+2. **CORS / landing-page integration mode** — RESOLVED
    - What we know: no CORS config exists. A cross-origin browser `fetch` with JSON gets blocked.
    - Recommendation: ship Pattern 7 with a blank-by-default `app.waitlist.allowed-origins`. It is inert until configured and makes either integration mode work.
-3. **Invite email link target**
+   - **RESOLVED: recommendation adopted.** Plan 17-01 adds `app.waitlist.allowed-origins` (blank by default) to both `application.yml` files. Plan 17-03 Task 2 adds a CORS mapping for `POST /api/waitlist` only. It stays inert until configured and never sends `Access-Control-Allow-Credentials`.
+3. **Invite email link target** — RESOLVED
    - What we know: invitees redeem by typing `inviteCode` at register (Phase 16). There is no existing invite URL key.
    - Recommendation: `app.waitlist.invite-url` (default `catspell://register`, configurable to an app-store or web page) with `?code=` appended, and the raw code also printed in the body.
-4. **Admin list size**
+   - **RESOLVED: recommendation adopted.** Plan 17-01 adds `app.waitlist.invite-url` (default `catspell://register`). Plan 17-05's `WaitlistInviteEmailRenderer` appends `?code=<code>` and also prints the raw code in the body.
+4. **Admin list size** — RESOLVED
    - Recommendation: `GET /api/admin/waitlist?status=confirmed&limit=100` (default 100, max 500, ordered by `confirmed_at ASC`). Status is case-insensitive; an invalid value throws `IllegalArgumentException` → 400. Full pagination is unnecessary for launch.
+   - **RESOLVED: recommendation adopted.** In plan 17-04, `status` is case-insensitive and defaults to `confirmed`. `limit` defaults to 100 and accepts 1..500. Results are ordered by `confirmed_at` ascending. An invalid status or limit returns 400, and there is no pagination.
 
 ## Environment Availability
 

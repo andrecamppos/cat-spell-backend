@@ -1,0 +1,1 @@
+No external API integration: this phase builds the app's own waitlist REST API for the separate-repo landing page and calls no third-party API or SDK (email goes through the internal EmailSender seam, whose only implementation is LoggingEmailSender).
