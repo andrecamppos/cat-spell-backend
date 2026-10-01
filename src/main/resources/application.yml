@@ -43,6 +43,9 @@ app:
     operator-email: ${REPORT_OPERATOR_EMAIL:ops@catspell.example}
   age:
     minimum-age: ${AGE_MINIMUM_AGE:18}
+  invite:
+    enabled: ${INVITE_ENABLED:false}
+    admin-token: ${INVITE_ADMIN_TOKEN:}   # deny-by-default when blank; NO guessable dev default
 
 springdoc:
   api-docs:

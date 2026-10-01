@@ -1,4 +1,12 @@
 spring:
+  datasource:
+    hikari:
+      # The integration suite caches many distinct @SpringBootTest contexts (per @TestPropertySource /
+      # @Import), and they all share ONE Testcontainers Postgres. Without a cap, each cached context's
+      # pool (HikariCP default max 10) accumulates and exhausts Postgres max_connections (FATAL: too many
+      # clients). Cap per-context connections so the sum stays well under the server limit.
+      maximum-pool-size: 4
+      minimum-idle: 1
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -47,6 +55,9 @@ app:
   confirm-email-change-url: catspell://confirm-email-change
   report:
     operator-email: ops@catspell.example
+  invite:
+    enabled: ${INVITE_ENABLED:false}
+    admin-token: ${INVITE_ADMIN_TOKEN:}
 
 rate-limit:
   capacity: 10000

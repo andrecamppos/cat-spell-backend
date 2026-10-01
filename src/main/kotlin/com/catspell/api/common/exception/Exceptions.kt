@@ -34,3 +34,10 @@ class SelfSwipeException(message: String = "Cannot swipe on yourself") : Runtime
 class SelfBlockException(message: String = "Cannot block yourself") : RuntimeException(message)
 
 class SelfReportException(message: String = "Cannot report yourself") : RuntimeException(message)
+
+// Single generic invite failure: invalid, consumed, and missing-when-gated codes all throw THIS one
+// exception so the responses are byte-indistinguishable (D-10, INV-04 enumeration safety).
+class InviteRequiredException(message: String = "A valid invite is required to sign up") : RuntimeException(message)
+
+// Admin issuance shared-secret failure → generic 401 with no hint about token correctness (D-03).
+class AdminAuthException(message: String = "Not authorized") : RuntimeException(message)

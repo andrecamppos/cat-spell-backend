@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Safety, Moderation & Gated Access
-current_phase: 16
-current_phase_name: Invite-Only Access & Referral
-status: "Phase 15 shipped — PR #15"
-stopped_at: Phase 15 context gathered
-last_updated: "2026-09-29T15:57:55.113Z"
-last_activity: 2026-09-29
+current_phase: 17
+current_phase_name: Waitlist / Landing-Page API
+status: "Phase 16 shipped — PR #16"
+stopped_at: Phase 16 context gathered
+last_updated: "2026-10-01T13:48:42.858Z"
+last_activity: 2026-10-01
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
-last_activity_desc: Phase 15 complete, transitioned to Phase 16
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 14
+  completed_plans: 14
+last_activity_desc: Phase 16 complete, transitioned to Phase 17
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-23)
+See: .planning/PROJECT.md (updated 2026-10-01)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 14 — report-a-user
+**Current focus:** Phase 17 — Waitlist / Landing-Page API
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 15 shipped — PR #15
+**Status:** Phase 16 shipped — PR #16
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -53,24 +53,24 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-09-28T15:47:24.419Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-age-verification/15-CONTEXT.md
+Last session: 2026-10-01
+Stopped at: Phase 16 complete (UAT passed, 14/14), ready to plan Phase 17
+Resume file: None
 
 ---
-*Last updated: 2026-08-24 after completing the v2.1 milestone*
+*Last updated: 2026-10-01 after Phase 16 (Invite-Only Access & Referral)*
 
 ## Current Position
 
-Phase: 16 — Invite-Only Access & Referral
+Phase: 17 — Waitlist / Landing-Page API
 Plan: Not started
-Status: Plans complete, full test suite green — awaiting phase verification
-Last activity: 2026-09-29
+Status: Ready to plan
+Last activity: 2026-10-01
 
 ## Operator Next Steps
 
-- `/gsd-verify-work 14` to run UAT verification for the report-a-user feature
-- `/gsd-ship 14` to open the PR once verification passes
+- `/gsd-discuss-phase 17` to gather context for the waitlist / landing-page API
+- `/gsd-plan-phase 17` to plan Phase 17 directly
 
 ## Accumulated Context
 

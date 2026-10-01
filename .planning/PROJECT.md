@@ -66,6 +66,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Change email while logged in — requires current password, confirm the new address via emailed single-use token before it becomes active, 409 if already in use, revokes all sessions on confirm — v2.1 (Phase 12)
 - ✓ Report a user — fixed category enum + required details, persisted with no dedupe; operator notified out-of-band (async `AFTER_COMMIT`, survives email-send failure); self-report rejected and reporter identity never exposed; optional atomic "also block" via Phase 13 BlockService — v2.2 (Phase 14) [MOD-06, MOD-07, MOD-08]
 - ✓ Age verification — self-attested DOB collected at signup, server-side hard-block under-18 (422 `UNDER_MINIMUM_AGE`) evaluated before the account row is created, behind a swappable `AgeVerifier` seam; DOB relocated to `users` (single source of truth, immutable after signup) via V22 with backfill + grandfathering of existing accounts; vendor age-check deferred — v2.2 (Phase 15) [AGE-01, AGE-02, AGE-03]
+- ✓ Invite-only access — global on/off gate (`app.invite.enabled`, deny-by-default) enforcing invite-required signup: public mode ignores any code and consumes nothing; gated mode requires a valid unconsumed code or returns an enumeration-safe `403 INVITE_REQUIRED` (identical response for null/blank/unknown/consumed) and creates no orphan account. Operator-issued codes via `POST /api/admin/invites` (shared-secret `X-Admin-Token`, constant-time compare, deny-by-default on blank token); codes are high-entropy and hashed-at-rest (SHA-256, raw returned once). Single-use is atomic (conditional UPDATE); referral attribution recorded only for a real distinct referrer (bootstrap + self-referral write none). V23 adds `invites` + `referrals` — v2.2 (Phase 16) [INV-01, INV-02, INV-03, INV-04, INV-05]
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -137,6 +138,9 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Enumeration-safe responses + reuse of Bucket4j rate limiting | Generic responses on forgot/resend, per-email + per-IP throttling on existing infra (no new dependency) | ✓ Good — v2.1 (Phases 10-11) |
 | Hard-gate login until email verified + grandfather migration | Unverified users get `403 EMAIL_NOT_VERIFIED`; V17 backfill marks existing accounts verified so no current user is locked out on rollout | ✓ Good — v2.1 (Phase 11) |
 | Confirm-before-swap for email changes (separate `email_change_requests` table) | New address is verified via emailed single-use token before it becomes active; 409 if already in use; revoke all sessions on confirm | ✓ Good — v2.1 (Phase 12) |
+| Invite gate as a global on/off switch (`app.invite.enabled`, deny-by-default) rather than per-feature | Lets launch flip between public and invite-only without code changes; public mode never rejects a missing code | ✓ Good — v2.2 (Phase 16) |
+| Invite codes hashed-at-rest + single generic `403 INVITE_REQUIRED` for all failures | Mirrors the email-token model (SHA-256, atomic single-use claim); indistinguishable failures prevent code enumeration | ✓ Good — v2.2 (Phase 16) |
+| Admin issuance behind a shared-secret `X-Admin-Token` (no admin UI/role) | No admin panel yet; a constant-time header check on a permitAll route is the entire access boundary, deny-by-default on blank token | ✓ Good — v2.2 (Phase 16); revisit when an operator panel lands |
 
 ## Evolution
 
@@ -156,4 +160,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-29 — Phase 15 (Age Verification) complete*
+*Last updated: 2026-10-01 — Phase 16 (Invite-Only Access & Referral) complete*
