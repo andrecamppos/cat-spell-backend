@@ -90,6 +90,24 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return problem
     }
 
+    @ExceptionHandler(WaitlistEntryNotConvertibleException::class)
+    fun handleWaitlistEntryNotConvertible(ex: WaitlistEntryNotConvertibleException): ProblemDetail {
+        // PENDING, already INVITED, or lost a concurrent race — no invite issued, no email sent (D-10).
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "Waitlist entry is not awaiting an invite")
+        problem.title = "Conflict"
+        problem.setProperty("code", "WAITLIST_ENTRY_NOT_CONVERTIBLE")
+        return problem
+    }
+
+    @ExceptionHandler(WaitlistInviteDeliveryException::class)
+    fun handleWaitlistInviteDelivery(ex: WaitlistInviteDeliveryException): ProblemDetail {
+        // The conversion was rolled back; the entry stays CONFIRMED so the operator can retry.
+        val problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.message ?: "Invite email could not be delivered")
+        problem.title = "Bad Gateway"
+        problem.setProperty("code", "WAITLIST_INVITE_DELIVERY_FAILED")
+        return problem
+    }
+
     @ExceptionHandler(UnderMinimumAgeException::class)
     fun handleUnderMinimumAge(ex: UnderMinimumAgeException): ProblemDetail {
         val problem = ProblemDetail.forStatusAndDetail(

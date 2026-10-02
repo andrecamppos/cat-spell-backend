@@ -23,6 +23,8 @@ class JwtAuthenticationFilter(
                 path.startsWith("/api/auth/verify-email") ||
                 path.startsWith("/api/auth/resend-verification") ||
                 path.startsWith("/api/auth/confirm-email-change") ||
+                // Public waitlist join + confirm (Phase 17): a stale Bearer header from the landing page must not 401.
+                path.startsWith("/api/waitlist") ||
                 path.startsWith("/v3/api-docs")
     }
 
