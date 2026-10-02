@@ -58,6 +58,15 @@ app:
   invite:
     enabled: ${INVITE_ENABLED:false}
     admin-token: ${INVITE_ADMIN_TOKEN:}
+  waitlist:
+    confirm-url: http://localhost:8080/api/waitlist/confirm
+    confirm-success-url: http://localhost:3000/waitlist/confirmed
+    confirm-error-url: http://localhost:3000/waitlist/link-invalid
+    confirm-token-ttl-hours: 168
+    per-email-capacity: 3
+    per-email-refill-hours: 1
+    invite-url: catspell://register
+    allowed-origins: ""
 
 rate-limit:
   capacity: 10000

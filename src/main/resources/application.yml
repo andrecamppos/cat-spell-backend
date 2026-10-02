@@ -46,6 +46,15 @@ app:
   invite:
     enabled: ${INVITE_ENABLED:false}
     admin-token: ${INVITE_ADMIN_TOKEN:}   # deny-by-default when blank; NO guessable dev default
+  waitlist:
+    confirm-url: ${WAITLIST_CONFIRM_URL:http://localhost:8080/api/waitlist/confirm}
+    confirm-success-url: ${WAITLIST_CONFIRM_SUCCESS_URL:http://localhost:3000/waitlist/confirmed}   # web landing-page URL (D-01/D-02)
+    confirm-error-url: ${WAITLIST_CONFIRM_ERROR_URL:http://localhost:3000/waitlist/link-invalid}   # web landing-page URL (D-01/D-02)
+    confirm-token-ttl-hours: ${WAITLIST_CONFIRM_TTL_HOURS:168}   # 7 days (D-08)
+    per-email-capacity: ${WAITLIST_PER_EMAIL_CAPACITY:3}
+    per-email-refill-hours: ${WAITLIST_PER_EMAIL_REFILL_HOURS:1}
+    invite-url: ${WAITLIST_INVITE_URL:catspell://register}
+    allowed-origins: ${WAITLIST_ALLOWED_ORIGINS:}   # blank = no CORS (server-to-server only)
 
 springdoc:
   api-docs:

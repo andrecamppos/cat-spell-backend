@@ -41,3 +41,9 @@ class InviteRequiredException(message: String = "A valid invite is required to s
 
 // Admin issuance shared-secret failure → generic 401 with no hint about token correctness (D-03).
 class AdminAuthException(message: String = "Not authorized") : RuntimeException(message)
+
+// Waitlist conversion of an entry that is not CONFIRMED (still PENDING, already INVITED, or lost a race) → 409 (D-10).
+class WaitlistEntryNotConvertibleException(message: String = "Waitlist entry is not awaiting an invite") : RuntimeException(message)
+
+// The invite email for a waitlist conversion failed; the conversion is rolled back so the entry stays retryable → 502.
+class WaitlistInviteDeliveryException(message: String = "Invite email could not be delivered") : RuntimeException(message)
