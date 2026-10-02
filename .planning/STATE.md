@@ -2,18 +2,17 @@
 gsd_state_version: "1.0"
 milestone: v2.2
 current_phase: 17
-current_phase_name: waitlist-landing-page-api
-status: executing
-stopped_at: Completed 17-08-PLAN.md
-last_updated: "2026-10-02T17:10:45.365Z"
+status: completed
+stopped_at: Phase 17 complete — all phases complete
+last_updated: "2026-10-02T21:35:37.865Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 17 execution started
-state_head: aa093171c4f79f9e6481642e03f8c0e68ff047c5
+last_activity_desc: Phase 17 complete
+state_head: c6cf055f3dd91a5dfaae6c041fc11fa7ffa0d076
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
 milestone_name: Safety, Moderation & Gated Access
 ---
 
@@ -21,14 +20,14 @@ milestone_name: Safety, Moderation & Gated Access
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-01)
+See: .planning/PROJECT.md (updated 2026-10-02)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 17 — Waitlist / Landing-Page API
+**Current focus:** Milestone v2.2 complete — ready to close (`/gsd-complete-milestone v2.2`)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Ready to execute
+**Status:** All phases complete
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -54,24 +53,23 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-10-02T12:05:55.872Z
-Stopped at: Completed 17-08-PLAN.md
+Last session: 2026-10-02T22:55:00Z
+Stopped at: Phase 17 complete (UAT 3 passed, 1 deferred) — all v2.2 phases complete, milestone ready to close
 Resume file: None
 
 ---
-*Last updated: 2026-10-01 after Phase 16 (Invite-Only Access & Referral)*
+*Last updated: 2026-10-02 after Phase 17 (Waitlist / Landing-Page API)*
 
 ## Current Position
 
-Phase: 17 (waitlist-landing-page-api) — READY TO EXECUTE
-Plan: 8 of 8
-Status: Re-verified after gap closure — gaps_found (51/52): SC3 per-IP limit bypassable (CR-01, CR-02); next /gsd-plan-phase 17 --gaps
-Last activity: 2026-10-02 — Phase 17 execution started
+Phase: 17
+Plan: Not started
+Status: Phase complete — verified, validated, secured, UAT complete (17-UAT.md)
+Last activity: 2026-10-02 — Phase 17 complete
 
 ## Operator Next Steps
 
-- `/gsd-discuss-phase 17` to gather context for the waitlist / landing-page API
-- `/gsd-plan-phase 17` to plan Phase 17 directly
+- `/gsd-complete-milestone v2.2` to archive milestone v2.2 (Safety, Moderation & Gated Access)
 
 ## Accumulated Context
 
@@ -92,6 +90,7 @@ Last activity: 2026-10-02 — Phase 17 execution started
 | Phase 17 P05 | 15 min | 2 tasks | 8 files |
 | Phase 17 P07 | 15 min | 2 tasks | 3 files |
 | Phase 17 P08 | 5 min | 2 tasks | 2 files |
+| Phase 17 P09 | 105 min | 3 tasks | 6 files |
 
 ## Decisions
 
@@ -111,3 +110,10 @@ Last activity: 2026-10-02 — Phase 17 execution started
 - [Phase 17]: Rate-limit tests sharing a cached context pin a unique 203.0.113.x remoteAddr per test and assert requests 1-2 are not 429 before asserting request 3 is 429
 - [Phase 17]: Per-email concurrency proof holds the email count at exactly 3 with Awaitility during(500ms), so a late extra send cannot pass a momentary match
 - [Phase 17]: D-05 email-only storage is enforced by an exact literal 10-column set read from information_schema.columns in WaitlistMigrationTest
+- [Phase 17]: RateLimitFilter matches on UrlPathHelper.defaultInstance.getPathWithinApplication (decoded path), not the raw requestURI; the waitlist join stays an exact POST + /api/waitlist match (T-17-32, CR-02)
+- [Phase 17]: A trusted peer is keyed on the rightmost X-Forwarded-For hop that is not a trusted proxy, read across every header line (Tomcat RemoteIpValve semantics); supersedes the 17-07 leftmost-hop rule for multi-hop chains (T-17-33, CR-01)
+- [Phase 17]: Trusted proxies are matched by TrustedProxyMatcher (JDK-only exact/CIDR, same-family, strict IP literals only, never DNS); an invalid rate-limit.trusted-proxies entry fails startup; key declared in application.yml (WR-09)
+
+### Blockers/Concerns
+
+- ⚠️ [Phase 17] Before launch: confirm the production reverse-proxy shape (connect address, `X-Forwarded-For` append vs overwrite, bare-IP hops) and set `RATE_LIMIT_TRUSTED_PROXIES` + `WAITLIST_ALLOWED_ORIGINS` to match exactly (deferred UAT test 3)

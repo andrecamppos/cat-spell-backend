@@ -67,6 +67,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Report a user — fixed category enum + required details, persisted with no dedupe; operator notified out-of-band (async `AFTER_COMMIT`, survives email-send failure); self-report rejected and reporter identity never exposed; optional atomic "also block" via Phase 13 BlockService — v2.2 (Phase 14) [MOD-06, MOD-07, MOD-08]
 - ✓ Age verification — self-attested DOB collected at signup, server-side hard-block under-18 (422 `UNDER_MINIMUM_AGE`) evaluated before the account row is created, behind a swappable `AgeVerifier` seam; DOB relocated to `users` (single source of truth, immutable after signup) via V22 with backfill + grandfathering of existing accounts; vendor age-check deferred — v2.2 (Phase 15) [AGE-01, AGE-02, AGE-03]
 - ✓ Invite-only access — global on/off gate (`app.invite.enabled`, deny-by-default) enforcing invite-required signup: public mode ignores any code and consumes nothing; gated mode requires a valid unconsumed code or returns an enumeration-safe `403 INVITE_REQUIRED` (identical response for null/blank/unknown/consumed) and creates no orphan account. Operator-issued codes via `POST /api/admin/invites` (shared-secret `X-Admin-Token`, constant-time compare, deny-by-default on blank token); codes are high-entropy and hashed-at-rest (SHA-256, raw returned once). Single-use is atomic (conditional UPDATE); referral attribution recorded only for a real distinct referrer (bootstrap + self-referral write none). V23 adds `invites` + `referrals` — v2.2 (Phase 16) [INV-01, INV-02, INV-03, INV-04, INV-05]
+- ✓ Waitlist / landing-page API — public `POST /api/waitlist` with an identical enumeration-safe `202` for every outcome; double opt-in via hashed single-use 7-day confirm token, `GET /api/waitlist/confirm` 302-redirects to configurable web success/error URLs; per-IP (Bucket4j `RateLimitFilter`, trusted-proxy-aware `X-Forwarded-For`) + per-email throttling on a normalized key (trim + lowercase + strip `+suffix`); narrow CORS for the landing origin only; operator lists confirmed entries and converts one into an emailed invite behind `X-Admin-Token` — v2.2 (Phase 17) [WAIT-01, WAIT-02, WAIT-03, WAIT-04]
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -75,8 +76,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Typing indicators and read receipts in chat
 - [ ] Block/report/unmatch safety features
 - [ ] Invite-only access — waitlist to bootstrap, then member referrals (invite quotas + referral attribution)
-- [ ] Waitlist / invite-request capture API (backend for the separate-repo landing page)
 - [ ] Report user — persist reports + notify owner to act manually (no admin panel yet)
+- [ ] Production reverse-proxy check before launch — confirm proxy connect address, `X-Forwarded-For` append/overwrite behavior and bare-IP hops, then set `RATE_LIMIT_TRUSTED_PROXIES` and `WAITLIST_ALLOWED_ORIGINS` (deferred Phase 17 UAT test 3)
 - [ ] Per-type notification toggles + quiet hours (deferred from v2.0)
 - [ ] Direct APNs integration for iOS delivery reliability (deferred from v2.0)
 
@@ -141,6 +142,9 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Invite gate as a global on/off switch (`app.invite.enabled`, deny-by-default) rather than per-feature | Lets launch flip between public and invite-only without code changes; public mode never rejects a missing code | ✓ Good — v2.2 (Phase 16) |
 | Invite codes hashed-at-rest + single generic `403 INVITE_REQUIRED` for all failures | Mirrors the email-token model (SHA-256, atomic single-use claim); indistinguishable failures prevent code enumeration | ✓ Good — v2.2 (Phase 16) |
 | Admin issuance behind a shared-secret `X-Admin-Token` (no admin UI/role) | No admin panel yet; a constant-time header check on a permitAll route is the entire access boundary, deny-by-default on blank token | ✓ Good — v2.2 (Phase 16); revisit when an operator panel lands |
+| Waitlist confirm link 302-redirects to web landing-page URLs (not JSON, not `catspell://`) | Waitlist clicks happen in a browser before the user has the app; success and error URLs come only from config (open-redirect guard) | ✓ Good — v2.2 (Phase 17) |
+| Waitlist double opt-in with one identical `202` for new / pending / confirmed / throttled joins | Response is not a membership oracle; bots that can't confirm never count; 7-day TTL maximizes launch-list confirmation | ✓ Good — v2.2 (Phase 17); disposable-domain filtering and optional join fields deferred |
+| Per-IP limiter keys on `X-Forwarded-For` only from configured trusted proxies | Untrusted peers can never borrow another IP's bucket by forging the header; preflights and confirm links are never throttled | ✓ Good — v2.2 (Phase 17); production proxy shape still to confirm at deployment |
 
 ## Evolution
 
@@ -160,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-01 — Phase 16 (Invite-Only Access & Referral) complete*
+*Last updated: 2026-10-02 — Phase 17 (Waitlist / Landing-Page API) complete*

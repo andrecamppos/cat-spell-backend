@@ -35,10 +35,10 @@ Requirements for milestone v2.2. Each maps to a roadmap phase.
 
 ### Waitlist / Landing-Page API
 
-- [ ] **WAIT-01**: A public unauthenticated endpoint accepts a waitlist join (email + optional info) and returns an identical enumeration-safe response for new vs duplicate emails
-- [ ] **WAIT-02**: Waitlist join uses double opt-in — a hashed single-use, time-limited confirmation token emailed to the address; only confirmed entries count
-- [ ] **WAIT-03**: The public endpoint is protected by per-IP + per-email rate limiting with email normalization (Bucket4j reuse), with optional disposable-domain filtering
-- [ ] **WAIT-04**: The operator can convert a confirmed waitlist entry into an invite, which emails the invite code/link
+- [x] **WAIT-01**: A public unauthenticated endpoint accepts a waitlist join (email + optional info) and returns an identical enumeration-safe response for new vs duplicate emails
+- [x] **WAIT-02**: Waitlist join uses double opt-in — a hashed single-use, time-limited confirmation token emailed to the address; only confirmed entries count
+- [x] **WAIT-03**: The public endpoint is protected by per-IP + per-email rate limiting with email normalization (Bucket4j reuse), with optional disposable-domain filtering
+- [x] **WAIT-04**: The operator can convert a confirmed waitlist entry into an invite, which emails the invite code/link
 
 ## v2 Requirements
 
@@ -96,10 +96,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | INV-03 | Phase 16 | Complete |
 | INV-04 | Phase 16 | Complete |
 | INV-05 | Phase 16 | Complete |
-| WAIT-01 | Phase 17 | Gaps Found |
-| WAIT-02 | Phase 17 | Gaps Found |
-| WAIT-03 | Phase 17 | Gaps Found |
-| WAIT-04 | Phase 17 | Gaps Found |
+| WAIT-01 | Phase 17 | Complete |
+| WAIT-02 | Phase 17 | Complete |
+| WAIT-03 | Phase 17 | Complete |
+| WAIT-04 | Phase 17 | Complete |
 
 **Coverage:**
 

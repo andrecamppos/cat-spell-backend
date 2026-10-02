@@ -57,7 +57,7 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 - [x] **Phase 14: Report a User** — report with category + details, persisted and operator-notified (completed 2026-09-28)
 - [x] **Phase 15: Age Verification** — server-side 18+ hard gate at signup (completed 2026-09-29)
 - [x] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution (completed 2026-10-01)
-- [ ] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites
+- [x] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites (completed 2026-10-02)
 
 ### Phase 13: Blocking & Unmatch
 
@@ -163,7 +163,7 @@ Plans:
 
 Introduces a `waitlist_entries` table, reuses the hashed single-use token model and the three-place public-endpoint whitelist pattern. New Flyway migration (V19+).
 
-**Plans:** 9 plans
+**Plans:** 9/9 plans complete
 
 Plans:
 **Wave 1**
@@ -191,7 +191,7 @@ Plans:
 
 **Gap Closure 2** *(from 17-VERIFICATION.md re-verification: SC3 per-IP bypasses CR-01, CR-02 + WR-09)*
 
-- [ ] 17-09-PLAN.md — Close the remaining SC3 per-IP bypasses: RateLimitFilter matches on the decoded path (CR-02), keys on the rightmost untrusted X-Forwarded-For hop (CR-01), and uses a family-safe exact/CIDR TrustedProxyMatcher (WR-09); re-enables the 3 staged RateLimitBypassIntegrationTest tests; declares and documents rate-limit.trusted-proxies (Gap Closure)
+- [x] 17-09-PLAN.md — Close the remaining SC3 per-IP bypasses: RateLimitFilter matches on the decoded path (CR-02), keys on the rightmost untrusted X-Forwarded-For hop (CR-01), and uses a family-safe exact/CIDR TrustedProxyMatcher (WR-09); re-enables the 3 staged RateLimitBypassIntegrationTest tests; declares and documents rate-limit.trusted-proxies (Gap Closure)
 
 </details>
 
@@ -215,7 +215,7 @@ Plans:
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
 | 16. Invite-Only Access & Referral | v2.2 | 4/4 | Complete    | 2026-10-01 |
-| 17. Waitlist / Landing-Page API | v2.2 | 8/8 | In Progress|  |
+| 17. Waitlist / Landing-Page API | v2.2 | 9/9 | Complete    | 2026-10-02 |
 
 ---
 *Roadmap created: 2025-06-09*

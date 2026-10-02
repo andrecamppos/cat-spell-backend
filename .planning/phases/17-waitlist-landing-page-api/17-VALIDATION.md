@@ -4,7 +4,7 @@ slug: "waitlist-landing-page-api"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
 status: validated
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-10-01"
 ---
@@ -38,7 +38,7 @@ created: "2026-10-01"
 
 ## Per-Task Verification Map
 
-Filled from the 17-01..17-08 PLAN.md files (17-07/17-08 are gap-closure plans added after the first draft). Each test file is created by the task that first lists it (no separate Wave 0 plan; every task's `<automated>` command runs a test it creates or a regression that already exists).
+Filled from the 17-01..17-09 PLAN.md files (17-07/17-08/17-09 are gap-closure plans added after the first draft). Each test file is created by the task that first lists it (no separate Wave 0 plan; every task's `<automated>` command runs a test it creates or a regression that already exists).
 
 | Task | Req ID | Behavior | Test Type | Automated Command | File Exists | Status |
 |------|--------|----------|-----------|-------------------|-------------|--------|
@@ -59,8 +59,11 @@ Filled from the 17-01..17-08 PLAN.md files (17-07/17-08 are gap-closure plans ad
 | 17-07-T2 | WAIT-03 | Same forgery proof on POST /api/waitlist + regression sweep (waitlist/common/invite/auth/push) | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistRateLimitIntegrationTest"` | ✅ | ✅ green |
 | 17-08-T1 | WAIT-03 (D-05) | waitlist_entries has exactly the ten email-only columns | integration (Flyway, private DB) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistMigrationTest"` | ✅ | ✅ green |
 | 17-08-T2 | WAIT-03 | 20 concurrent joins for one new email mint exactly per-email-capacity (3) tokens; one row; stored hash among sent | integration (concurrency) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistPerEmailConcurrencyIntegrationTest"` | ✅ | ✅ green |
-| SC3 / CR-02 | WAIT-03 | Percent-encoded `/api/%77aitlist` and `/api/auth/%6Cogin` throttled like canonical paths | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ (`@Disabled`) | ❌ red — impl bug, escalated |
-| SC3 / CR-01 | WAIT-03 | Trusted peer with rotating leftmost XFF hop shares the real client's bucket | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ (`@Disabled`) | ❌ red — impl bug, escalated |
+| SC3 / CR-02 | WAIT-03 | Percent-encoded `/api/%77aitlist` and `/api/auth/%6Cogin` throttled like canonical paths | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ | ✅ green (fixed by 17-09) |
+| SC3 / CR-01 | WAIT-03 | Trusted peer with rotating leftmost XFF hop shares the real client's bucket | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ | ✅ green (fixed by 17-09) |
+| 17-09-T1 | WAIT-03 | Decoded-path match: encoded join/login spellings share the canonical per-IP bucket; trusted peer keys on the rightmost untrusted XFF hop | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest" --tests "com.catspell.api.common.RateLimitIntegrationTest" --tests "com.catspell.api.waitlist.WaitlistRateLimitIntegrationTest"` | ✅ | ✅ green |
+| 17-09-T2 | WAIT-03 | `TrustedProxyMatcher`: loopback forms, CIDR edges, family guard, non-literal rejection, fail-fast config; inner-proxy chain, second XFF line, malformed hop | unit + integration | `./gradlew test --tests "com.catspell.api.common.TrustedProxyMatcherTest" --tests "com.catspell.api.common.RateLimitBypassIntegrationTest" --tests "com.catspell.api.common.RateLimitTrustedProxyIntegrationTest"` | ✅ | ✅ green |
+| 17-09-T3 | WAIT-03 | `rate-limit.trusted-proxies` declared and documented; 17-07 regression slice green | config + docs + integration (regression) | YAML check (`ok`), docs grep (`docs-ok`), `./gradlew test --tests "com.catspell.api.waitlist.*" --tests "com.catspell.api.common.*" --tests "com.catspell.api.invite.*" --tests "com.catspell.api.auth.*" --tests "com.catspell.api.push.*"` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -89,8 +92,7 @@ Framework install: none — existing infrastructure covers the stack.
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Confirm link survives mail-scanner prefetch UX (error-page copy) | WAIT-02 | Depends on real mail providers / landing-page copy in a separate repo | Send a confirm email to a Gmail/Outlook inbox, observe whether the link is pre-consumed, and check the error page wording |
-| Per-IP limit bypass via percent-encoded path (CR-02) — **escalated impl bug** | WAIT-03 | `RateLimitFilter.kt:40` matches raw `requestURI`; test exists but is `@Disabled` until the filter is fixed | Fix via `/gsd-plan-phase 17 --gaps`, then remove `@Disabled` in `RateLimitBypassIntegrationTest` (2 tests) and run it |
-| Per-IP limit bypass via leftmost XFF behind a trusted appending proxy (CR-01) — **escalated impl bug** | WAIT-03 | `RateLimitFilter.kt:80` keys on `split(",").first()`; test exists but is `@Disabled` | Same as above (1 test); also confirm prod proxy XFF behavior (append vs overwrite) and its connect address |
+| Production proxy X-Forwarded-For behavior and connect address | WAIT-03 | Depends on the real deployment's reverse proxy; CR-01 itself is now automated (17-09) | Confirm the prod proxy appends or overwrites XFF, and set `RATE_LIMIT_TRUSTED_PROXIES` to its connect address/CIDR (see `docs/CONFIGURATION.md`) |
 | Browser CORS from deployed landing origin vs foreign origin | WAIT-03 | MockMvc proves headers, not a real browser + deployment | With `WAITLIST_ALLOWED_ORIGINS` set, `fetch` POST /api/waitlist from the landing origin (readable 202) and from a foreign origin (blocked) |
 | Confirm/invite email rendering and copy | WAIT-02, WAIT-04 | Copy quality not asserted (see WR-03, IN-01) | Open both emails in a real client; follow links; check copy |
 
@@ -103,9 +105,9 @@ Framework install: none — existing infrastructure covers the stack.
 - [x] Wave 0 covers all MISSING references (no `MISSING` markers in any plan; every not-yet-existing test file a command targets is listed above with its creating plan)
 - [x] No watch-mode flags (plain `./gradlew test --tests ...`; no `--continuous`)
 - [x] Feedback latency < 180s (waitlist slice result timestamps span ~20 s of test time; Gradle startup + container reuse keeps the slice well under 180 s)
-- [ ] `nyquist_compliant: true` — set to `false` by the 2026-10-02 audit: WAIT-03 per-IP (SC3) has two escalated impl bugs (CR-01, CR-02) whose tests are `@Disabled`
+- [x] `nyquist_compliant: true` — restored by the second 2026-10-02 audit: 17-09 fixed CR-01/CR-02 and the three bypass tests run enabled and green
 
-**Approval:** partial — 2026-10-02 (blocked on CR-01/CR-02 impl fix)
+**Approval:** approved — 2026-10-02 (after 17-09 gap closure)
 
 ---
 
@@ -117,3 +119,12 @@ Framework install: none — existing infrastructure covers the stack.
 | Escalated | 2 (CR-01, CR-02 — impl bugs in `RateLimitFilter`; 3 red-confirmed tests added as `@Disabled` in `src/test/kotlin/com/catspell/api/common/RateLimitBypassIntegrationTest.kt`) |
 
 Evidence: last full suite 416 tests / 0 failures / 1 skip (`FcmSmokeTest`); `./gradlew test` reports `:test UP-TO-DATE` against the current tree. New bypass class: 3 skipped, 0 failures; rate-limit quick slice green.
+
+## Validation Audit 2026-10-02 (after 17-09)
+| Metric | Count |
+|--------|-------|
+| Gaps found | 2 carried over (CR-01, CR-02) + 3 unmapped 17-09 tasks |
+| Resolved | 2 (both SC3 rows green; 17-09 tasks mapped, already covered) |
+| Escalated | 0 |
+
+Evidence: full `./gradlew test` on the 17-09 staged tree: 430 tests, 0 failures, 0 errors, 1 skip (`FcmSmokeTest`), BUILD SUCCESSFUL in 15m 44s. `RateLimitBypassIntegrationTest` 8 tests / 0 skipped; `TrustedProxyMatcherTest` 6 / 0 skipped. Task 3 YAML check `ok`, docs check `docs-ok`.
