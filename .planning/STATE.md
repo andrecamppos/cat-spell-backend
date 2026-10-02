@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 milestone: v2.2
 current_phase: 17
-current_phase_name: waitlist-landing-page-api
-status: "Phase 16 shipped — PR #16"
-stopped_at: Phase 17 context gathered
-last_updated: "2026-10-01T20:38:37.695Z"
-last_activity: 2026-10-01
-last_activity_desc: Phase 17 planning complete
-state_head: 0e90c05a8085ced507c7eb809cb7dff9b31afbbd
+current_phase_name: Waitlist / Landing-Page API
+status: executing
+stopped_at: Completed 17-08-PLAN.md
+last_updated: "2026-10-02T15:45:34.949Z"
+last_activity: 2026-10-02
+last_activity_desc: Phase 17 execution started
+state_head: 6ae4f42581082686024784d210267d5ca2c05edc
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 20
-  completed_plans: 14
+  total_plans: 22
+  completed_plans: 22
 milestone_name: Safety, Moderation & Gated Access
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-01)
 
 ## Milestone v1.0 — MVP Backend
 
-**Status:** Phase 16 shipped — PR #16
+**Status:** Ready to execute
 See `.planning/milestones/v1.0-ROADMAP.md` for archived phase details.
 
 ## Milestone v1.1 — Mixed Discovery
@@ -54,19 +54,19 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-10-01T14:08:43.303Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-waitlist-landing-page-api/17-CONTEXT.md
+Last session: 2026-10-02T12:05:55.872Z
+Stopped at: Completed 17-08-PLAN.md
+Resume file: None
 
 ---
 *Last updated: 2026-10-01 after Phase 16 (Invite-Only Access & Referral)*
 
 ## Current Position
 
-Phase: 17 (waitlist-landing-page-api) — READY TO EXECUTE
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-10-01 — Phase 17 planning complete
+Phase: 17 (Waitlist / Landing-Page API) — EXECUTING
+Plan: 8 of 8
+Status: Re-verified after gap closure — gaps_found (51/52): SC3 per-IP limit bypassable (CR-01, CR-02); next /gsd-plan-phase 17 --gaps
+Last activity: 2026-10-02 — Phase 17 execution started
 
 ## Operator Next Steps
 
@@ -79,3 +79,35 @@ Last activity: 2026-10-01 — Phase 17 planning complete
 
 - 2026-09-24: v2.2 roadmap created — Phases 13 (Blocking & Unmatch), 14 (Report a User), 15 (Age Verification), 16 (Invite-Only Access & Referral), 17 (Waitlist / Landing-Page API). All 20 v2.2 requirements mapped. Research-driven ordering: block first (report + read-path enforcement depend on it), invite before waitlist (waitlist converts into invites).
 - 2026-08-07: v2.1 roadmap completed — added Phase 11 (Email Verification) and Phase 12 (Account Credentials) alongside existing Phase 10 (Password Recovery). All 19 v2.1 requirements mapped to phases (email infra bundled into Phase 10 per seed guidance).
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 17 P01 | 16 min | 2 tasks | 14 files |
+| Phase 17 P02 | 8 min | 2 tasks | 7 files |
+| Phase 17 P03 | 21 min | 3 tasks | 6 files |
+| Phase 17 P06 | 17 min | 2 tasks | 2 files |
+| Phase 17 P04 | 17 min | 2 tasks | 8 files |
+| Phase 17 P05 | 15 min | 2 tasks | 8 files |
+| Phase 17 P07 | 15 min | 2 tasks | 3 files |
+| Phase 17 P08 | 5 min | 2 tasks | 2 files |
+
+## Decisions
+
+- [Phase 17]: JoinWaitlistRequest trims email before bean validation so space-padded addresses are accepted (D-03)
+- [Phase 17]: WaitlistService.join keeps rotatePendingToken result in local 'rotated' for 17-02 event gating
+- [Phase 17]: D-08 applied literally: any 0-row confirm claim (incl. scanner-spent token) redirects to the error URL; hash kept on row for a possible later success variant
+- [Phase 17]: Waitlist confirmation event published only when rotatePendingToken returned 1 (CONFIRMED/INVITED re-joins send no mail, D-04)
+- [Phase 17]: Per-IP waitlist throttle is an exact POST /api/waitlist match plus the /api/waitlist URL registration; confirm links and CORS preflights are never throttled
+- [Phase 17]: CORS maps only /api/waitlist (explicit origins, POST, Content-Type, no credentials); blank app.waitlist.allowed-origins registers nothing
+- [Phase 17]: Waitlist migration proof runs on its own private DB (waitlist_migration_test), never shared with InviteMigrationTest
+- [Phase 17]: Terminal-state (CONFIRMED/INVITED) re-join no-op proven by back-dating updated_at before the re-join
+- [Phase 17]: AdminTokenGuard is the single shared X-Admin-Token check (app.invite.admin-token) for invite issuance and waitlist admin routes; called first in every admin handler
+- [Phase 17]: GET /api/admin/waitlist rejects out-of-range limit (1..500) with 400 instead of clamping; status is case-insensitive, default confirmed
+- [Phase 17]: Waitlist convert returns the raw invite code in the 201 and runs claim + organic invite + synchronous email in one transaction; delivery failure → 502 WAITLIST_INVITE_DELIVERY_FAILED with full rollback
+- [Phase 17]: No idempotent re-send: converting a PENDING or already-INVITED waitlist entry is 409 WAITLIST_ENTRY_NOT_CONVERTIBLE (single-winner markInvited conditional UPDATE)
+- [Phase 17]: RateLimitFilter trusts X-Forwarded-For only when request.remoteAddr is in rate-limit.trusted-proxies (exact match, default 127.0.0.1,::1; env RATE_LIMIT_TRUSTED_PROXIES); untrusted peers are keyed on their socket address (T-17-30 replaces accepted T-17-17)
+- [Phase 17]: Rate-limit tests sharing a cached context pin a unique 203.0.113.x remoteAddr per test and assert requests 1-2 are not 429 before asserting request 3 is 429
+- [Phase 17]: Per-email concurrency proof holds the email count at exactly 3 with Awaitility during(500ms), so a late extra send cannot pass a momentary match
+- [Phase 17]: D-05 email-only storage is enforced by an exact literal 10-column set read from information_schema.columns in WaitlistMigrationTest

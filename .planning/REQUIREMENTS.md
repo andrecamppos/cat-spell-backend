@@ -96,10 +96,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | INV-03 | Phase 16 | Complete |
 | INV-04 | Phase 16 | Complete |
 | INV-05 | Phase 16 | Complete |
-| WAIT-01 | Phase 17 | Pending |
-| WAIT-02 | Phase 17 | Pending |
-| WAIT-03 | Phase 17 | Pending |
-| WAIT-04 | Phase 17 | Pending |
+| WAIT-01 | Phase 17 | Gaps Found |
+| WAIT-02 | Phase 17 | Gaps Found |
+| WAIT-03 | Phase 17 | Gaps Found |
+| WAIT-04 | Phase 17 | Gaps Found |
 
 **Coverage:**
 

@@ -163,26 +163,31 @@ Plans:
 
 Introduces a `waitlist_entries` table, reuses the hashed single-use token model and the three-place public-endpoint whitelist pattern. New Flyway migration (V19+).
 
-**Plans:** 6 plans
+**Plans:** 8 plans
 
 Plans:
 **Wave 1**
 
-- [ ] 17-01-PLAN.md — Join slice (tracer): V24 waitlist_entries, entity/repository (ON CONFLICT upsert + PENDING token rotate), D-03 normalizer, per-email bucket, POST /api/waitlist identical 202, app.waitlist.* config, join tracer/normalizer/per-email tests (Wave 1)
+- [x] 17-01-PLAN.md — Join slice (tracer): V24 waitlist_entries, entity/repository (ON CONFLICT upsert + PENDING token rotate), D-03 normalizer, per-email bucket, POST /api/waitlist identical 202, app.waitlist.* config, join tracer/normalizer/per-email tests (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 17-02-PLAN.md — Double opt-in: async AFTER_COMMIT confirm email + GET /api/waitlist/confirm single-use claim → 302 success/error URL (Wave 2)
-- [ ] 17-03-PLAN.md — Per-IP RateLimitFilter on POST /api/waitlist (incl. URL registration), config-driven CORS, JWT-filter skip, enumeration-safety proof (Wave 2)
-- [ ] 17-06-PLAN.md — Join contract proof: V24 constraints on a private Flyway DB + validation, re-join states, 8-thread dedupe and 168h TTL tests (Wave 2)
+- [x] 17-02-PLAN.md — Double opt-in: async AFTER_COMMIT confirm email + GET /api/waitlist/confirm single-use claim → 302 success/error URL (Wave 2)
+- [x] 17-03-PLAN.md — Per-IP RateLimitFilter on POST /api/waitlist (incl. URL registration), config-driven CORS, JWT-filter skip, enumeration-safety proof (Wave 2)
+- [x] 17-06-PLAN.md — Join contract proof: V24 constraints on a private Flyway DB + validation, re-join states, 8-thread dedupe and 168h TTL tests (Wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 17-04-PLAN.md — Shared AdminTokenGuard extraction + GET /api/admin/waitlist confirmed-entry list (Wave 3)
+- [x] 17-04-PLAN.md — Shared AdminTokenGuard extraction + GET /api/admin/waitlist confirmed-entry list (Wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 17-05-PLAN.md — POST /api/admin/waitlist/{id}/invite: CONFIRMED→INVITED claim, organic InviteService.create(null), invite email, rollback on delivery failure (Wave 4)
+- [x] 17-05-PLAN.md — POST /api/admin/waitlist/{id}/invite: CONFIRMED→INVITED claim, organic InviteService.create(null), invite email, rollback on delivery failure (Wave 4)
+
+**Gap Closure** *(from 17-VERIFICATION.md: gaps_found, SC3 blocker + D-05 test-tier gap)*
+
+- [x] 17-07-PLAN.md — Fix SC3 per-IP rate-limit spoofing: RateLimitFilter trusts X-Forwarded-For only from a configured trusted proxy (default 127.0.0.1,::1); proven on /api/auth/login and POST /api/waitlist (Gap Closure)
+- [x] 17-08-PLAN.md — Close test-tier gaps: exact waitlist_entries column-set assertion (D-05) + per-email Bucket4j concurrent mint-cap proof (17-01 backstop truth) (Gap Closure)
 
 </details>
 
@@ -206,7 +211,7 @@ Plans:
 | 14. Report a User | v2.2 | 4/4 | Complete    | 2026-09-28 |
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
 | 16. Invite-Only Access & Referral | v2.2 | 4/4 | Complete    | 2026-10-01 |
-| 17. Waitlist / Landing-Page API | v2.2 | — | Not started | — |
+| 17. Waitlist / Landing-Page API | v2.2 | 8/8 | In Progress|  |
 
 ---
 *Roadmap created: 2025-06-09*
