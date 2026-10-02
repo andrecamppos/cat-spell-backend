@@ -4,10 +4,10 @@ milestone: v2.2
 current_phase: 17
 status: completed
 stopped_at: Phase 17 complete — all phases complete
-last_updated: "2026-10-02T21:35:37.865Z"
+last_updated: "2026-10-02T21:39:57.802Z"
 last_activity: 2026-10-02
-last_activity_desc: Phase 17 complete
-state_head: c6cf055f3dd91a5dfaae6c041fc11fa7ffa0d076
+last_activity_desc: "Phase 17 shipped — PR #17"
+state_head: 6af921b3f1a8d27982d9b61662362c29558b6ef9
 progress:
   total_phases: 5
   completed_phases: 5
@@ -65,7 +65,7 @@ Resume file: None
 Phase: 17
 Plan: Not started
 Status: Phase complete — verified, validated, secured, UAT complete (17-UAT.md)
-Last activity: 2026-10-02 — Phase 17 complete
+Last activity: 2026-10-02 — Phase 17 shipped — PR #17
 
 ## Operator Next Steps
 
