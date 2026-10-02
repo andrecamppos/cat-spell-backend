@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 milestone: v2.2
 current_phase: 17
-current_phase_name: Waitlist / Landing-Page API
+current_phase_name: waitlist-landing-page-api
 status: executing
 stopped_at: Completed 17-08-PLAN.md
-last_updated: "2026-10-02T15:45:34.949Z"
+last_updated: "2026-10-02T17:10:45.365Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 17 execution started
-state_head: 6ae4f42581082686024784d210267d5ca2c05edc
+state_head: aa093171c4f79f9e6481642e03f8c0e68ff047c5
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 22
+  total_plans: 23
   completed_plans: 22
 milestone_name: Safety, Moderation & Gated Access
 ---
@@ -63,7 +63,7 @@ Resume file: None
 
 ## Current Position
 
-Phase: 17 (Waitlist / Landing-Page API) — EXECUTING
+Phase: 17 (waitlist-landing-page-api) — READY TO EXECUTE
 Plan: 8 of 8
 Status: Re-verified after gap closure — gaps_found (51/52): SC3 per-IP limit bypassable (CR-01, CR-02); next /gsd-plan-phase 17 --gaps
 Last activity: 2026-10-02 — Phase 17 execution started

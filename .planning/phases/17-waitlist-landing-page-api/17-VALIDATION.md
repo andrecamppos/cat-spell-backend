@@ -3,9 +3,9 @@ phase: "17"
 slug: "waitlist-landing-page-api"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: true
-wave_0_complete: false
+status: validated
+nyquist_compliant: false
+wave_0_complete: true
 created: "2026-10-01"
 ---
 
@@ -38,23 +38,29 @@ created: "2026-10-01"
 
 ## Per-Task Verification Map
 
-Filled from the 17-01..17-06 PLAN.md files. Each test file is created by the task that first lists it (no separate Wave 0 plan; every task's `<automated>` command runs a test it creates or a regression that already exists).
+Filled from the 17-01..17-08 PLAN.md files (17-07/17-08 are gap-closure plans added after the first draft). Each test file is created by the task that first lists it (no separate Wave 0 plan; every task's `<automated>` command runs a test it creates or a regression that already exists).
 
 | Task | Req ID | Behavior | Test Type | Automated Command | File Exists | Status |
 |------|--------|----------|-----------|-------------------|-------------|--------|
-| 17-01-T1 | WAIT-01, WAIT-02 | Unauthenticated POST → constant 202; one PENDING row with 64-hex hash; V24 validates against the entity | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest" --tests "com.catspell.api.invite.InviteMigrationTest"` | created by task | ⬜ pending |
-| 17-01-T2 | WAIT-03 | Normalization rules; +suffix/case share one row + bucket; capacity boundary silent 202 | unit + integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistEmailNormalizerTest" --tests "com.catspell.api.waitlist.WaitlistPerEmailLimitIntegrationTest"` | created by task | ⬜ pending |
-| 17-02-T1 | WAIT-02 | One confirm email after commit with hash-matching token; new token on PENDING re-join; none for CONFIRMED/INVITED | integration (async, Awaitility) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConfirmIntegrationTest"` | created by task | ⬜ pending |
-| 17-02-T2 | WAIT-02 | 302 success/error; reuse/unknown/blank/missing/rotated/expired → error; strict expiry; concurrent single winner | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConfirmIntegrationTest" --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest"` | created by 17-02-T1 | ⬜ pending |
-| 17-03-T1 | WAIT-03 | Registered filter URL patterns; 202/202/429 problem+json; Retry-After ≥ 1; confirm never throttled | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistRateLimitIntegrationTest" --tests "com.catspell.api.common.RateLimitIntegrationTest"` | created by task | ⬜ pending |
-| 17-03-T2 | WAIT-03 | CORS preflight/actual for the allowed origin only; blank config emits none | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistCors*"` | created by task | ⬜ pending |
-| 17-03-T3 | WAIT-01 | Stale Bearer skipped on /api/waitlist (with /api/profile 401 control); six-state identical responses | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistEnumerationSafetyIntegrationTest" --tests "com.catspell.api.auth.AuthIntegrationTest"` | created by task | ⬜ pending |
-| 17-04-T1 | WAIT-04 | Invite admin behavior unchanged after `AdminTokenGuard` extraction | integration (regression) | `./gradlew test --tests "com.catspell.api.invite.InviteAdminEndpointIntegrationTest*"` | ✅ | ⬜ pending |
-| 17-04-T2 | WAIT-04 | Confirmed-only list ordered by confirmed_at; status/limit validation; 401 before params; deny-by-default | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistAdmin*" --tests "com.catspell.api.invite.InviteAdminEndpointIntegrationTest*"` | created by task | ⬜ pending |
-| 17-05-T1 | WAIT-04, WAIT-02 | Convert CONFIRMED → code + organic invite + INVITED + email; PENDING/INVITED 409; unknown 404; rollback on ERROR/throw; 4-thread single winner | integration (service level) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConvertIntegrationTest"` | created by task | ⬜ pending |
-| 17-05-T2 | WAIT-04 | HTTP 201/409/404/502/401 ProblemDetails; guard before lookup; deny-by-default | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConvert*" --tests "com.catspell.api.waitlist.WaitlistAdmin*"` | created by 17-05-T1 | ⬜ pending |
-| 17-06-T1 | WAIT-01, WAIT-02 | V24 on a private DB: nullability, three named constraints, duplicate-key + CHECK violations, PENDING default, multiple NULL hashes | integration (Flyway, private DB) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistMigrationTest" --tests "com.catspell.api.invite.InviteMigrationTest"` | created by task | ⬜ pending |
-| 17-06-T2 | WAIT-01, WAIT-02 | 400 validation with zero rows; PENDING/CONFIRMED/INVITED re-join; 8-thread single row; 168h TTL bracket | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest"` | created by 17-01-T1 | ⬜ pending |
+| 17-01-T1 | WAIT-01, WAIT-02 | Unauthenticated POST → constant 202; one PENDING row with 64-hex hash; V24 validates against the entity | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest" --tests "com.catspell.api.invite.InviteMigrationTest"` | ✅ | ✅ green |
+| 17-01-T2 | WAIT-03 | Normalization rules; +suffix/case share one row + bucket; capacity boundary silent 202 | unit + integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistEmailNormalizerTest" --tests "com.catspell.api.waitlist.WaitlistPerEmailLimitIntegrationTest"` | ✅ | ✅ green |
+| 17-02-T1 | WAIT-02 | One confirm email after commit with hash-matching token; new token on PENDING re-join; none for CONFIRMED/INVITED | integration (async, Awaitility) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConfirmIntegrationTest"` | ✅ | ✅ green |
+| 17-02-T2 | WAIT-02 | 302 success/error; reuse/unknown/blank/missing/rotated/expired → error; strict expiry; concurrent single winner | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConfirmIntegrationTest" --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest"` | ✅ | ✅ green |
+| 17-03-T1 | WAIT-03 | Registered filter URL patterns; 202/202/429 problem+json; Retry-After ≥ 1; confirm never throttled | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistRateLimitIntegrationTest" --tests "com.catspell.api.common.RateLimitIntegrationTest"` | ✅ | ✅ green |
+| 17-03-T2 | WAIT-03 | CORS preflight/actual for the allowed origin only; blank config emits none | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistCors*"` | ✅ | ✅ green |
+| 17-03-T3 | WAIT-01 | Stale Bearer skipped on /api/waitlist (with /api/profile 401 control); six-state identical responses | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistEnumerationSafetyIntegrationTest" --tests "com.catspell.api.auth.AuthIntegrationTest"` | ✅ | ✅ green |
+| 17-04-T1 | WAIT-04 | Invite admin behavior unchanged after `AdminTokenGuard` extraction | integration (regression) | `./gradlew test --tests "com.catspell.api.invite.InviteAdminEndpointIntegrationTest*"` | ✅ | ✅ green |
+| 17-04-T2 | WAIT-04 | Confirmed-only list ordered by confirmed_at; status/limit validation; 401 before params; deny-by-default | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistAdmin*" --tests "com.catspell.api.invite.InviteAdminEndpointIntegrationTest*"` | ✅ | ✅ green |
+| 17-05-T1 | WAIT-04, WAIT-02 | Convert CONFIRMED → code + organic invite + INVITED + email; PENDING/INVITED 409; unknown 404; rollback on ERROR/throw; 4-thread single winner | integration (service level) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConvertIntegrationTest"` | ✅ | ✅ green |
+| 17-05-T2 | WAIT-04 | HTTP 201/409/404/502/401 ProblemDetails; guard before lookup; deny-by-default | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistConvert*" --tests "com.catspell.api.waitlist.WaitlistAdmin*"` | ✅ | ✅ green |
+| 17-06-T1 | WAIT-01, WAIT-02 | V24 on a private DB: nullability, three named constraints, duplicate-key + CHECK violations, PENDING default, multiple NULL hashes | integration (Flyway, private DB) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistMigrationTest" --tests "com.catspell.api.invite.InviteMigrationTest"` | ✅ | ✅ green |
+| 17-06-T2 | WAIT-01, WAIT-02 | 400 validation with zero rows; PENDING/CONFIRMED/INVITED re-join; 8-thread single row; 168h TTL bracket | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistJoinIntegrationTest"` | ✅ | ✅ green |
+| 17-07-T1 | WAIT-03 | Untrusted remoteAddr: forged X-Forwarded-For never gets a fresh bucket; trusted peer still honors XFF | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitTrustedProxyIntegrationTest"` | ✅ | ✅ green |
+| 17-07-T2 | WAIT-03 | Same forgery proof on POST /api/waitlist + regression sweep (waitlist/common/invite/auth/push) | integration | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistRateLimitIntegrationTest"` | ✅ | ✅ green |
+| 17-08-T1 | WAIT-03 (D-05) | waitlist_entries has exactly the ten email-only columns | integration (Flyway, private DB) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistMigrationTest"` | ✅ | ✅ green |
+| 17-08-T2 | WAIT-03 | 20 concurrent joins for one new email mint exactly per-email-capacity (3) tokens; one row; stored hash among sent | integration (concurrency) | `./gradlew test --tests "com.catspell.api.waitlist.WaitlistPerEmailConcurrencyIntegrationTest"` | ✅ | ✅ green |
+| SC3 / CR-02 | WAIT-03 | Percent-encoded `/api/%77aitlist` and `/api/auth/%6Cogin` throttled like canonical paths | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ (`@Disabled`) | ❌ red — impl bug, escalated |
+| SC3 / CR-01 | WAIT-03 | Trusted peer with rotating leftmost XFF hop shares the real client's bucket | integration | `./gradlew test --tests "com.catspell.api.common.RateLimitBypassIntegrationTest"` | ✅ (`@Disabled`) | ❌ red — impl bug, escalated |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -62,17 +68,17 @@ Filled from the 17-01..17-06 PLAN.md files. Each test file is created by the tas
 
 ## Wave 0 Requirements
 
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistEmailNormalizerTest.kt` — WAIT-03 normalization
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistMigrationTest.kt` — V24 schema (own DB `waitlist_migration_test`) (17-06)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistJoinIntegrationTest.kt` — WAIT-01 (created 17-01, extended 17-06)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistEnumerationSafetyIntegrationTest.kt` — WAIT-01
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistConfirmIntegrationTest.kt` — WAIT-02
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistPerEmailLimitIntegrationTest.kt` — WAIT-03 per-email (17-01)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistRateLimitIntegrationTest.kt` — WAIT-03 per-IP, registered filter (17-03)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistCorsIntegrationTest.kt` — WAIT-03 CORS (17-03)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistAdminIntegrationTest.kt` — WAIT-04 list (17-04)
-- [ ] `src/test/kotlin/com/catspell/api/waitlist/WaitlistConvertIntegrationTest.kt` — WAIT-04 convert (17-05)
-- [ ] `src/test/resources/application.yml` — add `app.waitlist:` block
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistEmailNormalizerTest.kt` — WAIT-03 normalization
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistMigrationTest.kt` — V24 schema (own DB `waitlist_migration_test`) (17-06)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistJoinIntegrationTest.kt` — WAIT-01 (created 17-01, extended 17-06)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistEnumerationSafetyIntegrationTest.kt` — WAIT-01
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistConfirmIntegrationTest.kt` — WAIT-02
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistPerEmailLimitIntegrationTest.kt` — WAIT-03 per-email (17-01)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistRateLimitIntegrationTest.kt` — WAIT-03 per-IP, registered filter (17-03)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistCorsIntegrationTest.kt` — WAIT-03 CORS (17-03)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistAdminIntegrationTest.kt` — WAIT-04 list (17-04)
+- [x] `src/test/kotlin/com/catspell/api/waitlist/WaitlistConvertIntegrationTest.kt` — WAIT-04 convert (17-05)
+- [x] `src/test/resources/application.yml` — add `app.waitlist:` block
 
 Framework install: none — existing infrastructure covers the stack.
 
@@ -83,6 +89,10 @@ Framework install: none — existing infrastructure covers the stack.
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Confirm link survives mail-scanner prefetch UX (error-page copy) | WAIT-02 | Depends on real mail providers / landing-page copy in a separate repo | Send a confirm email to a Gmail/Outlook inbox, observe whether the link is pre-consumed, and check the error page wording |
+| Per-IP limit bypass via percent-encoded path (CR-02) — **escalated impl bug** | WAIT-03 | `RateLimitFilter.kt:40` matches raw `requestURI`; test exists but is `@Disabled` until the filter is fixed | Fix via `/gsd-plan-phase 17 --gaps`, then remove `@Disabled` in `RateLimitBypassIntegrationTest` (2 tests) and run it |
+| Per-IP limit bypass via leftmost XFF behind a trusted appending proxy (CR-01) — **escalated impl bug** | WAIT-03 | `RateLimitFilter.kt:80` keys on `split(",").first()`; test exists but is `@Disabled` | Same as above (1 test); also confirm prod proxy XFF behavior (append vs overwrite) and its connect address |
+| Browser CORS from deployed landing origin vs foreign origin | WAIT-03 | MockMvc proves headers, not a real browser + deployment | With `WAITLIST_ALLOWED_ORIGINS` set, `fetch` POST /api/waitlist from the landing origin (readable 202) and from a foreign origin (blocked) |
+| Confirm/invite email rendering and copy | WAIT-02, WAIT-04 | Copy quality not asserted (see WR-03, IN-01) | Open both emails in a real client; follow links; check copy |
 
 ---
 
@@ -92,7 +102,18 @@ Framework install: none — existing infrastructure covers the stack.
 - [x] Sampling continuity: no 3 consecutive tasks without automated verify (every task samples)
 - [x] Wave 0 covers all MISSING references (no `MISSING` markers in any plan; every not-yet-existing test file a command targets is listed above with its creating plan)
 - [x] No watch-mode flags (plain `./gradlew test --tests ...`; no `--continuous`)
-- [ ] Feedback latency < 180s (estimated ~120 s for the waitlist slice; not measured until the Wave 0 test files exist)
-- [x] `nyquist_compliant: true` set in frontmatter (`wave_0_complete` stays `false` until execution creates the Wave 0 files)
+- [x] Feedback latency < 180s (waitlist slice result timestamps span ~20 s of test time; Gradle startup + container reuse keeps the slice well under 180 s)
+- [ ] `nyquist_compliant: true` — set to `false` by the 2026-10-02 audit: WAIT-03 per-IP (SC3) has two escalated impl bugs (CR-01, CR-02) whose tests are `@Disabled`
 
-**Approval:** pending
+**Approval:** partial — 2026-10-02 (blocked on CR-01/CR-02 impl fix)
+
+---
+
+## Validation Audit 2026-10-02
+| Metric | Count |
+|--------|-------|
+| Gaps found | 2 (+4 unmapped 17-07/17-08 tasks, already covered) |
+| Resolved | 0 |
+| Escalated | 2 (CR-01, CR-02 — impl bugs in `RateLimitFilter`; 3 red-confirmed tests added as `@Disabled` in `src/test/kotlin/com/catspell/api/common/RateLimitBypassIntegrationTest.kt`) |
+
+Evidence: last full suite 416 tests / 0 failures / 1 skip (`FcmSmokeTest`); `./gradlew test` reports `:test UP-TO-DATE` against the current tree. New bypass class: 3 skipped, 0 failures; rate-limit quick slice green.

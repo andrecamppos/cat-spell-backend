@@ -163,7 +163,7 @@ Plans:
 
 Introduces a `waitlist_entries` table, reuses the hashed single-use token model and the three-place public-endpoint whitelist pattern. New Flyway migration (V19+).
 
-**Plans:** 8 plans
+**Plans:** 9 plans
 
 Plans:
 **Wave 1**
@@ -188,6 +188,10 @@ Plans:
 
 - [x] 17-07-PLAN.md — Fix SC3 per-IP rate-limit spoofing: RateLimitFilter trusts X-Forwarded-For only from a configured trusted proxy (default 127.0.0.1,::1); proven on /api/auth/login and POST /api/waitlist (Gap Closure)
 - [x] 17-08-PLAN.md — Close test-tier gaps: exact waitlist_entries column-set assertion (D-05) + per-email Bucket4j concurrent mint-cap proof (17-01 backstop truth) (Gap Closure)
+
+**Gap Closure 2** *(from 17-VERIFICATION.md re-verification: SC3 per-IP bypasses CR-01, CR-02 + WR-09)*
+
+- [ ] 17-09-PLAN.md — Close the remaining SC3 per-IP bypasses: RateLimitFilter matches on the decoded path (CR-02), keys on the rightmost untrusted X-Forwarded-For hop (CR-01), and uses a family-safe exact/CIDR TrustedProxyMatcher (WR-09); re-enables the 3 staged RateLimitBypassIntegrationTest tests; declares and documents rate-limit.trusted-proxies (Gap Closure)
 
 </details>
 
