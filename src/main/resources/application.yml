@@ -35,6 +35,9 @@ push:
 email:
   enabled: ${EMAIL_ENABLED:false}
 
+rate-limit:
+  trusted-proxies: "${RATE_LIMIT_TRUSTED_PROXIES:127.0.0.1,::1}"   # peers allowed to set X-Forwarded-For: exact IPs or CIDR, comma-separated (see docs/CONFIGURATION.md)
+
 app:
   reset-password-url: ${RESET_PASSWORD_URL:catspell://reset-password}
   verify-email-url: ${VERIFY_EMAIL_URL:catspell://verify-email}

@@ -84,10 +84,31 @@ For local development, MinIO runs on port 9002 (API, mapped from container port 
 
 ```yaml
 rate-limit:
-  capacity: 10    # requests per minute per IP (auth endpoints only)
+  capacity: 10    # requests per minute per client IP
+  trusted-proxies: ${RATE_LIMIT_TRUSTED_PROXIES:127.0.0.1,::1}
 ```
 
-Configurable via `rate-limit.capacity` property. Applies to `/api/auth/*` endpoints. Returns `429 Too Many Requests` with `Retry-After` and `X-RateLimit-Remaining` headers.
+**What is throttled.** Each client IP gets one bucket of `rate-limit.capacity` requests per minute. The `/api/auth/*` endpoints and `POST /api/waitlist` share that bucket. `GET /api/waitlist/confirm` links and CORS preflight requests are never throttled. A throttled request gets `429 Too Many Requests` with a `Retry-After` header and the `X-RateLimit-Remaining` / `X-RateLimit-Reset` headers.
+
+**Path matching.** Paths are matched after percent-decoding, so encoded spellings such as `/api/%77aitlist` share the canonical path's bucket.
+
+**Client IP resolution.**
+
+- If the directly connecting peer is not a trusted proxy, the bucket is keyed on its own socket address. Any `X-Forwarded-For` header it sends is ignored.
+- If the peer is a trusted proxy, the key is the rightmost `X-Forwarded-For` hop that is not itself a trusted proxy. Hops are read across all `X-Forwarded-For` header lines in arrival order. If every hop is trusted, or there is none, the peer address is used.
+
+**`RATE_LIMIT_TRUSTED_PROXIES`** takes a comma-separated list of exact IPv4/IPv6 addresses or CIDR ranges, for example `127.0.0.1,::1,10.0.0.0/8`. Addresses are compared by value, so `::1` also matches `0:0:0:0:0:0:0:1`. An invalid entry fails startup. An empty value trusts no peer.
+
+**Deployment.**
+
+- Set the value to the address or range your reverse proxy connects from. Proxies that append to the header (nginx `$proxy_add_x_forwarded_for`, AWS ALB) and proxies that overwrite it both work.
+- If the proxy's address is not listed, every client behind it shares one bucket.
+- **Server-to-server landing page:** list the landing server's address, and have it forward the visitor IP in `X-Forwarded-For`. Otherwise every join shares one bucket.
+
+**Unsupported shapes.**
+
+- A trusted peer that relays a client-supplied `X-Forwarded-For` unchanged lets the client choose its own key.
+- Hops written as `ip:port` give each connection its own key. Strip ports at the proxy.
 
 ### OpenAPI
 
@@ -196,4 +217,4 @@ org.gradle.parallel=true
 | Min user age | 18 years | `CreateProfileRequest` validation |
 | Access token expiry | 1 hour | `jwt.access-token-expiry` |
 | Refresh token expiry | 30 days | `jwt.refresh-token-expiry-days` |
-| Rate limit (auth) | 10 req/min per IP | `rate-limit.capacity` |
+| Rate limit (auth + waitlist join) | 10 req/min per client IP | `rate-limit.capacity` |
