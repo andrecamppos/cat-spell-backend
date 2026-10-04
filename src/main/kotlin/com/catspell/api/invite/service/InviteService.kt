@@ -29,6 +29,8 @@ class InviteService(
      * Issue a new invite for an optional referrer. A non-null referrer must be a real user (D-12); an
      * unknown referrer is rejected with 400 (IllegalArgumentException → handleIllegalArgument). Only the
      * SHA-256 hash of the code is persisted; the raw code is returned exactly once and never stored (D-06).
+     * The row is flushed at creation, so callers that send the code afterwards (waitlist conversion, operator
+     * issuance) never mail an unstored code (D-10, WR-05).
      */
     @Transactional
     fun create(referrerUserId: UUID?): String {
@@ -37,7 +39,7 @@ class InviteService(
             throw IllegalArgumentException("Unknown referrer")
         }
         val rawCode = generateRawCode()
-        inviteRepository.save(Invite(codeHash = hashToken(rawCode), referrerUserId = referrerUserId))
+        inviteRepository.saveAndFlush(Invite(codeHash = hashToken(rawCode), referrerUserId = referrerUserId))
         return rawCode
     }
 

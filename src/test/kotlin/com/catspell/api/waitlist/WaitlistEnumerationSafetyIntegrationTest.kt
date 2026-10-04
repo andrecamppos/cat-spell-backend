@@ -21,7 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * WAIT-01 success criterion 1 / D-04: no caller can tell new, pending, confirmed, invited, `+suffix` and per-email
  * throttled addresses apart from the join response. Also proves the JWT filter ignores stale Bearer headers on the
- * public waitlist routes (RESEARCH Pattern 1 step 2) while still rejecting them on protected routes.
+ * public waitlist routes (RESEARCH Pattern 1 step 2) and the operator routes (D-12), while still rejecting them on
+ * protected routes and on look-alike paths (IN-06).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -58,8 +59,9 @@ class WaitlistEnumerationSafetyIntegrationTest : BaseIntegrationTest() {
     }
 
     /**
-     * Calls the filter bean directly. servletPath is set explicitly, as Tomcat does for the DispatcherServlet "/"
-     * mapping; MockMvc leaves it empty, so the skip list cannot be exercised through MockMvc.
+     * Calls the filter bean directly with servletPath set explicitly, as Tomcat does for the DispatcherServlet "/"
+     * mapping. MockMvc leaves servletPath empty; the skip list reads RequestPaths.normalized, so it applies in both
+     * shapes, and these tests pin the production (Tomcat) shape.
      */
     private fun runJwtFilter(method: String, servletPath: String): Pair<MockFilterChain, MockHttpServletResponse> {
         val request = MockHttpServletRequest(method, servletPath).apply {
@@ -90,6 +92,29 @@ class WaitlistEnumerationSafetyIntegrationTest : BaseIntegrationTest() {
     fun `a stale Bearer header is still rejected on a protected route`() {
         val (chain, response) = runJwtFilter("GET", "/api/profile")
         assertNull(chain.request, "a protected route with an invalid token must stop at the JWT filter")
+        assertEquals(401, response.status)
+    }
+
+    @Test
+    fun `a stale Bearer header does not block the operator waitlist list`() {
+        // D-12: operator routes authenticate with X-Admin-Token in AdminTokenFilter, never with a JWT.
+        val (chain, response) = runJwtFilter("GET", "/api/admin/waitlist")
+        assertNotNull(chain.request, "the operator list must reach the rest of the filter chain")
+        assertNotEquals(401, response.status, "the JWT filter must not write a 401 on an operator route")
+    }
+
+    @Test
+    fun `a stale Bearer header does not block operator invite issuance`() {
+        val (chain, response) = runJwtFilter("POST", "/api/admin/invites")
+        assertNotNull(chain.request, "invite issuance must reach the rest of the filter chain")
+        assertNotEquals(401, response.status, "the JWT filter must not write a 401 on an operator route")
+    }
+
+    @Test
+    fun `a stale Bearer header is still rejected on a waitlist look-alike path`() {
+        // IN-06: the waitlist skip is exact, so /api/waitlistX keeps its Bearer validation.
+        val (chain, response) = runJwtFilter("POST", "/api/waitlistX")
+        assertNull(chain.request, "a look-alike path with an invalid token must stop at the JWT filter")
         assertEquals(401, response.status)
     }
 

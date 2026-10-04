@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["rate-limit.capacity=2"])
+@TestPropertySource(properties = ["rate-limit.capacity=2", "rate-limit.trusted-proxies=127.0.0.1,::1,198.51.100.0/24", "rate-limit.waitlist-capacity=2", "rate-limit.admin-capacity=2"])
 class RateLimitTrustedProxyIntegrationTest : BaseIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc

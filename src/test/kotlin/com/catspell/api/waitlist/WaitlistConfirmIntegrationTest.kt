@@ -121,10 +121,46 @@ class WaitlistConfirmIntegrationTest : BaseIntegrationTest() {
         assertEquals(storedHash("confirm-first@example.com"), sha256Hex(token), "only the SHA-256 of the token is stored")
     }
 
+    /** Moves the entry's updated_at 16 minutes into the past, just outside the default 15-minute resend cooldown. */
+    private fun backdate(normalizedEmail: String) {
+        jdbcTemplate.update(
+            "UPDATE waitlist_entries SET updated_at = updated_at - INTERVAL '16 minutes' WHERE normalized_email = ?",
+            normalizedEmail
+        )
+    }
+
     @Test
-    fun `pending re-join sends a second email with a fresh token and the stored hash matches the newest`() {
+    fun `a pending re-join inside the cooldown sends no second email`() {
+        join("confirm-cooldown@example.com")
+        awaitEmails(1)
+        val firstToken = tokenFrom(sentMessages[0])
+
+        join("confirm-cooldown@example.com")
+
+        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).untilAsserted {
+            assertEquals(1, sentMessages.size, "a re-join inside the resend cooldown must not send a second email")
+        }
+        assertEquals(storedHash("confirm-cooldown@example.com"), sha256Hex(firstToken), "the first link must stay live")
+    }
+
+    @Test
+    fun `a variant re-join outside the cooldown mails the first stored address`() {
+        join("pin-first@example.com")
+        awaitEmails(1)
+        backdate("pin-first@example.com")
+
+        join("Pin-First+x@example.com")
+        awaitEmails(2)
+
+        assertEquals("pin-first@example.com", sentMessages[1].to, "the fresh link must go to the address stored at first insert")
+        assertEquals(storedHash("pin-first@example.com"), sha256Hex(tokenFrom(sentMessages[1])))
+    }
+
+    @Test
+    fun `pending re-join outside the cooldown sends a second email with a fresh token and the stored hash matches the newest`() {
         join("confirm-rejoin@example.com")
         awaitEmails(1)
+        backdate("confirm-rejoin@example.com")
         join("confirm-rejoin@example.com")
         awaitEmails(2)
 
@@ -247,6 +283,7 @@ class WaitlistConfirmIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `pending re-join invalidates the first link and only the newest token confirms`() {
         val firstToken = joinAndCaptureToken("confirm-rotated@example.com")
+        backdate("confirm-rotated@example.com")
         val secondToken = joinAndCaptureToken("confirm-rotated@example.com")
 
         confirmVia(firstToken).andExpect(header().string("Location", CONFIRM_ERROR_URL))

@@ -3,9 +3,9 @@ package com.catspell.api.auth.service
 import com.catspell.api.auth.model.PasswordResetToken
 import com.catspell.api.auth.model.PasswordResetTokenRepository
 import com.catspell.api.auth.model.UserRepository
+import com.catspell.api.common.ratelimit.RateLimitBuckets
 import com.catspell.api.email.service.EmailSender
 import com.catspell.api.email.service.PasswordResetEmailRenderer
-import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -16,7 +16,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Base64
 import java.util.HexFormat
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class PasswordResetService(
@@ -26,20 +25,16 @@ class PasswordResetService(
     private val passwordResetEmailRenderer: PasswordResetEmailRenderer,
     @Value("\${app.forgot-password.per-email-capacity:3}") private val perEmailCapacity: Long,
     @Value("\${app.forgot-password.per-email-refill-hours:1}") private val perEmailRefillHours: Long,
-    @Value("\${app.reset-token.ttl-minutes:30}") private val resetTokenTtlMinutes: Long
+    @Value("\${app.reset-token.ttl-minutes:30}") private val resetTokenTtlMinutes: Long,
+    @Value("\${rate-limit.max-tracked-keys:100000}") private val maxTrackedKeys: Long
 ) {
 
     private val secureRandom = SecureRandom()
 
-    private val emailBuckets = ConcurrentHashMap<String, Bucket>()
+    // One bucket per normalized email in a bounded, access-expiring store (WR-10), so email-key churn cannot grow memory.
+    private val emailBuckets = RateLimitBuckets(perEmailCapacity, Duration.ofHours(perEmailRefillHours), maxTrackedKeys)
 
-    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.computeIfAbsent(normalizedEmail) {
-        val bandwidth = Bandwidth.builder()
-            .capacity(perEmailCapacity)
-            .refillIntervally(perEmailCapacity, Duration.ofHours(perEmailRefillHours))
-            .build()
-        Bucket.builder().addLimit(bandwidth).build()
-    }
+    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.bucketFor(normalizedEmail)
 
     /**
      * Enumeration-safe forgot-password flow (D-05 / RECOV-04): ALWAYS returns normally regardless of

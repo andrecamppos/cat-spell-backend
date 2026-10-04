@@ -70,6 +70,8 @@ app:
 
 rate-limit:
   capacity: 10000
+  waitlist-capacity: 10000
+  admin-capacity: 10000
 
 server:
   port: 0

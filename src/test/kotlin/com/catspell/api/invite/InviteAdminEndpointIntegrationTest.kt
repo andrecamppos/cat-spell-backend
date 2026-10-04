@@ -1,6 +1,7 @@
 package com.catspell.api.invite
 
 import com.catspell.api.BaseIntegrationTest
+import com.catspell.api.TEST_ADMIN_TOKEN
 import com.catspell.api.auth.model.User
 import com.catspell.api.auth.model.UserRepository
 import org.junit.jupiter.api.Assertions.*
@@ -24,7 +25,7 @@ import java.util.UUID
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["app.invite.admin-token=test-admin-secret"])
+@TestPropertySource(properties = ["app.invite.admin-token=$TEST_ADMIN_TOKEN"])
 class InviteAdminEndpointIntegrationTest : BaseIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc
@@ -41,7 +42,7 @@ class InviteAdminEndpointIntegrationTest : BaseIntegrationTest() {
     fun `correct token issues 201 with a code stored hashed`() {
         val result = mockMvc.perform(
             post("/api/admin/invites")
-                .header("X-Admin-Token", "test-admin-secret")
+                .header("X-Admin-Token", TEST_ADMIN_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}")
         )
@@ -84,7 +85,7 @@ class InviteAdminEndpointIntegrationTest : BaseIntegrationTest() {
     fun `unknown referrerUserId returns 400 and writes no invite`() {
         mockMvc.perform(
             post("/api/admin/invites")
-                .header("X-Admin-Token", "test-admin-secret")
+                .header("X-Admin-Token", TEST_ADMIN_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"referrerUserId":"${UUID.randomUUID()}"}""")
         )
@@ -98,7 +99,7 @@ class InviteAdminEndpointIntegrationTest : BaseIntegrationTest() {
         val referrer = userRepository.save(User(email = "admin-referrer@example.com", passwordHash = "hash"))
         mockMvc.perform(
             post("/api/admin/invites")
-                .header("X-Admin-Token", "test-admin-secret")
+                .header("X-Admin-Token", TEST_ADMIN_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"referrerUserId":"${referrer.id}"}""")
         )

@@ -36,6 +36,10 @@ email:
   enabled: ${EMAIL_ENABLED:false}
 
 rate-limit:
+  capacity: ${RATE_LIMIT_CAPACITY:10}   # auth endpoints: requests per client IP per minute
+  waitlist-capacity: ${RATE_LIMIT_WAITLIST_CAPACITY:10}   # POST /api/waitlist: requests per client IP per minute
+  admin-capacity: ${RATE_LIMIT_ADMIN_CAPACITY:5}   # every /api/admin request, any method: per client IP per minute
+  max-tracked-keys: ${RATE_LIMIT_MAX_TRACKED_KEYS:100000}   # max keys held per bucket store; idle keys expire after one window
   trusted-proxies: "${RATE_LIMIT_TRUSTED_PROXIES:127.0.0.1,::1}"   # peers allowed to set X-Forwarded-For: exact IPs or CIDR, comma-separated (see docs/CONFIGURATION.md)
 
 app:
@@ -48,15 +52,17 @@ app:
     minimum-age: ${AGE_MINIMUM_AGE:18}
   invite:
     enabled: ${INVITE_ENABLED:false}
-    admin-token: ${INVITE_ADMIN_TOKEN:}   # deny-by-default when blank; NO guessable dev default
+    admin-token: ${INVITE_ADMIN_TOKEN:}   # deny-by-default when blank; NO guessable dev default; blank = operator endpoints disabled; otherwise >= 32 chars or startup fails (D-13)
   waitlist:
     confirm-url: ${WAITLIST_CONFIRM_URL:http://localhost:8080/api/waitlist/confirm}
     confirm-success-url: ${WAITLIST_CONFIRM_SUCCESS_URL:http://localhost:3000/waitlist/confirmed}   # web landing-page URL (D-01/D-02)
     confirm-error-url: ${WAITLIST_CONFIRM_ERROR_URL:http://localhost:3000/waitlist/link-invalid}   # web landing-page URL (D-01/D-02)
     confirm-token-ttl-hours: ${WAITLIST_CONFIRM_TTL_HOURS:168}   # 7 days (D-08)
     per-email-capacity: ${WAITLIST_PER_EMAIL_CAPACITY:3}
-    per-email-refill-hours: ${WAITLIST_PER_EMAIL_REFILL_HOURS:1}
+    per-email-refill-hours: ${WAITLIST_PER_EMAIL_REFILL_HOURS:24}   # 3 per 24 h per email (D-07)
+    resend-cooldown-minutes: ${WAITLIST_RESEND_COOLDOWN_MINUTES:15}   # a PENDING re-join inside this window sends nothing (D-07)
     invite-url: ${WAITLIST_INVITE_URL:catspell://register}
+    invite-send-timeout-ms: ${WAITLIST_INVITE_SEND_TIMEOUT_MS:10000}   # max wait for the convert invite email; must be > 0 (D-10)
     allowed-origins: ${WAITLIST_ALLOWED_ORIGINS:}   # blank = no CORS (server-to-server only)
 
 springdoc:

@@ -22,10 +22,15 @@ import java.net.URI
 class WaitlistController(
     private val waitlistService: WaitlistService,
     @Value("\${app.waitlist.confirm-success-url:http://localhost:3000/waitlist/confirmed}")
-    private val confirmSuccessUrl: String,
+    confirmSuccessUrl: String,
     @Value("\${app.waitlist.confirm-error-url:http://localhost:3000/waitlist/link-invalid}")
-    private val confirmErrorUrl: String
+    confirmErrorUrl: String
 ) {
+
+    // Parsed once here: a malformed value throws IllegalArgumentException while the bean is built (startup),
+    // never after a user's token has already been claimed (IN-07).
+    private val successUri: URI = URI.create(confirmSuccessUrl)
+    private val errorUri: URI = URI.create(confirmErrorUrl)
 
     /**
      * Public, unauthenticated join. Every accepted request — new, pending, confirmed, invited or throttled —
@@ -43,13 +48,14 @@ class WaitlistController(
      * success URL; every failure (blank, missing, unknown, expired, reused, rotated away) goes to the configured error
      * URL, never a 400 or a JSON body. The Location comes only from those two config values, so no request input is
      * echoed into it (open-redirect guard). `no-referrer` and `no-store` keep the token out of Referer headers and caches.
+     * Both URLs are parsed once at startup (IN-07), so a misconfigured value fails the deploy instead of turning a
+     * just-claimed token into a server error; the handler only picks one of the pre-parsed URIs.
      */
     @SecurityRequirements
     @GetMapping("/confirm")
     fun confirm(@RequestParam(name = "token", required = false) token: String?): ResponseEntity<Void> {
-        val target = if (waitlistService.confirm(token)) confirmSuccessUrl else confirmErrorUrl
         return ResponseEntity.status(HttpStatus.FOUND)
-            .location(URI.create(target))
+            .location(if (waitlistService.confirm(token)) successUri else errorUri)
             .header("Referrer-Policy", "no-referrer")
             .header(HttpHeaders.CACHE_CONTROL, "no-store")
             .build()

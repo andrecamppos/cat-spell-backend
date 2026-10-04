@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["rate-limit.capacity=2"])
+@TestPropertySource(properties = ["rate-limit.capacity=2", "rate-limit.trusted-proxies=127.0.0.1,::1,198.51.100.0/24", "rate-limit.waitlist-capacity=2", "rate-limit.admin-capacity=2"])
 class WaitlistRateLimitIntegrationTest : BaseIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc
@@ -48,6 +48,15 @@ class WaitlistRateLimitIntegrationTest : BaseIntegrationTest() {
          */
         const val UNTRUSTED_PEER = "203.0.113.50"
         private const val FORGED_XFF_PEER = "203.0.113.53"
+
+        /** WR-07(a) / D-14: one untrusted peer spends its login budget and its join budget independently. */
+        private const val SEPARATE_BUCKETS_PEER = "203.0.113.80"
+
+        /** WR-08 / D-13: an untrusted peer guessing the operator secret, and a bystander peer with its own bucket. */
+        private const val ADMIN_GUESSING_PEER = "203.0.113.81"
+        private const val OTHER_ADMIN_PEER = "203.0.113.82"
+
+        private const val ADMIN_WAITLIST_URL = "/api/admin/waitlist"
     }
 
     private fun join(ip: String) = mockMvc.perform(
@@ -66,11 +75,60 @@ class WaitlistRateLimitIntegrationTest : BaseIntegrationTest() {
             .with { request -> request.remoteAddr = remoteAddr; request }
     )
 
+    /** A join sent directly by [remoteAddr] with no X-Forwarded-For, so the key is the peer address itself. */
+    private fun joinFromPeer(remoteAddr: String): Int = mockMvc.perform(
+        post("/api/waitlist")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"email":"${nextEmail()}"}""")
+            .with { request -> request.remoteAddr = remoteAddr; request }
+    ).andReturn().response.status
+
+    /** A login for an unknown account sent directly by [remoteAddr] (401 unless throttled). */
+    private fun loginFromPeer(remoteAddr: String): Int = mockMvc.perform(
+        post("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"email":"rl-separate-buckets@example.com","password":"password123"}""")
+            .with { request -> request.remoteAddr = remoteAddr; request }
+    ).andReturn().response.status
+
+    /** An operator list request with a wrong token sent directly by [remoteAddr] (401 unless throttled). */
+    private fun adminListFromPeer(remoteAddr: String): Int = mockMvc.perform(
+        get(ADMIN_WAITLIST_URL)
+            .header("X-Admin-Token", "wrong")
+            .with { request -> request.remoteAddr = remoteAddr; request }
+    ).andReturn().response.status
+
     @Test
-    fun `the registered rate-limit filter covers the auth paths and the waitlist join`() {
+    fun `the registered rate-limit filter covers the auth paths, the waitlist join and the operator routes`() {
         val patterns = rateLimitFilterRegistration.urlPatterns
         assertTrue(patterns.contains("/api/auth/*"), "auth throttling must stay registered: $patterns")
         assertTrue(patterns.contains("/api/waitlist"), "the join must be registered or it is never throttled: $patterns")
+        assertTrue(patterns.contains("/api/admin/*"), "operator routes must be registered to be throttled: $patterns")
+        assertEquals(3, patterns.size, "exactly the auth, join and operator patterns are registered: $patterns")
+    }
+
+    @Test
+    fun `the waitlist join and login draw from separate per-IP buckets`() {
+        val logins = listOf(loginFromPeer(SEPARATE_BUCKETS_PEER), loginFromPeer(SEPARATE_BUCKETS_PEER))
+        assertTrue(logins.none { it == 429 }, "logins 1 and 2 must consume from a fresh auth bucket, got $logins")
+
+        val joins = listOf(joinFromPeer(SEPARATE_BUCKETS_PEER), joinFromPeer(SEPARATE_BUCKETS_PEER))
+        assertEquals(
+            listOf(202, 202), joins,
+            "two spent logins must not use up the join budget; joins draw from their own bucket"
+        )
+        assertEquals(429, joinFromPeer(SEPARATE_BUCKETS_PEER), "the third join exhausts the join bucket at capacity 2")
+        assertEquals(429, loginFromPeer(SEPARATE_BUCKETS_PEER), "the third login exhausts the auth bucket at capacity 2")
+    }
+
+    @Test
+    fun `operator routes are throttled per IP before the token check`() {
+        val statuses = (1..3).map { adminListFromPeer(ADMIN_GUESSING_PEER) }
+        assertEquals(
+            listOf(401, 401, 429), statuses,
+            "wrong-token operator requests must be throttled per IP at capacity 2 before the token check"
+        )
+        assertEquals(401, adminListFromPeer(OTHER_ADMIN_PEER), "another peer has its own operator bucket")
     }
 
     @Test

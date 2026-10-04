@@ -14,8 +14,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 /**
  * D-03 + D-07 (WAIT-03): `+suffix` / case variants collapse onto one waitlist identity AND one per-email bucket,
- * dotted variants stay distinct, and exhausting the bucket is silent (identical 202, token not rotated). Each test
- * uses distinct addresses because the buckets live in the service bean for the whole cached context.
+ * dotted variants stay distinct, and exhausting the bucket is silent (identical 202, token not rotated). The resend
+ * cooldown is escaped by backdating updated_at, so these tests prove that the bucket still caps once the cooldown
+ * no longer blocks. The stored address is pinned at first insert (D-08). Each test uses distinct addresses because
+ * the buckets live in the service bean for the whole cached context.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,12 +42,21 @@ class WaitlistPerEmailLimitIntegrationTest : BaseIntegrationTest() {
             normalizedEmail
         )
 
+    /** Moves the entry's updated_at 16 minutes into the past, just outside the default 15-minute resend cooldown. */
+    private fun backdate(normalizedEmail: String) {
+        jdbcTemplate.update(
+            "UPDATE waitlist_entries SET updated_at = updated_at - INTERVAL '16 minutes' WHERE normalized_email = ?",
+            normalizedEmail
+        )
+    }
+
     @Test
     fun `plus and case variants share one row and one bucket and the over-limit join is silent`() {
         val first = join(" B+Tag@Example.COM ")
         assertEquals(202, first.status)
         assertEquals(1, rowCount())
         val hash1 = row("b@example.com")["confirm_token_hash"] as String
+        backdate("b@example.com")
 
         val second = join("b@example.com")
         assertEquals(202, second.status)
@@ -53,7 +64,8 @@ class WaitlistPerEmailLimitIntegrationTest : BaseIntegrationTest() {
         val afterSecond = row("b@example.com")
         val hash2 = afterSecond["confirm_token_hash"] as String
         assertNotEquals(hash1, hash2, "join 2 (within capacity) must rotate the confirm token")
-        assertEquals("b@example.com", afterSecond["email"], "a PENDING re-join stores the address just submitted")
+        assertEquals("B+Tag@Example.COM", afterSecond["email"], "a re-join keeps the address stored at first insert (D-08)")
+        backdate("b@example.com")
 
         val third = join("b+other@example.com")
         assertEquals(first.status, third.status, "the over-limit join must return the identical status")
@@ -62,8 +74,8 @@ class WaitlistPerEmailLimitIntegrationTest : BaseIntegrationTest() {
             "the over-limit join must return a byte-identical body"
         )
         val afterThird = row("b@example.com")
-        assertEquals(hash2, afterThird["confirm_token_hash"], "an exhausted bucket must leave the token unchanged")
-        assertEquals("b@example.com", afterThird["email"], "an exhausted bucket must leave the email unchanged")
+        assertEquals(hash2, afterThird["confirm_token_hash"], "an exhausted bucket (not the cooldown) must leave the token unchanged")
+        assertEquals("B+Tag@Example.COM", afterThird["email"], "an exhausted bucket must leave the email unchanged")
         assertEquals(1, rowCount())
     }
 
@@ -80,13 +92,18 @@ class WaitlistPerEmailLimitIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `exhausting one address bucket does not affect another address`() {
         join("e@example.com")
+        val eHash1 = row("e@example.com")["confirm_token_hash"]
+        backdate("e@example.com")
         join("e@example.com")
         val exhaustedHash = row("e@example.com")["confirm_token_hash"]
+        assertNotEquals(eHash1, exhaustedHash, "e@ join 2 (within capacity, outside the cooldown) must rotate")
+        backdate("e@example.com")
         join("e@example.com")
         assertEquals(exhaustedHash, row("e@example.com")["confirm_token_hash"], "e@ is over its limit")
 
         assertEquals(202, join("f@example.com").status)
         val fHash1 = row("f@example.com")["confirm_token_hash"] as String
+        backdate("f@example.com")
         join("f@example.com")
         assertNotEquals(fHash1, row("f@example.com")["confirm_token_hash"], "f@ has its own, untouched bucket")
     }

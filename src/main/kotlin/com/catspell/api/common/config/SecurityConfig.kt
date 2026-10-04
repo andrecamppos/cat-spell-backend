@@ -2,7 +2,6 @@ package com.catspell.api.common.config
 
 import com.catspell.api.common.security.JwtAuthenticationFilter
 import com.catspell.api.common.security.ProblemDetailAuthenticationEntryPoint
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -13,7 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
@@ -22,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val authenticationEntryPoint: ProblemDetailAuthenticationEntryPoint,
-    @Value("\${app.waitlist.allowed-origins:}") private val waitlistAllowedOrigins: String
+    private val waitlistCorsPolicy: WaitlistCorsPolicy
 ) {
 
     @Bean
@@ -38,9 +36,9 @@ class SecurityConfig(
                 // Public waitlist routes (Phase 17). The confirm handler lands in plan 17-02.
                 it.requestMatchers(HttpMethod.POST, "/api/waitlist").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/waitlist/confirm").permitAll()
-                it.requestMatchers("/api/admin/invites").permitAll()
-                // Operator waitlist routes (D-09): the shared AdminTokenGuard is the access boundary, not a JWT.
-                it.requestMatchers("/api/admin/waitlist", "/api/admin/waitlist/**").permitAll()
+                // Operator routes (D-09, D-11): AdminTokenFilter enforces X-Admin-Token on every /api/admin path before
+                // this chain runs, so it is the access boundary, not a JWT. Handlers keep their own check as a second layer.
+                it.requestMatchers("/api/admin/**").permitAll()
                 it.requestMatchers("/v3/api-docs/**").permitAll()
                 it.requestMatchers("/actuator/health").permitAll()
                 it.requestMatchers("/ws/**").permitAll()
@@ -57,24 +55,15 @@ class SecurityConfig(
 
     /**
      * Narrow CORS for the landing page's cross-origin join (RESEARCH Pattern 7). Only `POST /api/waitlist` is mapped,
-     * only for the explicit origins in `app.waitlist.allowed-origins` (never a wildcard), with no credentials. A blank
-     * value registers nothing, so no CORS headers are emitted. `/api/waitlist/confirm` is a top-level navigation and
-     * the `/ws` STOMP endpoint keeps its own WebSocketConfig origin handling, so neither is mapped here.
+     * only for the explicit origins of [WaitlistCorsPolicy] (never a wildcard), with no credentials. The rate limiter's
+     * 429 reads the same policy (D-14). A blank origin list registers nothing, so no CORS headers are emitted.
+     * `/api/waitlist/confirm` is a top-level navigation and the `/ws` STOMP endpoint keeps its own WebSocketConfig
+     * origin handling, so neither is mapped here.
      */
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val source = UrlBasedCorsConfigurationSource()
-        val origins = waitlistAllowedOrigins.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        if (origins.isNotEmpty()) {
-            val config = CorsConfiguration().apply {
-                allowedOrigins = origins
-                allowedMethods = listOf("POST")
-                allowedHeaders = listOf("Content-Type")
-                allowCredentials = false
-                maxAge = 3600L
-            }
-            source.registerCorsConfiguration("/api/waitlist", config)
-        }
+        waitlistCorsPolicy.configuration?.let { source.registerCorsConfiguration("/api/waitlist", it) }
         return source
     }
 

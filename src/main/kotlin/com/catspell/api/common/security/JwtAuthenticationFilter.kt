@@ -14,7 +14,8 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        val path = request.servletPath
+        // The same normalized path the rate limiter uses (D-16), so MockMvc and Tomcat take the same decision.
+        val path = RequestPaths.normalized(request)
         return path.startsWith("/api/auth/register") ||
                 path.startsWith("/api/auth/login") ||
                 path.startsWith("/api/auth/refresh") ||
@@ -24,7 +25,13 @@ class JwtAuthenticationFilter(
                 path.startsWith("/api/auth/resend-verification") ||
                 path.startsWith("/api/auth/confirm-email-change") ||
                 // Public waitlist join + confirm (Phase 17): a stale Bearer header from the landing page must not 401.
-                path.startsWith("/api/waitlist") ||
+                // Exact matches (IN-06), so a look-alike such as /api/waitlistX still has its Bearer validated.
+                path == "/api/waitlist" ||
+                path == "/api/waitlist/confirm" ||
+                // Operator routes authenticate with X-Admin-Token in AdminTokenFilter, never with a JWT (D-12), so a
+                // stale Bearer header must not lock the operator out.
+                path == "/api/admin" ||
+                path.startsWith("/api/admin/") ||
                 path.startsWith("/v3/api-docs")
     }
 

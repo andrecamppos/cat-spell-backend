@@ -46,4 +46,9 @@ class AdminAuthException(message: String = "Not authorized") : RuntimeException(
 class WaitlistEntryNotConvertibleException(message: String = "Waitlist entry is not awaiting an invite") : RuntimeException(message)
 
 // The invite email for a waitlist conversion failed; the conversion is rolled back so the entry stays retryable → 502.
-class WaitlistInviteDeliveryException(message: String = "Invite email could not be delivered") : RuntimeException(message)
+// The underlying failure (timeout, rejection, or the sender's own exception) is chained as the cause for diagnosis;
+// the client-facing message stays generic.
+class WaitlistInviteDeliveryException(
+    message: String = "Invite email could not be delivered",
+    cause: Throwable? = null
+) : RuntimeException(message, cause)

@@ -259,6 +259,16 @@ class ChatService(
         conversationParticipantRepository.save(participant)
     }
 
+    /**
+     * Reconnect redelivery: pushes a notification preview for each undelivered message addressed to
+     * [userId], except in hidden conversations (ended match, or a block either way). Messages in a
+     * hidden conversation are not pushed but are still marked delivered, so they can't resurface if
+     * the pair later rematches and the same match row is reactivated (D-04). The rows themselves are
+     * kept as evidence. Hidden conversations are resolved by one set-based query (D-05); there is no
+     * extra re-check at push time, because the send path already rejects a blocked or ended pair (D-06).
+     *
+     * @return the number of notifications pushed (visible conversations only)
+     */
     @Transactional
     fun deliverUnreadMessages(userId: UUID): Int {
         val participations = conversationParticipantRepository.findByUserId(userId)
@@ -268,8 +278,15 @@ class ChatService(
         val undelivered = messageRepository.findByConversationIdInAndDeliveredFalseAndSenderIdNotOrderByCreatedAtAsc(
             conversationIds, userId
         )
+        if (undelivered.isEmpty()) return 0
 
-        for (msg in undelivered) {
+        val hidden = conversationRepository.findHiddenConversationIdsForUser(userId).toSet()
+        val (suppressed, visible) = undelivered.partition { it.conversation.id in hidden }
+
+        suppressed.forEach { it.delivered = true }
+        messageRepository.saveAll(suppressed)
+
+        for (msg in visible) {
             val senderProfile = userProfileRepository.findByUserId(msg.sender.id!!)
             val senderName = senderProfile?.displayName ?: "Unknown"
 
@@ -288,7 +305,7 @@ class ChatService(
             messageRepository.save(msg)
         }
 
-        return undelivered.size
+        return visible.size
     }
 
     private fun getOtherUserId(conversation: Conversation, currentUserId: UUID): UUID {
