@@ -51,13 +51,14 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 </details>
 
 <details open>
-<summary>🔭 v2.2 Safety, Moderation & Gated Access (Phases 13-17) — PLANNED</summary>
+<summary>🔭 v2.2 Safety, Moderation & Gated Access (Phases 13-18) — PLANNED</summary>
 
 - [x] **Phase 13: Blocking & Unmatch** — block/unblock/list + unmatch, enforced across all surfaces (completed 2026-09-25)
 - [x] **Phase 14: Report a User** — report with category + details, persisted and operator-notified (completed 2026-09-28)
 - [x] **Phase 15: Age Verification** — server-side 18+ hard gate at signup (completed 2026-09-29)
 - [x] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution (completed 2026-10-01)
 - [x] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites (completed 2026-10-02)
+- [ ] **Phase 18: Address tech debt: post-block redelivery + waitlist review warnings** — v2.2 audit tech debt
 
 ### Phase 13: Blocking & Unmatch
 
@@ -193,6 +194,35 @@ Plans:
 
 - [x] 17-09-PLAN.md — Close the remaining SC3 per-IP bypasses: RateLimitFilter matches on the decoded path (CR-02), keys on the rightmost untrusted X-Forwarded-For hop (CR-01), and uses a family-safe exact/CIDR TrustedProxyMatcher (WR-09); re-enables the 3 staged RateLimitBypassIntegrationTest tests; declares and documents rate-limit.trusted-proxies (Gap Closure)
 
+### Phase 18: Address tech debt: post-block redelivery + waitlist review warnings
+
+**Goal:** Close the v2.2 audit tech debt without adding a capability. WebSocket reconnect never pushes previews for blocked or ended conversations (W1). Every open Phase 17 review warning, plus the chosen cheap info items and the stale-Bearer audit item, is fixed. Every finding has a recorded disposition.
+**Requirements**: TBD (hardens MOD-02, MOD-03, INV-02, WAIT-01..WAIT-04; no new IDs)
+**Depends on:** Phase 17
+**Plans:** 11 plans
+
+Plans:
+**Wave 1**
+- [x] 18-01-PLAN.md — W1: reconnect redelivery skips hidden (ended or blocked) conversations and marks them delivered, via one set-based query
+- [x] 18-02-PLAN.md — WR-10: shared Caffeine-backed RateLimitBuckets helper; report + auth per-email stores migrated
+- [x] 18-03-PLAN.md — X-Forwarded-For hop canonicalization with fail-safe fallback, non-octet CIDR tests, private shape check, one-shot misconfiguration WARN
+- [x] 18-04-PLAN.md — Truthful confirm copy (rendered TTL and cooldown), UriComponentsBuilder links, redirect URLs parsed at startup
+- [x] 18-05-PLAN.md — Admin token must be blank or at least 32 chars (startup check); shared TEST_ADMIN_TOKEN
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [x] 18-06-PLAN.md — Waitlist resend cooldown, 3 per 24 h, address pinned at first insert, bounded per-email bucket
+- [x] 18-07-PLAN.md — Separate per-IP buckets for join / auth / admin (admin throttle) on the container-normalized path
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [x] 18-08-PLAN.md — Convert: flush invite before send, bounded synchronous send, chained cause, address-free WARN logs
+- [x] 18-09-PLAN.md — CORS-readable 429 on the waitlist join from one shared WaitlistCorsPolicy
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [x] 18-10-PLAN.md — Central AdminTokenFilter on /api/admin/*, exact JWT skip list incl. operator routes (stale Bearer)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [x] 18-11-PLAN.md — Declare keys in application.yml, operator docs, 17-REVIEW-DISPOSITION record (WR-10..IN-12, AUD-01), full-suite gate
+
 </details>
 
 ## Progress
@@ -216,6 +246,7 @@ Plans:
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
 | 16. Invite-Only Access & Referral | v2.2 | 4/4 | Complete    | 2026-10-01 |
 | 17. Waitlist / Landing-Page API | v2.2 | 9/9 | Complete    | 2026-10-02 |
+| 18. Address tech debt: post-block redelivery + waitlist review warnings | v2.2 | 11/11 | In Progress|  |
 
 ---
 *Roadmap created: 2025-06-09*
