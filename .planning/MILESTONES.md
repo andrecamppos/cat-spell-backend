@@ -1,5 +1,34 @@
 # Milestones
 
+## v2.2 Safety, Moderation & Gated Access (Shipped: 2026-10-05)
+
+**Delivered:** User safety (block, unmatch, report), an 18+ signup gate, invite-only signup with referral attribution, and a double-opt-in waitlist that operators convert into invites, followed by a hardening phase that closed the milestone audit's tech debt.
+
+**Phases completed:** 6 phases (13-18), 35 plans, 85 tasks
+**Stats:** 139 commits, 21,328 LOC Kotlin, 511 tests passing (79 test files); 283 files changed (+34,664 / −291)
+**Timeline:** 2026-09-24 → 2026-10-05
+**Requirements:** 20/20 v2.2 requirements complete (MOD-01→08, AGE-01→03, INV-01→05, WAIT-01→04)
+**Closeout:** override_closeout
+**Known verification overrides:** 1 newly acknowledged, 0 carried forward from a prior close (see STATE.md Deferred Items). In addition, Phase 17's VERIFICATION.md (passed 59/59) is stale because Phase 18 intentionally changed Phase 17 files to close its review warnings; Phase 18 verified those changes at 75/75. The user accepted this override on 2026-10-05. The milestone audit (2026-10-03, `tech_debt`) predates Phase 18.
+
+**Key accomplishments:**
+
+- Blocking and unmatch: a bidirectional block predicate (V19 `blocks` and V20 soft-state matches) enforced across the discovery feed, profile detail, swipes, chat send/open and conversation lists, with pretend-not-exist 404s. Unmatch ends the conversation without banning rediscovery (Phase 13).
+- Report a user: category plus details, persisted in V21 `reports`, optional `alsoBlock` in the same transaction, and the operator is notified by an `@Async` AFTER_COMMIT email, so a send failure never loses a report (Phase 14).
+- Server-side 18+ gate: DOB moved to `users` (V22, existing DOBs grandfathered, no lockout), checked at register behind a swappable `AgeVerifier` seam that returns 422 `UNDER_MINIMUM_AGE` (Phase 15).
+- Invite-only access: SecureRandom codes stored as SHA-256 hashes and claimed single-use with an atomic conditional UPDATE, one generic 403 for invalid and consumed codes, referral attribution on consumption, an operator issuance endpoint, and a global `app.invite.enabled` flag (Phase 16).
+- Waitlist API for the landing page: an enumeration-safe identical 202 join, hashed time-limited double opt-in, per-IP and per-email throttles, config-driven CORS, and operator list and convert-to-invite endpoints that roll back if delivery fails (Phase 17).
+- Audit tech debt closed (Phase 18): reconnect and rematch never resurface previews from hidden conversations; rate-limit stores are bounded (Caffeine `RateLimitBuckets`); X-Forwarded-For hops are canonicalized against a CIDR-aware trusted-proxy matcher; join, auth and admin have separate per-IP buckets; a central `AdminTokenFilter` with a 32-character minimum token; a waitlist resend cooldown with the address pinned at first insert; and a 26-finding disposition record with 0 open.
+
+**Known tech debt carried forward:**
+
+- Before launch, confirm the production reverse-proxy shape and set `RATE_LIMIT_TRUSTED_PROXIES` and `WAITLIST_ALLOWED_ORIGINS` to match (deferred Phase 17 UAT test 3).
+- Pre-V22 accounts with no DOB stay out of discovery, and no endpoint lets them set a DOB later (W2, AGE-03; not a regression).
+- Waitlist-converted invites are bearer codes that aren't bound to the waitlist email (W3, low; follows from INV-04).
+- Phase 17 IN-03 and IN-10 were deferred under D-02. Accepted residual T-18-29: a provider that ignores interrupts may deliver a rolled-back code after the send timeout.
+
+---
+
 ## v2.1 Account Recovery & Email Verification (Shipped: 2026-08-24)
 
 **Phases completed:** 3 phases (10-12), 14 plans, 36 tasks

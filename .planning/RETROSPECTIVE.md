@@ -132,6 +132,51 @@
 
 ---
 
+## Milestone: v2.2 — Safety, Moderation & Gated Access
+
+**Shipped:** 2026-10-05
+**Phases:** 6 (13-18) | **Plans:** 35 | **Timeline:** 2026-09-24 → 2026-10-05
+
+### What Was Built
+- Bidirectional blocking and unmatch, enforced on the feed, profile detail, swipes and chat, with pretend-not-exist 404s and soft-state teardown (Phase 13)
+- User reports with a fixed category, an operator email sent after commit, and an optional atomic block (Phase 14)
+- A server-side 18+ gate: DOB moved to `users` and checked before any row is written, behind an `AgeVerifier` seam (Phase 15)
+- Invite-only signup: hashed single-use codes, one generic 403, referral attribution, and a global on/off flag (Phase 16)
+- A double-opt-in waitlist API with an identical 202, per-IP and per-email throttles, narrow CORS, and operator convert-to-invite (Phase 17)
+- A hardening phase that closed the audit's tech debt and all 26 Phase 17 review findings (0 open) (Phase 18)
+
+### What Worked
+- **Research-driven ordering:** block first (report and the read paths reuse its predicate), and invite before waitlist (the waitlist converts into invites). No phase had to wait on a later one.
+- **Reusing v2.1 building blocks:** the `EmailSender` seam, the hashed single-use token model, AFTER_COMMIT dispatch and Bucket4j carried Phases 14-17 with little new design.
+- **Treating audit debt as a planned phase:** turning the `tech_debt` audit into Phase 18 (12 plans) gave every finding a recorded disposition instead of a vague backlog.
+- **UAT on the hardening phase:** UAT found the rematch residual (G-18-1) that the reconnect-path fix alone missed; 18-12 closed it before ship.
+
+### What Was Inefficient
+- **Phase 17 needed three gap-closure rounds** (17-07, 17-08, 17-09) for per-IP rate-limit bypasses (X-Forwarded-For spoofing, raw vs decoded path, multi-hop chains). The threat model was too thin for a public, unauthenticated endpoint.
+- **Review-ID reuse dropped findings:** an incremental review reused WR-01/WR-02, and the disposition ledger merges rows by ID, so two warnings vanished until the audit caught them.
+- **GSD tool friction:** `state.update` and `milestone.complete` overwrote archived `**Status:**` lines, stage-only mode ruled out worktree execution, and node wasn't on PATH. Each needed manual repair.
+- **Slow gates:** the full suite (~14 min, 511 tests) under Podman with amd64 PostGIS on qemu, plus occasional Testcontainers start-up flakes.
+
+### Patterns Established
+- **One predicate, every surface:** the block check is a single bidirectional predicate, consulted synchronously on every read and send path, including reconnect redelivery and rematch.
+- **Hostile-proxy model for per-IP limits:** trust X-Forwarded-For only from configured proxies (exact or CIDR), canonicalize hops, key on the rightmost untrusted hop, fail safe to the peer.
+- **Bounded per-key stores:** every attacker-keyable bucket map goes through Caffeine-backed `RateLimitBuckets` (max size + expire-after-access).
+- **Servlet-level operator boundary:** `AdminTokenFilter` on `/api/admin/*` ahead of MVC, a startup check on token length, a strict admin throttle, and per-handler checks kept as defense in depth.
+- **Enumeration-safe public endpoints:** byte-identical responses across membership states, proven by a multi-state test.
+
+### Key Lessons
+1. **Threat-model public endpoints up front.** Proxy headers, path normalization and multi-hop chains belong in the first plan of any unauthenticated endpoint, not in gap closure.
+2. **Never reuse finding IDs across review rounds.** Allocate new IDs so ledgers that merge by ID can't silently drop open items.
+3. **Hiding data needs every delivery path covered.** Reconnect, rematch and push are separate paths; check each one when content becomes hidden.
+4. **Back up planning files before running GSD state writers.** Diff against the backup afterwards; the tools can rewrite archived milestone lines.
+
+### Cost Observations
+- Model mix: not tracked
+- Sessions: multi-session across ~12 days (2026-09-24 → 2026-10-05)
+- Notable: Phase 18 (12 plans of pure debt paydown) was the largest phase of the milestone; Phase 17 P09 took 105 min on its own
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -142,6 +187,7 @@
 | v1.1 | 2 days | 1 | Compact feature phase — schema + query + tests |
 | v2.0 | ~5 weeks | 2 | Provider abstraction + async event-driven delivery |
 | v2.1 | ~11 days | 3 | Reusable seam front-loaded, then thin dependent phases |
+| v2.2 | ~12 days | 6 | Audit tech debt run as its own planned phase (18) |
 
 ### Cumulative Quality
 
@@ -151,6 +197,7 @@
 | v1.1 | 180 | 8,880 | 19 |
 | v2.0 | 221 | 10,608 | — |
 | v2.1 | 260 | 12,774 | 36 |
+| v2.2 | 511 | 21,328 | 79 |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -159,3 +206,4 @@
 3. Test data isolation (unique coordinates, unique emails) prevents cross-test interference
 4. Front-load reusable seams/abstractions (`PushProvider`, `EmailSender`) so dependent phases stay thin
 5. Keep planning bookkeeping (REQUIREMENTS/STATE/RETROSPECTIVE) in sync at phase close, not deferred to milestone close
+6. Threat-model public and unauthenticated endpoints in the first plan; retrofitting through gap closure costs more (v2.1 enumeration safety, v2.2 per-IP bypasses)

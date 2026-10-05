@@ -5,7 +5,7 @@ pre-existing issues unrelated to the current task).
 
 ## Pre-existing flaky DiscoveryIntegrationTest failures (shared-DB test pollution)
 
-**Status:** RESOLVED (2026-07-30). Added a `@BeforeEach cleanDatabase()` in
+**Status:** acknowledged
 `BaseIntegrationTest` that truncates all `public` tables (excluding `spatial_ref_sys`
 and `flyway_schema_history`) with `RESTART IDENTITY CASCADE` before every test. This
 isolates DB state per test regardless of execution order. Verified with two full

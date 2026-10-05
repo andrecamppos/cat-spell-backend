@@ -2,32 +2,26 @@
 
 ## What This Is
 
-The backend API for Cat Spell — a dating app for cat lovers and cat owners. It powers a "see the cat before the owner" experience where users browse cat profiles in the swipe screen and can optionally tap through to the owner's profile. The backend serves a mobile app (built in a separate repo) via REST and WebSocket APIs, handling user/cat profiles, swipe-based discovery with geolocation filtering, mutual match detection, real-time chat, and production-ready API hardening.
+The backend API for Cat Spell — a dating app for cat lovers and cat owners. It powers a "see the cat before the owner" experience where users browse cat profiles in the swipe screen and can optionally tap through to the owner's profile. The backend serves a mobile app (built in a separate repo) via REST and WebSocket APIs, handling user/cat profiles, swipe-based discovery with geolocation filtering, mutual match detection, real-time chat, push notifications, account recovery, and launch-readiness controls: user safety tools (block, unmatch, report), an 18+ signup gate, invite-only signup, and a waitlist API for the landing page.
 
 ## Core Value
 
 Cat-preferred discovery — users with cats show cat-first (fall for the cat, then meet the person). Users without cats appear as human cards. The app is for all cat lovers, not just cat owners. The reveal mechanic works for cat cards; human cards show the person directly.
 
-## Current Milestone: v2.2 Safety, Moderation & Gated Access
-
-**Goal:** Make the app safe and controlled enough for a real launch — give users protective tools, gate signup behind age + invites, and capture demand via a waitlist.
-
-**Target features:**
-- Block a user — mutual hide from discovery, prevent new contact; existing conversation history retained but read-only/inaccessible (no new messages, no rediscovery)
-- Block management — list blocked users and unblock (re-enables rediscovery)
-- Unmatch — end a match/conversation without a full block; the other user can reappear in discovery
-- Report a user — fixed category enum + required details, persisted and emailed to the operator; optional "also block" flag on the report
-- Age verification — self-attested DOB at signup, hard-block under-18 (vendor-based check deferred)
-- Invite-only access — global on/off gate enforcing invite-required signup, operator-issued invite codes to bootstrap, referral attribution (referrer → invitee)
-- Waitlist / landing-page API — public unauthenticated join endpoint with email confirmation + rate-limiting/dedupe anti-abuse, and an operator flow to convert a waitlisted email into an invite (sends invite email)
-
 ## Current State
 
-**Shipped:** v2.1 Account Recovery & Email Verification (2026-08-24) — reusable provider-abstracted `EmailSender` infrastructure, password recovery (enumeration-safe forgot/reset with hashed single-use tokens, rate limiting, session revocation), email verification on signup (hard-gate login until verified, resend, grandfather migration), and self-service change-password / change-email (verify the new address before it takes effect).
+**Shipped:** v2.2 Safety, Moderation & Gated Access (2026-10-05). Shipped bidirectional blocking and unmatch enforced on every read and send path, user reports with an operator email and an optional block, a server-side 18+ signup gate behind an `AgeVerifier` seam, invite-only signup with hashed single-use codes and referral attribution, and a double-opt-in waitlist API that operators convert into invites. A hardening phase (18) closed the milestone audit's tech debt.
 
-**Previously shipped:** v2.0 Push Notifications (2026-07-30), v1.1 Mixed Discovery (2026-06-23), v1.0 MVP Backend (2026-06-16).
+**Previously shipped:** v2.1 Account Recovery & Email Verification (2026-08-24), v2.0 Push Notifications (2026-07-30), v1.1 Mixed Discovery (2026-06-23), v1.0 MVP Backend (2026-06-16).
 
-**Next milestone:** v2.2 Safety, Moderation & Gated Access — in planning (block/unmatch/report, age verification, invite-only access, waitlist/landing-page API). Continues phase numbering from Phase 13.
+## Next Milestone Goals
+
+Not yet defined. Start it with `/gsd-new-milestone`, which continues phase numbering from Phase 19. Candidates from Active:
+
+- Launch prerequisites: confirm the production reverse-proxy shape and set `RATE_LIMIT_TRUSTED_PROXIES` and `WAITLIST_ALLOWED_ORIGINS`; give DOB-less legacy accounts a path back into discovery.
+- Member referral invites (invite quotas), building on the shipped referral attribution.
+- Cat compatibility and lifestyle scoring, plus a primary/featured cat.
+- Chat typing indicators and read receipts; notification toggles and quiet hours; direct APNs.
 
 ## Requirements
 
@@ -64,6 +58,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Email verification on signup — hard-gate login until verified (403 EMAIL_NOT_VERIFIED), enumeration-safe resend, migration grandfathers existing accounts — v2.1 (Phase 11)
 - ✓ Change password while logged in — requires current password (403 INVALID_CURRENT_PASSWORD on mismatch), revokes all sessions, mints no tokens — v2.1 (Phase 12)
 - ✓ Change email while logged in — requires current password, confirm the new address via emailed single-use token before it becomes active, 409 if already in use, revokes all sessions on confirm — v2.1 (Phase 12)
+- ✓ Blocking & unmatch — bidirectional block (V19 `blocks`) enforced across the discovery feed (cat and human branches), profile detail, swipe match lookup and chat send/open, with pretend-not-exist 404s; existing conversation history retained but locked; block list + unblock re-enables rediscovery; unmatch ends the match (V20 soft-state) without banning rediscovery; self-block rejected (400) — v2.2 (Phase 13) [MOD-01, MOD-02, MOD-03, MOD-04, MOD-05]
 - ✓ Report a user — fixed category enum + required details, persisted with no dedupe; operator notified out-of-band (async `AFTER_COMMIT`, survives email-send failure); self-report rejected and reporter identity never exposed; optional atomic "also block" via Phase 13 BlockService — v2.2 (Phase 14) [MOD-06, MOD-07, MOD-08]
 - ✓ Age verification — self-attested DOB collected at signup, server-side hard-block under-18 (422 `UNDER_MINIMUM_AGE`) evaluated before the account row is created, behind a swappable `AgeVerifier` seam; DOB relocated to `users` (single source of truth, immutable after signup) via V22 with backfill + grandfathering of existing accounts; vendor age-check deferred — v2.2 (Phase 15) [AGE-01, AGE-02, AGE-03]
 - ✓ Invite-only access — global on/off gate (`app.invite.enabled`, deny-by-default) enforcing invite-required signup: public mode ignores any code and consumes nothing; gated mode requires a valid unconsumed code or returns an enumeration-safe `403 INVITE_REQUIRED` (identical response for null/blank/unknown/consumed) and creates no orphan account. Operator-issued codes via `POST /api/admin/invites` (shared-secret `X-Admin-Token`, constant-time compare, deny-by-default on blank token); codes are high-entropy and hashed-at-rest (SHA-256, raw returned once). Single-use is atomic (conditional UPDATE); referral attribution recorded only for a real distinct referrer (bootstrap + self-referral write none). V23 adds `invites` + `referrals` — v2.2 (Phase 16) [INV-01, INV-02, INV-03, INV-04, INV-05]
@@ -86,9 +81,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - [ ] Lifestyle signal scoring from cat ownership patterns
 - [ ] Primary/featured cat designation for swipe feed
 - [ ] Typing indicators and read receipts in chat
-- [ ] Block/report/unmatch safety features
-- [ ] Invite-only access — waitlist to bootstrap, then member referrals (invite quotas + referral attribution)
-- [ ] Report user — persist reports + notify owner to act manually (no admin panel yet)
+- [ ] Member referral invites — let members issue their own invites under a quota (operator issuance, the waitlist and referral attribution shipped in v2.2)
+- [ ] Self-service DOB for legacy accounts — pre-V22 accounts with no DOB can log in but stay out of discovery, and no endpoint lets them set a DOB (v2.2 audit W2)
 - [ ] Production reverse-proxy check before launch — confirm proxy connect address, `X-Forwarded-For` append/overwrite behavior and bare-IP hops, then set `RATE_LIMIT_TRUSTED_PROXIES` and `WAITLIST_ALLOWED_ORIGINS` (deferred Phase 17 UAT test 3)
 - [ ] Per-type notification toggles + quiet hours (deferred from v2.0)
 - [ ] Direct APNs integration for iOS delivery reliability (deferred from v2.0)
@@ -96,7 +90,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 ### Out of Scope
 
 - Mobile app — separate project/repo
-- Admin moderation panel — v2 (after block/report is built)
+- Admin moderation panel — reports go to the operator by email and operator actions use `X-Admin-Token` endpoints; revisit when report volume warrants it
 - OAuth/social login — v2 (email+password sufficient for MVP)
 - Chat media sharing — v2 (text-only proven sufficient)
 - Payment/subscription features — v2 (premature before community)
@@ -105,7 +99,7 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 
 ## Context
 
-- **Current state:** v2.1 shipped (2026-08-24). 12,774 LOC Kotlin, 260 test methods across 36 test files. Four milestones complete (v1.0, v1.1, v2.0, v2.1).
+- **Current state:** v2.2 shipped (2026-10-05). 21,328 LOC Kotlin, 511 tests across 79 test files, Flyway migrations through V24. Five milestones complete (v1.0, v1.1, v2.0, v2.1, v2.2).
 - **Tech stack:** Kotlin + Spring Boot 4.0, PostgreSQL + PostGIS, S3 (MinIO local), WebSocket STOMP, Flyway, Testcontainers
 - **Domain:** Niche dating app targeting cat lovers/owners
 - **Architecture:** Backend-only REST + WebSocket API. Mobile app is a separate project.
@@ -114,8 +108,9 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - **Chat:** WebSocket STOMP messaging with lazy conversation creation, offline delivery, and unread tracking. Unlocked after mutual match.
 - **Push:** FCM push for matches and messages behind a `PushProvider` abstraction (APNs-ready), "offline + inactive" send decision via STOMP presence, async `AFTER_COMMIT` dispatch, dead-token pruning.
 - **Account/email:** Provider-abstracted `EmailSender` seam (no-op logging default, no network sends in dev/CI). Password recovery, email verification (hard-gate login), and self-service change-password/change-email all use hashed single-use expiring tokens, enumeration-safe responses, Bucket4j rate limiting, and session revocation.
+- **Safety & gated access:** One bidirectional block predicate is checked on every read and send path, and reconnect or rematch never resurfaces previews from hidden conversations. Reports email the operator after commit. Signup composes the age gate and then the invite gate. The public waitlist (identical 202, double opt-in) feeds operator invites. Operator routes go through one `AdminTokenFilter` (token of at least 32 characters) with a strict per-IP throttle. All per-key rate-limit stores are bounded (Caffeine), and `X-Forwarded-For` is trusted only from configured proxies, with hops canonicalized.
 - **Testing:** Full Testcontainers-based integration tests (PostgreSQL + PostGIS + MinIO). No H2.
-- **Next focus:** Safety & moderation, compatibility scoring, direct APNs hardening, or mobile app integration.
+- **Next focus:** Launch prerequisites (production proxy config), member referral invites, compatibility scoring, or mobile app integration.
 
 ## Constraints
 
@@ -137,10 +132,10 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Lazy conversation creation | Conversation created on first message, not on match | ✓ Good — avoids empty conversation clutter |
 | S3 presigned URLs | Client uploads directly to S3, backend never handles file bytes | ✓ Good — scalable, MinIO local dev parity |
 | Testcontainers over H2 | Real PostgreSQL + PostGIS in tests, no dialect mismatches | ✓ Good — caught real bugs H2 would miss |
-| Bucket4j rate limiting | Lightweight, no Redis dependency for MVP | ✓ Good — simple ConcurrentHashMap sufficient |
+| Bucket4j rate limiting | Lightweight, no Redis dependency for MVP | ✓ Good — still no Redis; v2.2 (Phase 18) replaced the unbounded ConcurrentHashMap stores with bounded Caffeine-backed `RateLimitBuckets` |
 | Optional cat ownership | App is for all cat lovers, not just owners — widens user base | ✓ Good — v1.1 (Phase 7) |
 | Mixed discovery feed | Cat cards for cat owners, human cards for catless users | ✓ Good — v1.1 (Phase 7) |
-| Defer moderation to v2 | Focus v1 on core matching/chat loop | — Pending (needed before public launch) |
+| Defer moderation to v2 | Focus v1 on core matching/chat loop | ✓ Good — block, unmatch and report shipped in v2.2 (Phases 13-14) before public launch |
 | Push notifications: FCM-only + "offline+inactive" send | Fastest path (one integration, relays to iOS+APNs); abstraction leaves room for direct APNs; suppress push when user is in the conversation | ✓ Good — shipped v2.0 (Phases 8-9); `PushProvider` abstraction kept call sites APNs-agnostic |
 | Push preferences: all-on, no toggle in v1 | OS-level permission is the off switch; avoids premature preferences model | ✓ Good — v2.0; per-type toggles + quiet hours deferred to a later milestone |
 | Async AFTER_COMMIT push dispatch | Domain-event listeners run off-thread after commit so a slow/failing FCM call never blocks or rolls back message persistence | ✓ Good — v2.0 (Phase 9), verified persistence is never blocked |
@@ -151,6 +146,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Enumeration-safe responses + reuse of Bucket4j rate limiting | Generic responses on forgot/resend, per-email + per-IP throttling on existing infra (no new dependency) | ✓ Good — v2.1 (Phases 10-11) |
 | Hard-gate login until email verified + grandfather migration | Unverified users get `403 EMAIL_NOT_VERIFIED`; V17 backfill marks existing accounts verified so no current user is locked out on rollout | ✓ Good — v2.1 (Phase 11) |
 | Confirm-before-swap for email changes (separate `email_change_requests` table) | New address is verified via emailed single-use token before it becomes active; 409 if already in use; revoke all sessions on confirm | ✓ Good — v2.1 (Phase 12) |
+| Block as one bidirectional predicate with pretend-not-exist 404s; unmatch as soft-state teardown (history kept, conversation locked) | One check reused by every read/send path and by report's `alsoBlock`; a blocked user can't tell they were blocked; unmatch stays reversible by rediscovery | ✓ Good — v2.2 (Phase 13); reconnect-redelivery gap found by the audit, closed in Phase 18 |
+| DOB moved to `users` and checked by an `AgeVerifier` seam at register | Single source of truth that is immutable after signup; the hard gate runs before any row is written; a vendor check can drop in without call-site changes | ✓ Good — v2.2 (Phase 15); DOB-less legacy accounts stay out of discovery (W2) |
 | Invite gate as a global on/off switch (`app.invite.enabled`, deny-by-default) rather than per-feature | Lets launch flip between public and invite-only without code changes; public mode never rejects a missing code | ✓ Good — v2.2 (Phase 16) |
 | Invite codes hashed-at-rest + single generic `403 INVITE_REQUIRED` for all failures | Mirrors the email-token model (SHA-256, atomic single-use claim); indistinguishable failures prevent code enumeration | ✓ Good — v2.2 (Phase 16) |
 | Admin issuance behind a shared-secret `X-Admin-Token` (no admin UI/role) | No admin panel yet; a constant-time header check on a permitAll route is the entire access boundary, deny-by-default on blank token | ✓ Good — v2.2 (Phase 16); revisit when an operator panel lands |
@@ -178,4 +175,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-05 — Phase 18 (Address tech debt: post-block redelivery + waitlist review warnings) complete*
+*Last updated: 2026-10-05 after v2.2 milestone*
