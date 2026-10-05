@@ -34,27 +34,40 @@ interface WaitlistEntryRepository : JpaRepository<WaitlistEntry, UUID> {
     ): Int
 
     /**
-     * Atomically rotate the confirm token of a still-PENDING entry in a single conditional UPDATE. The
-     * `status = :pending` guard is evaluated under a row lock by the database, so a CONFIRMED or INVITED entry is
-     * never reset or re-tokened by a re-join (D-04). Overwriting the hash invalidates any previously issued link by
-     * construction (D-08). Returns 1 = new or still-PENDING entry (token rotated), 0 = CONFIRMED/INVITED (silent no-op).
+     * Atomically rotate the confirm token of a still-PENDING entry in a single conditional UPDATE, gated by the
+     * resend cooldown (D-07, WR-03, WR-11). A fresh entry (NULL hash) always rotates. An entry that already holds a
+     * token rotates only when its `updatedAt` is at or before [resendCutoff] (now minus the cooldown), so a re-join
+     * inside the cooldown matches 0 rows and changes nothing. The status and cutoff guards are evaluated under the
+     * row lock, so concurrent re-joins block, re-check the updated row, and rotate at most once. A CONFIRMED or
+     * INVITED entry is never reset or re-tokened (D-04). Overwriting the hash invalidates any previously issued link
+     * by construction. The email column is never written after insert (D-08), so a `+suffix` or case variant cannot
+     * redirect the confirm link or the later invite. `<=` makes a cooldown of 0 mean "always rotate".
+     * Returns 1 = token rotated, 0 = inside the cooldown or CONFIRMED/INVITED (silent no-op).
      */
     @Modifying
     @Query(
         """
-        UPDATE WaitlistEntry e SET e.email = :email, e.confirmTokenHash = :hash,
+        UPDATE WaitlistEntry e SET e.confirmTokenHash = :hash,
                e.confirmTokenExpiresAt = :expiresAt, e.updatedAt = :now
         WHERE e.normalizedEmail = :normalizedEmail AND e.status = :pending
+          AND (e.confirmTokenHash IS NULL OR e.updatedAt <= :resendCutoff)
         """
     )
     fun rotatePendingToken(
         @Param("normalizedEmail") normalizedEmail: String,
-        @Param("email") email: String,
         @Param("hash") hash: String,
         @Param("expiresAt") expiresAt: Instant,
         @Param("now") now: Instant,
+        @Param("resendCutoff") resendCutoff: Instant,
         @Param("pending") pending: WaitlistStatus
     ): Int
+
+    /**
+     * The delivery address stored at first insert for the D-03 normalized key (pinned, D-08), or null when no row
+     * exists. A scalar read, so it does not depend on the persistence context after the bulk rotate UPDATE.
+     */
+    @Query("SELECT e.email FROM WaitlistEntry e WHERE e.normalizedEmail = :normalizedEmail")
+    fun findStoredEmail(@Param("normalizedEmail") normalizedEmail: String): String?
 
     /**
      * Single-use confirm claim (WAIT-02, D-08). One conditional UPDATE, evaluated under the row lock, rejects unknown,
@@ -95,9 +108,6 @@ interface WaitlistEntryRepository : JpaRepository<WaitlistEntry, UUID> {
         @Param("confirmed") confirmed: WaitlistStatus,
         @Param("invited") invited: WaitlistStatus
     ): Int
-
-    /** Lookup by the D-03 normalized key (the UNIQUE dedupe column). */
-    fun findByNormalizedEmail(normalizedEmail: String): WaitlistEntry?
 
     /**
      * Operator list (D-09): entries in [status], oldest confirmation first, `created_at` as the tiebreak. Postgres

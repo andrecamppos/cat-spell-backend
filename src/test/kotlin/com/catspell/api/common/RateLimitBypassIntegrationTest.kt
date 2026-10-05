@@ -1,33 +1,41 @@
 package com.catspell.api.common
 
 import com.catspell.api.BaseIntegrationTest
+import com.catspell.api.common.security.RateLimitFilter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockFilterChain
+import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import java.net.URI
 
 /**
- * WAIT-03 per-IP bypasses from 17-REVIEW (CR-01, CR-02), against the REGISTERED RateLimitFilter.
+ * WAIT-03 per-IP bypasses from 17-REVIEW (CR-01, CR-02, and IN-01 path normalization), against the REGISTERED
+ * RateLimitFilter.
  *
- * Shares one cached Spring context (identical annotations) and per-IP bucket map with
- * RateLimitTrustedProxyIntegrationTest and WaitlistRateLimitIntegrationTest, so each test pins its own 203.0.113.6x
- * or 203.0.113.7x address, used by no other test, and asserts requests 1 and 2 are NOT throttled before asserting
- * request 3 is.
+ * Shares one cached Spring context (byte-identical test property arrays) and per-IP bucket maps with
+ * RateLimitTrustedProxyIntegrationTest and WaitlistRateLimitIntegrationTest, so each test pins its own 203.0.113.6x,
+ * 203.0.113.7x or 203.0.113.8x address, used by no other test, and asserts requests 1 and 2 are NOT throttled before asserting
+ * request 3 is. The shared array also trusts 198.51.100.0/24 (RFC 5737 TEST-NET-2), a range reserved for these tests'
+ * trusted inner proxies and trusted peers, so a test that needs its own trusted peer never shares 127.0.0.1's bucket.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["rate-limit.capacity=2"])
+@TestPropertySource(properties = ["rate-limit.capacity=2", "rate-limit.trusted-proxies=127.0.0.1,::1,198.51.100.0/24", "rate-limit.waitlist-capacity=2", "rate-limit.admin-capacity=2"])
 class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc
+    @Autowired lateinit var rateLimitFilterRegistration: FilterRegistrationBean<RateLimitFilter>
 
     companion object {
         private const val ENCODED_WAITLIST_PEER = "203.0.113.60"
@@ -44,6 +52,16 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
         private const val CLIENT_BEFORE_MALFORMED_HOP = "203.0.113.67"
         private const val MALFORMED_HOP = "rl-malformed-hop"
 
+        /** D-15: hops with a port (and bracketed IPv6 hops) must key on the canonical client address. */
+        private const val CLIENT_WITH_ROTATING_PORT = "203.0.113.68"
+        private const val IPV6_CLIENT_WITH_ROTATING_PORT = "2001:db8::68"
+        private const val CLIENT_BEHIND_TRUSTED_HOP_WITH_PORT = "203.0.113.69"
+
+        /** Inside the test-only trusted range 198.51.100.0/24. */
+        private const val TRUSTED_INNER_PROXY_WITH_PORT = "198.51.100.9"
+        private const val TRUSTED_PEER_FOR_MALFORMED_HOP = "198.51.100.10"
+        private const val OTHER_TRUSTED_PEER_FOR_MALFORMED_HOP = "198.51.100.11"
+
         private const val SPELLING_ENCODED_W_PEER = "203.0.113.70"
         private const val SPELLING_ENCODED_A_PEER = "203.0.113.71"
         private const val SPELLING_ENCODED_T_PEER = "203.0.113.72"
@@ -52,6 +70,10 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
         private const val SPELLING_DOUBLE_SLASH_PEER = "203.0.113.75"
         private const val SPELLING_DOT_SEGMENT_PEER = "203.0.113.76"
 
+        /** D-16 / current IN-01: dot-segment spellings, throttled by the filter itself rather than the firewall. */
+        private const val DOT_SEGMENT_LOGIN_PEER = "203.0.113.83"
+        private const val DOT_SEGMENT_JOIN_PEER = "203.0.113.84"
+
         /** Percent-encoded spellings: the join handler serves them, so they must share the canonical bucket exactly. */
         private val ENCODED_SPELLINGS = listOf(
             "/api/%77aitlist" to SPELLING_ENCODED_W_PEER,
@@ -59,11 +81,20 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
             "/api/waitlis%74" to SPELLING_ENCODED_T_PEER
         )
 
+        /**
+         * D-16: spellings Tomcat normalizes to /api/waitlist (empty segment, path parameter). The filter matches on the
+         * container-normalized path, so each must draw from the canonical bucket even if the firewall that rejects them
+         * today (400) is ever loosened. The dot-segment join spelling is proven separately below: MockMvc maps filters
+         * on a path that keeps dot segments, so through MockMvc it never reaches the exact `/api/waitlist` mapping.
+         */
+        private val NORMALIZED_SPELLINGS = listOf(
+            "/api//waitlist" to SPELLING_DOUBLE_SLASH_PEER,
+            "/api/waitlist;x=1" to SPELLING_PATH_PARAM_PEER
+        )
+
         /** Other spellings: each must either share the bucket or never reach the join handler (firewall 400 / 404). */
         private val OTHER_SPELLINGS = listOf(
-            "/api/waitlist;x=1" to SPELLING_PATH_PARAM_PEER,
             "/api/waitlist/" to SPELLING_TRAILING_SLASH_PEER,
-            "/api//waitlist" to SPELLING_DOUBLE_SLASH_PEER,
             "/api/./waitlist" to SPELLING_DOT_SEGMENT_PEER
         )
     }
@@ -127,6 +158,18 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
                 "$spelling must draw from the canonical POST /api/waitlist bucket, got $statuses"
             )
         }
+        for ((spelling, peer) in NORMALIZED_SPELLINGS) {
+            val statuses = canonicalThenSpellingTwice(spelling, peer)
+            assertEquals(202, statuses[0], "canonical join before $spelling must be accepted, got $statuses")
+            assertTrue(
+                statuses[1] in setOf(202, 400),
+                "$spelling request 2 must pass the filter (handler 202 or firewall 400), got $statuses"
+            )
+            assertEquals(
+                429, statuses[2],
+                "$spelling must draw from the canonical POST /api/waitlist bucket in the filter itself, got $statuses"
+            )
+        }
         for ((spelling, peer) in OTHER_SPELLINGS) {
             val statuses = canonicalThenSpellingTwice(spelling, peer)
             assertEquals(202, statuses[0], "canonical join before $spelling must be accepted, got $statuses")
@@ -135,6 +178,55 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
                 "$spelling must not yield a third accepted join from one peer at capacity 2, got $statuses"
             )
         }
+    }
+
+    @Test
+    fun `a dot-segment login path is throttled by the filter like the canonical path`() {
+        val statuses = listOf(
+            postRaw("/api/auth/login", loginBody(), DOT_SEGMENT_LOGIN_PEER),
+            postRaw("/api/auth/./login", loginBody(), DOT_SEGMENT_LOGIN_PEER),
+            postRaw("/api/auth/./login", loginBody(), DOT_SEGMENT_LOGIN_PEER)
+        )
+        assertNotEquals(429, statuses[0], "request 1 must consume from a fresh bucket, got $statuses")
+        assertNotEquals(429, statuses[1], "request 2 must consume from a fresh bucket, got $statuses")
+        assertEquals(
+            429, statuses[2],
+            "POST /api/auth/./login must share the canonical login bucket in the filter, not rely on the firewall, " +
+                "got $statuses"
+        )
+    }
+
+    /**
+     * Drives the REGISTERED filter instance directly with an un-normalized dot-segment join, shaped as MockMvc builds it
+     * (empty servletPath, the URI in pathInfo). MockMvc's own filter mapping never routes `/api/./waitlist` to the exact
+     * `/api/waitlist` pattern, whereas Tomcat maps filters on the normalized URI, so in production this request does
+     * reach the filter and must then be throttled by the filter's own path match. Returns the status after the filter
+     * (200 when it passed the request on to the chain).
+     */
+    private fun postDotSegmentJoinToFilter(remoteAddr: String): Int {
+        val request = MockHttpServletRequest("POST", "/api/./waitlist")
+        request.servletPath = ""
+        request.pathInfo = "/api/./waitlist"
+        request.remoteAddr = remoteAddr
+        val response = MockHttpServletResponse()
+        val filter = requireNotNull(rateLimitFilterRegistration.filter) { "the rate-limit filter must be registered" }
+        filter.doFilter(request, response, MockFilterChain())
+        return response.status
+    }
+
+    @Test
+    fun `a dot-segment join path is throttled by the filter itself like the canonical path`() {
+        val statuses = listOf(
+            postRaw("/api/waitlist", """{"email":"rl-dot-join-1@example.com"}""", DOT_SEGMENT_JOIN_PEER),
+            postDotSegmentJoinToFilter(DOT_SEGMENT_JOIN_PEER),
+            postDotSegmentJoinToFilter(DOT_SEGMENT_JOIN_PEER)
+        )
+        assertEquals(202, statuses[0], "the canonical join must be accepted, got $statuses")
+        assertNotEquals(429, statuses[1], "request 2 must consume from the canonical join bucket, got $statuses")
+        assertEquals(
+            429, statuses[2],
+            "POST /api/./waitlist must draw from the canonical POST /api/waitlist bucket in the filter, got $statuses"
+        )
     }
 
     @Test
@@ -193,13 +285,63 @@ class RateLimitBypassIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
-    fun `a malformed rightmost hop from a trusted peer never errors and shares one bucket`() {
-        val statuses = (1..3).map {
-            postLoginWithForwardedLines(TRUSTED_PROXY, "$CLIENT_BEFORE_MALFORMED_HOP, $MALFORMED_HOP")
-        }
+    fun `a malformed rightmost hop from a trusted peer never errors and falls back to the peer bucket`() {
+        val forwarded = "$CLIENT_BEFORE_MALFORMED_HOP, $MALFORMED_HOP"
+        val statuses = (1..3).map { postLoginWithForwardedLines(TRUSTED_PEER_FOR_MALFORMED_HOP, forwarded) }
         assertTrue(statuses.none { it >= 500 }, "a malformed hop must never produce a server error, got $statuses")
         assertNotEquals(429, statuses[0], "request 1 must consume from a fresh bucket, got $statuses")
         assertNotEquals(429, statuses[1], "request 2 must consume from a fresh bucket, got $statuses")
-        assertEquals(429, statuses[2], "requests with a malformed hop must share one bucket, got $statuses")
+        assertEquals(429, statuses[2], "requests with a malformed hop must share the peer's bucket, got $statuses")
+
+        val otherPeer = postLoginWithForwardedLines(OTHER_TRUSTED_PEER_FOR_MALFORMED_HOP, forwarded)
+        assertNotEquals(
+            429, otherPeer,
+            "the same malformed hop from another trusted peer must get that peer's bucket, so the key is the peer, " +
+                "not the hop text"
+        )
+    }
+
+    @Test
+    fun `a forwarded IPv4 hop with a rotating port shares the client bucket`() {
+        val statuses = (1..3).map {
+            postLoginWithForwardedLines(TRUSTED_PROXY, "$CLIENT_WITH_ROTATING_PORT:${40000 + it}")
+        }
+        assertNotEquals(429, statuses[0], "request 1 must consume from a fresh bucket, got $statuses")
+        assertNotEquals(429, statuses[1], "request 2 must consume from a fresh bucket, got $statuses")
+        assertEquals(
+            429, statuses[2],
+            "the port must be stripped so every connection keys on $CLIENT_WITH_ROTATING_PORT, got $statuses"
+        )
+    }
+
+    @Test
+    fun `a forwarded bracketed IPv6 hop with a rotating port shares the client bucket`() {
+        val statuses = (1..3).map {
+            postLoginWithForwardedLines(TRUSTED_PROXY, "[$IPV6_CLIENT_WITH_ROTATING_PORT]:${41000 + it}")
+        }
+        assertNotEquals(429, statuses[0], "request 1 must consume from a fresh bucket, got $statuses")
+        assertNotEquals(429, statuses[1], "request 2 must consume from a fresh bucket, got $statuses")
+        assertEquals(
+            429, statuses[2],
+            "brackets and port must be stripped so every connection keys on $IPV6_CLIENT_WITH_ROTATING_PORT, " +
+                "got $statuses"
+        )
+    }
+
+    @Test
+    fun `a trusted inner proxy hop written with a port is skipped`() {
+        val statuses = (1..3).map {
+            postLoginWithForwardedLines(
+                TRUSTED_PROXY,
+                "10.206.0.$it, $CLIENT_BEHIND_TRUSTED_HOP_WITH_PORT, $TRUSTED_INNER_PROXY_WITH_PORT:${443 + it}"
+            )
+        }
+        assertNotEquals(429, statuses[0], "request 1 must consume from a fresh bucket, got $statuses")
+        assertNotEquals(429, statuses[1], "request 2 must consume from a fresh bucket, got $statuses")
+        assertEquals(
+            429, statuses[2],
+            "$TRUSTED_INNER_PROXY_WITH_PORT:<port> must be recognized as trusted and skipped, so " +
+                "$CLIENT_BEHIND_TRUSTED_HOP_WITH_PORT is the key, got $statuses"
+        )
     }
 }

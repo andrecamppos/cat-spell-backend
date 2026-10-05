@@ -3,6 +3,7 @@ package com.catspell.api.match.service
 import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.CatPhotoRepository
 import com.catspell.api.cat.model.CatProfileRepository
+import com.catspell.api.chat.model.MessageRepository
 import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.discovery.model.SwipeRepository
 import com.catspell.api.match.model.*
@@ -25,6 +26,7 @@ class MatchService(
     private val catProfileRepository: CatProfileRepository,
     private val catPhotoRepository: CatPhotoRepository,
     private val swipeRepository: SwipeRepository,
+    private val messageRepository: MessageRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) {
 
@@ -38,10 +40,14 @@ class MatchService(
             // Reactivate an ended (blocked/unmatched) match on a fresh mutual re-like rather
             // than inserting a duplicate row that violates the pair unique index (D-08). Do NOT
             // re-timestamp matchedAt — it is @Column(updatable = false), so a write is a silent no-op.
+            // Sweep the conversation's undelivered messages before the match is visible again, so
+            // leftovers from before the block or unmatch cannot resurface as previews when the
+            // recipient never reconnected while the conversation was hidden (G-18-1, D-04).
             if (existing.endedAt != null) {
                 existing.endedAt = null
                 existing.endedReason = null
                 matchRepository.save(existing)
+                messageRepository.markAllDeliveredForMatch(existing.id!!)
                 eventPublisher.publishEvent(MatchCreatedEvent(existing.id!!, u1, u2))
             }
             return existing

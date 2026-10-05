@@ -128,9 +128,18 @@ class WaitlistJoinIntegrationTest : BaseIntegrationTest() {
         assertRejectedWithoutWrite("""{}""", BAD_REQUEST)
     }
 
+    /** Moves the entry's updated_at 16 minutes into the past, just outside the default 15-minute resend cooldown. */
+    private fun backdate(normalizedEmail: String) {
+        jdbcTemplate.update(
+            "UPDATE waitlist_entries SET updated_at = updated_at - INTERVAL '16 minutes' WHERE normalized_email = ?",
+            normalizedEmail
+        )
+    }
+
     @Test
-    fun `a PENDING re-join rotates the token hash and overwrites email with the latest trimmed submission`() {
+    fun `a PENDING re-join outside the cooldown rotates the token hash and keeps the first stored email`() {
         val first = join("pending-rejoin@example.com")
+        backdate("pending-rejoin@example.com")
         val before = entry("pending-rejoin@example.com")
 
         val second = join("  Pending-Rejoin+landing@Example.com  ")
@@ -140,7 +149,23 @@ class WaitlistJoinIntegrationTest : BaseIntegrationTest() {
         assertEquals(1, rowCount(), "a re-join must not create a second row")
         assertEquals("PENDING", after["status"])
         assertNotEquals(before["confirm_token_hash"], after["confirm_token_hash"], "a PENDING re-join must rotate the hash")
-        assertEquals("Pending-Rejoin+landing@Example.com", after["email"], "email must be the latest trimmed submission")
+        assertEquals("pending-rejoin@example.com", after["email"], "a re-join must never change the stored email (D-08)")
+    }
+
+    @Test
+    fun `a PENDING re-join inside the cooldown changes nothing and returns the identical 202`() {
+        val first = join("pending-cooldown@example.com")
+        val before = entry("pending-cooldown@example.com")
+
+        val second = join("Pending-Cooldown+x@Example.com")
+        val after = entry("pending-cooldown@example.com")
+
+        assertIdenticalResponse(first, second)
+        assertEquals(1, rowCount())
+        assertEquals("PENDING", after["status"])
+        assertEquals(before["confirm_token_hash"], after["confirm_token_hash"], "hash must be unchanged inside the cooldown")
+        assertEquals(before["updated_at"], after["updated_at"], "updated_at must be unchanged (no write)")
+        assertEquals(before["email"], after["email"], "email must be unchanged")
     }
 
     @Test

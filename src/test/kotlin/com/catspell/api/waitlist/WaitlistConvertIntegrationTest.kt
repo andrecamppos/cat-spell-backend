@@ -1,6 +1,7 @@
 package com.catspell.api.waitlist
 
 import com.catspell.api.BaseIntegrationTest
+import com.catspell.api.TEST_ADMIN_TOKEN
 import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.common.exception.WaitlistEntryNotConvertibleException
 import com.catspell.api.common.exception.WaitlistInviteDeliveryException
@@ -44,7 +45,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private const val CONVERT_ADMIN_SECRET = "test-admin-secret"
 private const val CONVERT_URL = "/api/admin/waitlist/{id}/invite"
 private const val CONVERT_TOKEN_HEADER = "X-Admin-Token"
 private const val INVITE_URL = "catspell://register"
@@ -81,7 +81,7 @@ private fun seedEntry(jdbcTemplate: org.springframework.jdbc.core.JdbcTemplate, 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(WaitlistConvertIntegrationTest.MockEmailConfig::class)
-@TestPropertySource(properties = ["app.invite.admin-token=$CONVERT_ADMIN_SECRET"])
+@TestPropertySource(properties = ["app.invite.admin-token=$TEST_ADMIN_TOKEN", "app.waitlist.invite-send-timeout-ms=1000"])
 class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
 
     @TestConfiguration
@@ -247,7 +247,7 @@ class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
     fun `http convert of a confirmed entry returns 201 with the entry id and a code stored hashed`() {
         val id = seedEntry(jdbcTemplate, "http-ok@example.com", "CONFIRMED")
 
-        val result = convertRequest(id, CONVERT_ADMIN_SECRET)
+        val result = convertRequest(id, TEST_ADMIN_TOKEN)
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.entryId").value(id.toString()))
             .andExpect(jsonPath("$.code").isNotEmpty)
@@ -262,7 +262,7 @@ class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
     fun `http convert of a pending entry returns 409 not convertible`() {
         val id = seedEntry(jdbcTemplate, "http-pending@example.com", "PENDING")
 
-        convertRequest(id, CONVERT_ADMIN_SECRET)
+        convertRequest(id, TEST_ADMIN_TOKEN)
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.title").value("Conflict"))
             .andExpect(jsonPath("$.code").value("WAITLIST_ENTRY_NOT_CONVERTIBLE"))
@@ -273,9 +273,9 @@ class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
     @Test
     fun `http second convert of the same entry returns 409 with the same body`() {
         val id = seedEntry(jdbcTemplate, "http-twice@example.com", "CONFIRMED")
-        convertRequest(id, CONVERT_ADMIN_SECRET).andExpect(status().isCreated)
+        convertRequest(id, TEST_ADMIN_TOKEN).andExpect(status().isCreated)
 
-        convertRequest(id, CONVERT_ADMIN_SECRET)
+        convertRequest(id, TEST_ADMIN_TOKEN)
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.title").value("Conflict"))
             .andExpect(jsonPath("$.code").value("WAITLIST_ENTRY_NOT_CONVERTIBLE"))
@@ -286,7 +286,7 @@ class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
 
     @Test
     fun `http convert of an unknown id returns 404`() {
-        convertRequest(UUID.randomUUID(), CONVERT_ADMIN_SECRET)
+        convertRequest(UUID.randomUUID(), TEST_ADMIN_TOKEN)
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.title").value("Not Found"))
 
@@ -298,12 +298,35 @@ class WaitlistConvertIntegrationTest : BaseIntegrationTest() {
         val id = seedEntry(jdbcTemplate, "http-502@example.com", "CONFIRMED")
         every { emailSender.send(any()) } returns EmailResult(EmailSendStatus.ERROR, errorDetail = "provider down")
 
-        convertRequest(id, CONVERT_ADMIN_SECRET)
+        convertRequest(id, TEST_ADMIN_TOKEN)
             .andExpect(status().isBadGateway)
             .andExpect(jsonPath("$.title").value("Bad Gateway"))
             .andExpect(jsonPath("$.code").value("WAITLIST_INVITE_DELIVERY_FAILED"))
 
         assertRolledBack(id)
+    }
+
+    @Test
+    fun `http convert with a hung sender times out with 502 and rolls the conversion back`() {
+        val id = seedEntry(jdbcTemplate, "http-hung@example.com", "CONFIRMED")
+        every { emailSender.send(any()) } answers {
+            Thread.sleep(10_000)
+            EmailResult(EmailSendStatus.SUCCESS, messageId = "late")
+        }
+
+        val startedAt = System.nanoTime()
+        convertRequest(id, TEST_ADMIN_TOKEN)
+            .andExpect(status().isBadGateway)
+            .andExpect(jsonPath("$.code").value("WAITLIST_INVITE_DELIVERY_FAILED"))
+        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
+
+        assertTrue(elapsedMs < 5_000, "a hung sender must be cut off by the send timeout, took $elapsedMs ms")
+        assertRolledBack(id)
+
+        every { emailSender.send(capture(sentMessages)) } returns EmailResult(EmailSendStatus.SUCCESS, messageId = "ok")
+        convertRequest(id, TEST_ADMIN_TOKEN).andExpect(status().isCreated)
+        assertEquals("INVITED", entryStatus(id))
+        assertEquals(1, inviteCount())
     }
 
     @Test
@@ -371,7 +394,7 @@ class WaitlistConvertDenyByDefaultIntegrationTest : BaseIntegrationTest() {
     fun `convert is 401 when admin-token is blank even with a plausible header`() {
         val id = seedEntry(jdbcTemplate, "deny@example.com", "CONFIRMED")
 
-        mockMvc.perform(post(CONVERT_URL, id).header(CONVERT_TOKEN_HEADER, CONVERT_ADMIN_SECRET))
+        mockMvc.perform(post(CONVERT_URL, id).header(CONVERT_TOKEN_HEADER, TEST_ADMIN_TOKEN))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.title").value("Unauthorized"))
 

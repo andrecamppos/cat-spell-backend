@@ -4,9 +4,9 @@ import com.catspell.api.auth.model.EmailVerificationToken
 import com.catspell.api.auth.model.EmailVerificationTokenRepository
 import com.catspell.api.auth.model.User
 import com.catspell.api.auth.model.UserRepository
+import com.catspell.api.common.ratelimit.RateLimitBuckets
 import com.catspell.api.email.service.EmailSender
 import com.catspell.api.email.service.EmailVerificationEmailRenderer
-import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -17,7 +17,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Base64
 import java.util.HexFormat
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class EmailVerificationService(
@@ -27,20 +26,16 @@ class EmailVerificationService(
     private val emailVerificationEmailRenderer: EmailVerificationEmailRenderer,
     @Value("\${app.resend-verification.per-email-capacity:3}") private val perEmailCapacity: Long,
     @Value("\${app.resend-verification.per-email-refill-hours:1}") private val perEmailRefillHours: Long,
-    @Value("\${app.verify-token.ttl-hours:24}") private val verifyTokenTtlHours: Long
+    @Value("\${app.verify-token.ttl-hours:24}") private val verifyTokenTtlHours: Long,
+    @Value("\${rate-limit.max-tracked-keys:100000}") private val maxTrackedKeys: Long
 ) {
 
     private val secureRandom = SecureRandom()
 
-    private val emailBuckets = ConcurrentHashMap<String, Bucket>()
+    // One bucket per normalized email in a bounded, access-expiring store (WR-10), so email-key churn cannot grow memory.
+    private val emailBuckets = RateLimitBuckets(perEmailCapacity, Duration.ofHours(perEmailRefillHours), maxTrackedKeys)
 
-    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.computeIfAbsent(normalizedEmail) {
-        val bandwidth = Bandwidth.builder()
-            .capacity(perEmailCapacity)
-            .refillIntervally(perEmailCapacity, Duration.ofHours(perEmailRefillHours))
-            .build()
-        Bucket.builder().addLimit(bandwidth).build()
-    }
+    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.bucketFor(normalizedEmail)
 
     /**
      * Reusable internal issue path (VERIFY-01): invalidate any prior unused verification tokens, mint a

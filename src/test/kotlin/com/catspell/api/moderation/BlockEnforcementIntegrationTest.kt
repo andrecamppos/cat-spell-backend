@@ -12,13 +12,21 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import tools.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
+import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor
+import org.springframework.messaging.support.AbstractSubscribableChannel
+import org.springframework.messaging.support.ChannelInterceptor
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
@@ -26,6 +34,7 @@ import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,6 +49,37 @@ class BlockEnforcementIntegrationTest : BaseIntegrationTest() {
     @Autowired lateinit var chatService: ChatService
     @Autowired lateinit var matchRepository: MatchRepository
     @Autowired lateinit var messageRepository: MessageRepository
+
+    // SimpMessagingTemplate.convertAndSendToUser publishes `/user/<id>/queue/notifications` on
+    // this channel, so a missing reconnect push is observed directly at the broker (Pitfall 5b).
+    @Autowired @Qualifier("brokerChannel") lateinit var brokerChannel: AbstractSubscribableChannel
+
+    private val capturedDestinations = CopyOnWriteArrayList<String>()
+
+    private val captureInterceptor = object : ChannelInterceptor {
+        override fun preSend(message: Message<*>, channel: MessageChannel): Message<*> {
+            SimpMessageHeaderAccessor.getDestination(message.headers)?.let { capturedDestinations.add(it) }
+            return message
+        }
+    }
+
+    @BeforeEach
+    fun registerBrokerCapture() {
+        capturedDestinations.clear()
+        brokerChannel.addInterceptor(captureInterceptor)
+    }
+
+    @AfterEach
+    fun removeBrokerCapture() {
+        brokerChannel.removeInterceptor(captureInterceptor)
+        capturedDestinations.clear()
+    }
+
+    private fun notificationsTo(userId: UUID): Int =
+        capturedDestinations.count { it == "/user/$userId/queue/notifications" }
+
+    private fun delivered(messageId: UUID): Boolean =
+        jdbcTemplate.queryForObject("SELECT delivered FROM messages WHERE id = ?", Boolean::class.java, messageId)!!
 
     // ---- setup helpers ----
 
@@ -251,5 +291,222 @@ class BlockEnforcementIntegrationTest : BaseIntegrationTest() {
 
         blockService.unblock(a.id, b.id)
         assertTrue(b.id in feedUserIds(a.token), "B reappears after unblock")
+    }
+
+    // ---- W1 / D-04: reconnect redelivery skips hidden conversations ----
+
+    @Test
+    fun `reconnect does not push a message left undelivered before a block and marks it delivered`() {
+        val a = setupUser("be-redeliver-a1@example.com", "RedelA1", "FEMALE", "RedelCatA1")
+        val b = setupUser("be-redeliver-b1@example.com", "RedelB1", "MALE", "RedelCatB1")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+        assertFalse(delivered(sent.messageId), "message starts undelivered")
+
+        blockService.block(a.id, b.id)
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "no reconnect preview for a blocked pair")
+        assertEquals(0, pushed, "pushed count excludes the hidden conversation")
+        assertTrue(delivered(sent.messageId), "suppressed message is marked delivered (D-04)")
+        assertTrue(messageRepository.existsById(sent.messageId), "message row kept as evidence")
+    }
+
+    @Test
+    fun `reconnect still pushes a visible conversation while suppressing a blocked one`() {
+        val a = setupUser("be-redeliver-a2@example.com", "RedelA2", "FEMALE", "RedelCatA2")
+        val b = setupUser("be-redeliver-b2@example.com", "RedelB2", "MALE", "RedelCatB2")
+        val c = setupUser("be-redeliver-c2@example.com", "RedelC2", "FEMALE", "RedelCatC2")
+        val abMatch = matchPair(a, b)
+        val cbMatch = matchPair(c, b)
+        val hiddenMsg = chatService.sendMessage(a.id, SendMessageRequest(matchId = abMatch, content = "hi B"))
+        val visibleMsg = chatService.sendMessage(c.id, SendMessageRequest(matchId = cbMatch, content = "hello B"))
+
+        blockService.block(a.id, b.id)
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(1, pushed, "only the visible conversation is pushed")
+        assertEquals(1, notificationsTo(b.id), "exactly one reconnect notification for B")
+        assertTrue(delivered(hiddenMsg.messageId), "hidden message marked delivered")
+        assertTrue(delivered(visibleMsg.messageId), "visible message marked delivered after push")
+    }
+
+    @Test
+    fun `reconnect does not push a message left undelivered before an unmatch`() {
+        val a = setupUser("be-redeliver-c-a@example.com", "RedelCA", "FEMALE", "RedelCatCA")
+        val b = setupUser("be-redeliver-c-b@example.com", "RedelCB", "MALE", "RedelCatCB")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+
+        matchService.unmatch(a.id, b.id)
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "no reconnect preview after unmatch")
+        assertEquals(0, pushed, "pushed count is 0 for an ended conversation")
+        assertTrue(delivered(sent.messageId), "suppressed message is marked delivered")
+    }
+
+    @Test
+    fun `message suppressed after an unmatch does not resurface after a rematch`() {
+        val a = setupUser("be-redeliver-d-a@example.com", "RedelDA", "FEMALE", "RedelCatDA")
+        val b = setupUser("be-redeliver-d-b@example.com", "RedelDB", "MALE", "RedelCatDB")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+        matchService.unmatch(a.id, b.id)
+        capturedDestinations.clear()
+        assertEquals(0, chatService.deliverUnreadMessages(b.id), "first reconnect suppressed")
+
+        val rematchId = matchPair(a, b)
+        assertEquals(matchId, rematchId, "rematch reactivates the same match row")
+        assertEquals(null, matchRepository.findByUserPair(a.id, b.id)!!.endedAt, "rematched match is active")
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "old message is not pushed after the rematch")
+        assertEquals(0, pushed, "nothing pushed on the second reconnect")
+        assertTrue(delivered(sent.messageId), "message stays delivered")
+    }
+
+    @Test
+    fun `message suppressed after a block does not resurface after unblock and rematch`() {
+        val a = setupUser("be-redeliver-e-a@example.com", "RedelEA", "FEMALE", "RedelCatEA")
+        val b = setupUser("be-redeliver-e-b@example.com", "RedelEB", "MALE", "RedelCatEB")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+        blockService.block(a.id, b.id)
+        capturedDestinations.clear()
+        assertEquals(0, chatService.deliverUnreadMessages(b.id), "reconnect while blocked is suppressed")
+        assertEquals(0, notificationsTo(b.id), "no push while blocked")
+
+        blockService.unblock(a.id, b.id)
+        val rematchId = matchPair(a, b)
+        assertEquals(matchId, rematchId, "rematch reactivates the same match row")
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "old message is not pushed after unblock and rematch")
+        assertEquals(0, pushed, "nothing pushed after the rematch")
+        assertTrue(delivered(sent.messageId), "message stays delivered")
+    }
+
+    // ---- G-18-1 / D-04: rematch before any reconnect must not resurface stale previews ----
+
+    /**
+     * Drives the no-reconnect-between rematch scenario for one hide path (G-18-1): both users
+     * exchange messages while matched (each left undelivered), [hideThenRestore] hides the
+     * conversation and makes a fresh match possible again, and the pair rematches with no
+     * reconnect in between. Asserts the rematch swept every pre-hide message delivered, that
+     * neither participant's first reconnect pushes a stale preview, and that a message sent
+     * after the rematch is still pushed live once and once more on the next reconnect.
+     */
+    private fun assertNoStalePreviewWhenRematchPrecedesReconnect(
+        a: TestUser,
+        b: TestUser,
+        hiddenBy: String,
+        hideThenRestore: () -> Unit
+    ) {
+        val matchId = matchPair(a, b)
+        val first = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "before $hiddenBy 1"))
+        val convId = first.conversationId
+        val second = chatService.sendMessage(a.id, SendMessageRequest(conversationId = convId, content = "before $hiddenBy 2"))
+        val reply = chatService.sendMessage(b.id, SendMessageRequest(conversationId = convId, content = "reply before $hiddenBy"))
+        val preHideIds = listOf(first.messageId, second.messageId, reply.messageId)
+        preHideIds.forEach { assertFalse(delivered(it), "pre-$hiddenBy message starts undelivered") }
+
+        // No deliverUnreadMessages call anywhere between the first send and the rematch.
+        hideThenRestore()
+        val rematchId = matchPair(a, b)
+
+        assertEquals(matchId, rematchId, "rematch reactivates the same match row")
+        assertEquals(null, matchRepository.findByUserPair(a.id, b.id)!!.endedAt, "rematched match is active")
+        val deliveredAtRematch = preHideIds.map { delivered(it) }
+
+        capturedDestinations.clear()
+        val pushedToB = chatService.deliverUnreadMessages(b.id)
+        val pushedToA = chatService.deliverUnreadMessages(a.id)
+
+        assertEquals(0, notificationsTo(b.id), "no stale preview for B when the rematch comes before the reconnect")
+        assertEquals(0, notificationsTo(a.id), "no stale preview for A when the rematch comes before the reconnect")
+        assertEquals(0, pushedToB, "B's first reconnect after the rematch pushes nothing")
+        assertEquals(0, pushedToA, "A's first reconnect after the rematch pushes nothing")
+        assertEquals(listOf(true, true, true), deliveredAtRematch, "rematch swept every pre-$hiddenBy message delivered, both directions")
+
+        // Post-rematch control: normal delivery still works, so only pre-rematch messages were swept.
+        capturedDestinations.clear()
+        val afterRematch = chatService.sendMessage(a.id, SendMessageRequest(conversationId = convId, content = "after rematch"))
+        assertEquals(1, notificationsTo(b.id), "post-rematch message is pushed live exactly once")
+        assertFalse(delivered(afterRematch.messageId), "post-rematch message starts undelivered")
+
+        capturedDestinations.clear()
+        val pushedOnReconnect = chatService.deliverUnreadMessages(b.id)
+        assertEquals(1, pushedOnReconnect, "post-rematch message is pushed on B's next reconnect")
+        assertEquals(1, notificationsTo(b.id), "exactly one reconnect notification for the post-rematch message")
+        assertTrue(delivered(afterRematch.messageId), "post-rematch message is delivered after the reconnect push")
+    }
+
+    @Test
+    fun `pre-block messages do not resurface when the pair rematches before the recipient reconnects`() {
+        val a = setupUser("be-redeliver-h-a@example.com", "RedelHA", "FEMALE", "RedelCatHA")
+        val b = setupUser("be-redeliver-h-b@example.com", "RedelHB", "MALE", "RedelCatHB")
+        assertNoStalePreviewWhenRematchPrecedesReconnect(a, b, "block") {
+            blockService.block(a.id, b.id)
+            blockService.unblock(a.id, b.id)
+        }
+    }
+
+    @Test
+    fun `pre-unmatch messages do not resurface when the pair rematches before the recipient reconnects`() {
+        val a = setupUser("be-redeliver-i-a@example.com", "RedelIA", "FEMALE", "RedelCatIA")
+        val b = setupUser("be-redeliver-i-b@example.com", "RedelIB", "MALE", "RedelCatIB")
+        assertNoStalePreviewWhenRematchPrecedesReconnect(a, b, "unmatch") {
+            matchService.unmatch(a.id, b.id)
+        }
+    }
+
+    @Test
+    fun `reconnect does not push when the recipient blocked the sender`() {
+        val a = setupUser("be-redeliver-f-a@example.com", "RedelFA", "FEMALE", "RedelCatFA")
+        val b = setupUser("be-redeliver-f-b@example.com", "RedelFB", "MALE", "RedelCatFB")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+
+        blockService.block(b.id, a.id)
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "no reconnect preview when the recipient is the blocker")
+        assertEquals(0, pushed, "pushed count is 0")
+        assertTrue(delivered(sent.messageId), "suppressed message is marked delivered")
+    }
+
+    @Test
+    fun `a block row alone with the match still active suppresses the reconnect push`() {
+        val a = setupUser("be-redeliver-g-a@example.com", "RedelGA", "FEMALE", "RedelCatGA")
+        val b = setupUser("be-redeliver-g-b@example.com", "RedelGB", "MALE", "RedelCatGB")
+        val matchId = matchPair(a, b)
+        val sent = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "hi B"))
+
+        // Bypass BlockService (which always ends the match) so only the EXISTS branch can hide it.
+        jdbcTemplate.update(
+            "INSERT INTO blocks (id, blocker_id, blocked_id, created_at) VALUES (gen_random_uuid(), ?, ?, NOW())",
+            b.id, a.id
+        )
+        assertEquals(null, matchRepository.findByUserPair(a.id, b.id)!!.endedAt, "match is still active")
+
+        capturedDestinations.clear()
+        val pushed = chatService.deliverUnreadMessages(b.id)
+
+        assertEquals(0, notificationsTo(b.id), "block row alone suppresses the reconnect push")
+        assertEquals(0, pushed, "pushed count is 0")
+        assertTrue(delivered(sent.messageId), "suppressed message is marked delivered")
     }
 }

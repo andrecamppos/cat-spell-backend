@@ -1,6 +1,7 @@
 package com.catspell.api.invite
 
 import com.catspell.api.BaseIntegrationTest
+import com.catspell.api.TEST_ADMIN_TOKEN
 import com.catspell.api.invite.service.InviteService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["app.invite.enabled=true", "app.invite.admin-token=test-admin-secret"])
+@TestPropertySource(properties = ["app.invite.enabled=true", "app.invite.admin-token=$TEST_ADMIN_TOKEN"])
 class InviteGateIntegrationTest : BaseIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc

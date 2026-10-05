@@ -3,11 +3,11 @@ package com.catspell.api.moderation.service
 import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.common.exception.ResourceNotFoundException
 import com.catspell.api.common.exception.SelfReportException
+import com.catspell.api.common.ratelimit.RateLimitBuckets
 import com.catspell.api.moderation.event.ReportCreatedEvent
 import com.catspell.api.moderation.model.Report
 import com.catspell.api.moderation.model.ReportCategory
 import com.catspell.api.moderation.model.ReportRepository
-import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Duration
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class ReportService(
@@ -26,18 +25,14 @@ class ReportService(
     private val blockService: BlockService,
     private val eventPublisher: ApplicationEventPublisher,
     @Value("\${app.report.per-reporter-capacity:5}") private val perReporterCapacity: Long,
-    @Value("\${app.report.per-reporter-refill-hours:1}") private val perReporterRefillHours: Long
+    @Value("\${app.report.per-reporter-refill-hours:1}") private val perReporterRefillHours: Long,
+    @Value("\${rate-limit.max-tracked-keys:100000}") private val maxTrackedKeys: Long
 ) {
 
-    private val reporterBuckets = ConcurrentHashMap<String, Bucket>()
+    // One bucket per reporter in a bounded, access-expiring store (WR-10), so reporter-key churn cannot grow memory.
+    private val reporterBuckets = RateLimitBuckets(perReporterCapacity, Duration.ofHours(perReporterRefillHours), maxTrackedKeys)
 
-    private fun reporterBucket(reporterId: UUID): Bucket = reporterBuckets.computeIfAbsent(reporterId.toString()) {
-        val bandwidth = Bandwidth.builder()
-            .capacity(perReporterCapacity)
-            .refillIntervally(perReporterCapacity, Duration.ofHours(perReporterRefillHours))
-            .build()
-        Bucket.builder().addLimit(bandwidth).build()
-    }
+    private fun reporterBucket(reporterId: UUID): Bucket = reporterBuckets.bucketFor(reporterId.toString())
 
     /**
      * Persist a report of [reportedId] by [reporterId]. Guard order (RESEARCH A5): self-report (400) →

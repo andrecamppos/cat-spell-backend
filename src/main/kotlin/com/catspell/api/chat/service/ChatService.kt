@@ -173,11 +173,15 @@ class ChatService(
 
     @Transactional
     fun findOrCreateConversation(match: Match): Conversation {
-        conversationRepository.findByMatchId(match.id!!)?.let { return it }
+        val matchId = match.id!!
+        conversationRepository.findByMatchId(matchId)?.let { return it }
 
-        val conversation = conversationRepository.save(
-            Conversation(match = match)
-        )
+        // Concurrent first messages race here. The loser's insert waits for the winner's commit, so the
+        // participants are always written in the same transaction as the conversation row (by whoever inserted it).
+        val inserted = conversationRepository.insertIfAbsent(matchId, Instant.now())
+        val conversation = conversationRepository.findByMatchId(matchId)
+            ?: throw IllegalStateException("Conversation for match $matchId missing after insert")
+        if (inserted == 0) return conversation
 
         conversationParticipantRepository.save(
             ConversationParticipant(
@@ -259,17 +263,59 @@ class ChatService(
         conversationParticipantRepository.save(participant)
     }
 
+    /**
+     * Reconnect redelivery: pushes one notification preview for each undelivered message addressed
+     * to [userId] in a visible conversation, marks each pushed message delivered, and returns the
+     * pushed count.
+     *
+     * Suppression point 1 (here): undelivered messages in a conversation that is hidden at reconnect
+     * time (ended match, or a block either way, resolved by one set-based query per D-05) are marked
+     * delivered without being pushed.
+     *
+     * Suppression point 2 (`MatchService.createMatch`, reactivation branch): reactivating an ended
+     * match marks every still-undelivered message of its conversation delivered in one UPDATE
+     * ([MessageRepository.markAllDeliveredForMatch]) before the match is visible again. This covers a
+     * recipient who never reconnected while the conversation was hidden (G-18-1).
+     *
+     * Only the two together keep messages from before a block or unmatch from resurfacing as
+     * previews after a rematch (D-04). `sendMessage` pushes live without setting delivered, so a
+     * message received live is pushed once more on the next reconnect while its conversation is
+     * visible (pre-existing behavior). There is no push-time block re-check, because the send path
+     * already rejects a blocked or ended pair (D-06), and message rows are kept as evidence.
+     *
+     * The ordering of the two reads below is load-bearing: the hidden set is resolved BEFORE the
+     * undelivered rows are read. A concurrent rematch (`MatchService.createMatch`) resets `endedAt`
+     * and sweeps every undelivered row in one transaction. Reading hidden-first means any commit of
+     * that transaction that lands between the two reads (or before either) is observed consistently:
+     * either the conversation still counts as hidden (and the pre-sweep rows are suppressed), or the
+     * undelivered read already reflects the sweep (so there are no stale rows to push). Reading
+     * undelivered-first would leave a window where the undelivered read sees stale `delivered = false`
+     * rows while the hidden read then sees the conversation as already reactivated, pushing a stale
+     * pre-hide preview (G-18-1 / D-04).
+     *
+     * @return the number of notifications pushed (visible conversations only)
+     */
     @Transactional
     fun deliverUnreadMessages(userId: UUID): Int {
         val participations = conversationParticipantRepository.findByUserId(userId)
         val conversationIds = participations.mapNotNull { it.conversation.id }
         if (conversationIds.isEmpty()) return 0
 
+        // Resolve hidden BEFORE reading undelivered rows: see the KDoc note above on why this
+        // ordering is load-bearing for the reconnect-vs-rematch race (G-18-1 / D-04 / WR-02).
+        val hidden = conversationRepository.findHiddenConversationIdsForUser(userId).toSet()
+
         val undelivered = messageRepository.findByConversationIdInAndDeliveredFalseAndSenderIdNotOrderByCreatedAtAsc(
             conversationIds, userId
         )
+        if (undelivered.isEmpty()) return 0
 
-        for (msg in undelivered) {
+        val (suppressed, visible) = undelivered.partition { it.conversation.id in hidden }
+
+        suppressed.forEach { it.delivered = true }
+        messageRepository.saveAll(suppressed)
+
+        for (msg in visible) {
             val senderProfile = userProfileRepository.findByUserId(msg.sender.id!!)
             val senderName = senderProfile?.displayName ?: "Unknown"
 
@@ -288,7 +334,7 @@ class ChatService(
             messageRepository.save(msg)
         }
 
-        return undelivered.size
+        return visible.size
     }
 
     private fun getOtherUserId(conversation: Conversation, currentUserId: UUID): UUID {

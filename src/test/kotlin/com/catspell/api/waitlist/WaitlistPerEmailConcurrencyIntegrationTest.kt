@@ -31,12 +31,12 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 /**
- * Promotes the 17-01 backstop truth to an explicit test (WAIT-03): concurrent joins for one brand-new normalized
- * email all draw from the single shared per-email Bucket4j bucket in WaitlistService, so no more than
- * app.waitlist.per-email-capacity confirm tokens (and confirmation emails) are minted, however many callers race.
- * The REAL configured capacity (3, from src/test/resources/application.yml) is exercised on purpose: nothing here
- * overrides it. EmailSender is a MockK @Primary bean; sends run on the async executor after commit, so captures go
- * into a thread-safe list and are awaited.
+ * WAIT-03 / D-07 (WR-03): concurrent joins for one brand-new normalized email mint exactly ONE confirm link. The
+ * first rotate stamps the hash and updated_at; every other racing join blocks on the row lock, re-evaluates the
+ * resend-cooldown predicate against the committed row, and matches 0 rows. The per-email bucket cap is proven
+ * separately by WaitlistPerEmailLimitIntegrationTest, which escapes the cooldown by backdating. EmailSender is a
+ * MockK @Primary bean; sends run on the async executor after commit, so captures go into a thread-safe list and are
+ * awaited.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -52,7 +52,6 @@ class WaitlistPerEmailConcurrencyIntegrationTest : BaseIntegrationTest() {
 
     companion object {
         private const val ADDRESS = "concurrency-cap@example.com"
-        private const val PER_EMAIL_CAPACITY = 3
     }
 
     @Autowired lateinit var emailSender: EmailSender
@@ -76,7 +75,7 @@ class WaitlistPerEmailConcurrencyIntegrationTest : BaseIntegrationTest() {
         HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)))
 
     @Test
-    fun `20 concurrent joins for one new email mint at most per-email-capacity confirm tokens`() {
+    fun `20 concurrent joins for one new email send exactly one confirmation email`() {
         val pool = Executors.newFixedThreadPool(20)
         val startGate = CountDownLatch(1)
         try {
@@ -93,9 +92,9 @@ class WaitlistPerEmailConcurrencyIntegrationTest : BaseIntegrationTest() {
             pool.shutdownNow()
         }
 
-        // `during` makes the count hold at exactly 3 for a window, so a late 4th send cannot slip past a momentary 3.
+        // `during` makes the count hold at exactly 1 for a window, so a late second send cannot slip past.
         await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted {
-            assertEquals(PER_EMAIL_CAPACITY, sentMessages.size, "exactly per-email-capacity confirmation emails")
+            assertEquals(1, sentMessages.size, "the resend cooldown must let exactly one racing join send a link")
         }
 
         val normalized = WaitlistEmailNormalizer.normalize(ADDRESS)
@@ -110,7 +109,7 @@ class WaitlistPerEmailConcurrencyIntegrationTest : BaseIntegrationTest() {
             String::class.java, normalized
         )
         val sentHashes = sentMessages.map { sha256Hex(tokenFrom(it)) }.toSet()
-        assertEquals(PER_EMAIL_CAPACITY, sentHashes.size, "each minted token must be distinct")
-        assertTrue(storedHash in sentHashes, "stored confirm_token_hash must be the SHA-256 of one of the sent tokens")
+        assertEquals(1, sentHashes.size, "exactly one distinct token may be minted")
+        assertEquals(sentHashes.single(), storedHash, "stored confirm_token_hash must be the SHA-256 of the sent token")
     }
 }

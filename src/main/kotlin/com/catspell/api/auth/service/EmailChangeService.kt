@@ -6,9 +6,9 @@ import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.common.exception.DuplicateEmailException
 import com.catspell.api.common.exception.InvalidCurrentPasswordException
 import com.catspell.api.common.exception.ResourceNotFoundException
+import com.catspell.api.common.ratelimit.RateLimitBuckets
 import com.catspell.api.email.service.EmailChangeEmailRenderer
 import com.catspell.api.email.service.EmailSender
-import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -23,7 +23,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Base64
 import java.util.HexFormat
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class EmailChangeService(
@@ -34,20 +33,16 @@ class EmailChangeService(
     private val passwordEncoder: PasswordEncoder,
     @Value("\${app.change-email.per-email-capacity:3}") private val perEmailCapacity: Long,
     @Value("\${app.change-email.per-email-refill-hours:1}") private val perEmailRefillHours: Long,
-    @Value("\${app.confirm-email-change-token.ttl-hours:24}") private val confirmTokenTtlHours: Long
+    @Value("\${app.confirm-email-change-token.ttl-hours:24}") private val confirmTokenTtlHours: Long,
+    @Value("\${rate-limit.max-tracked-keys:100000}") private val maxTrackedKeys: Long
 ) {
 
     private val secureRandom = SecureRandom()
 
-    private val emailBuckets = ConcurrentHashMap<String, Bucket>()
+    // One bucket per normalized email in a bounded, access-expiring store (WR-10), so email-key churn cannot grow memory.
+    private val emailBuckets = RateLimitBuckets(perEmailCapacity, Duration.ofHours(perEmailRefillHours), maxTrackedKeys)
 
-    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.computeIfAbsent(normalizedEmail) {
-        val bandwidth = Bandwidth.builder()
-            .capacity(perEmailCapacity)
-            .refillIntervally(perEmailCapacity, Duration.ofHours(perEmailRefillHours))
-            .build()
-        Bucket.builder().addLimit(bandwidth).build()
-    }
+    private fun emailBucket(normalizedEmail: String): Bucket = emailBuckets.bucketFor(normalizedEmail)
 
     /**
      * Change-email step 1 (request): the authenticated owner asks to move the account to [newEmail].

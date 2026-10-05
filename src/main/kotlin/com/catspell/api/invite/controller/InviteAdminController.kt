@@ -14,9 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Operator-only invite issuance (INV-02, D-01/D-02). The route is permitAll in SecurityConfig — there is no
- * admin JWT/role (D-03) — so the shared [AdminTokenGuard] is the ENTIRE access-control boundary. It is
- * deny-by-default (a blank configured token rejects everything) and compares in constant time.
+ * Operator-only invite issuance (INV-02, D-01/D-02). There is no admin JWT/role (D-03). The access boundary is the
+ * central AdminTokenFilter on every `/api/admin` path (D-11): it runs before Spring Security and MVC, so a caller
+ * without the right `X-Admin-Token` gets the generic 401 before the body is read or validated (IN-09). The handler's
+ * own [AdminTokenGuard.require] call stays as defense in depth. Both use the same deny-by-default, constant-time check.
  */
 @RestController
 @RequestMapping("/api/admin/invites")

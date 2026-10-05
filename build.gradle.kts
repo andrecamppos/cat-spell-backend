@@ -50,6 +50,7 @@ dependencies {
     implementation("net.coobird:thumbnailator:0.4.20")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.github.ben-manes.caffeine:caffeine") // version managed by the Spring Boot BOM (D-18)
     implementation("com.google.firebase:firebase-admin:9.9.0")
     runtimeOnly("org.postgresql:postgresql")
 

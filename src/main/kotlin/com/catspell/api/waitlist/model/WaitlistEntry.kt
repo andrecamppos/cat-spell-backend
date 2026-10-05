@@ -11,7 +11,7 @@ class WaitlistEntry(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    // Delivery address: trimmed, case preserved, overwritten on a PENDING re-join.
+    // Delivery address: trimmed, case preserved, pinned at first insert. A re-join never changes it (D-08).
     @Column(name = "email", nullable = false, length = 255)
     var email: String,
 
