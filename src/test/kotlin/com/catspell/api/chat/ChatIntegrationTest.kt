@@ -338,6 +338,69 @@ class ChatIntegrationTest : BaseIntegrationTest() {
         }
     }
 
+    private fun countMessages(token: String, convId: String): Int {
+        var total = 0
+        var cursor: String? = null
+        do {
+            val request = get("/api/conversations/$convId/messages").header("Authorization", "Bearer $token")
+            cursor?.let { request.param("cursor", it) }
+            val page = objectMapper.readTree(mockMvc.perform(request).andReturn().response.contentAsString)
+            total += page["messages"].size()
+            cursor = if (page["hasMore"].asBoolean()) page["nextCursor"].asText() else null
+        } while (cursor != null)
+        return total
+    }
+
+    // STOMP SEND is fire-and-forget, so poll REST (while the session is still connected) until every message
+    // is persisted. Returns the caller's only conversation id.
+    private fun awaitPersistedMessages(token: String, expected: Int): String {
+        var convId: String? = null
+        var seen = -1
+        repeat(80) {
+            if (convId == null) {
+                val list = objectMapper.readTree(
+                    mockMvc.perform(get("/api/conversations").header("Authorization", "Bearer $token"))
+                        .andReturn().response.contentAsString
+                )["conversations"]
+                if (list.size() > 0) convId = list[0]["conversationId"].asText()
+            }
+            convId?.let { id ->
+                seen = countMessages(token, id)
+                if (seen >= expected) return id
+            }
+            Thread.sleep(250)
+        }
+        throw AssertionError("Expected $expected persisted messages, saw $seen (conversation $convId)")
+    }
+
+    @Test
+    fun `concurrent first messages to a new match are all persisted`() {
+        val (tokenA, catIdA, _) = setupCompleteUser("chat-race-a@example.com", "RaceA", "FEMALE", "CatRaceA")
+        val (tokenB, catIdB, _) = setupCompleteUser("chat-race-b@example.com", "RaceB", "MALE", "CatRaceB")
+        createMutualMatch(tokenA, catIdA, tokenB, catIdB)
+        val matchId = getMatchId(tokenA, "RaceB")
+
+        val sessionA = connectStomp(tokenA)
+        val sessionB = connectStomp(tokenB)
+        val stompHeaders = StompHeaders()
+        stompHeaders.destination = "/app/chat.send"
+        // Back-to-back from both sides, so the first sends race to create the conversation.
+        for (i in 1..3) {
+            sessionA.send(stompHeaders, mapOf("matchId" to matchId, "content" to "A $i"))
+            sessionB.send(stompHeaders, mapOf("matchId" to matchId, "content" to "B $i"))
+        }
+
+        val convId = awaitPersistedMessages(tokenA, 6)
+        sessionA.disconnect()
+        sessionB.disconnect()
+
+        mockMvc.perform(get("/api/conversations").header("Authorization", "Bearer $tokenA"))
+            .andExpect(jsonPath("$.conversations.length()").value(1))
+        mockMvc.perform(get("/api/conversations/$convId/messages").header("Authorization", "Bearer $tokenB"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.messages.length()").value(6))
+    }
+
     @Test
     fun `message history returns paginated results newest first`() {
         val (tokenA, catIdA, _) = setupCompleteUser("chat-hist-a@example.com", "HistA", "FEMALE", "CatHistA")
@@ -346,38 +409,16 @@ class ChatIntegrationTest : BaseIntegrationTest() {
 
         val matchId = getMatchId(tokenA, "HistB")
 
-        // Send 5 messages
         val sessionA = connectStomp(tokenA)
-        // Settle so the first send is not dropped in the connect race.
-        Thread.sleep(500)
         val stompHeaders = StompHeaders()
         stompHeaders.destination = "/app/chat.send"
+        // Back-to-back on purpose: per-session receive order must hold without pacing the sends.
         for (i in 1..5) {
             sessionA.send(stompHeaders, mapOf("matchId" to matchId, "content" to "Message $i"))
-            Thread.sleep(100)
         }
-        Thread.sleep(1000)
-
-        // Get conversation ID from conversation list
-        val listResult = mockMvc.perform(
-            get("/api/conversations")
-                .header("Authorization", "Bearer $tokenA")
-        ).andExpect(status().isOk).andReturn()
-        val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
-
-        // STOMP send is fire-and-forget: poll WHILE STILL CONNECTED until all 5 messages are persisted,
-        // so the async outbound buffer drains before we disconnect (otherwise a frame can be dropped).
-        for (attempt in 1..60) {
-            val poll = mockMvc.perform(
-                get("/api/conversations/$convId/messages")
-                    .header("Authorization", "Bearer $tokenA")
-            ).andReturn().response.contentAsString
-            if (objectMapper.readTree(poll)["messages"].size() == 5) break
-            Thread.sleep(250)
-        }
+        val convId = awaitPersistedMessages(tokenA, 5)
         sessionA.disconnect()
 
-        // Fetch message history and verify newest-first order
         val histResult = mockMvc.perform(
             get("/api/conversations/$convId/messages")
                 .header("Authorization", "Bearer $tokenA")
@@ -404,44 +445,12 @@ class ChatIntegrationTest : BaseIntegrationTest() {
 
         // Send 35 messages to test pagination (page size 30)
         val sessionA = connectStomp(tokenA)
-        // The STOMP CONNECTED frame can arrive before the server-side session is fully wired; settle so the
-        // first send is not dropped in the connect race.
-        Thread.sleep(1000)
         val stompHeaders = StompHeaders()
         stompHeaders.destination = "/app/chat.send"
         for (i in 1..35) {
             sessionA.send(stompHeaders, mapOf("matchId" to matchId, "content" to "Msg $i"))
-            Thread.sleep(100)
         }
-        Thread.sleep(1000)
-
-        // Get conversation ID from conversation list
-        val listResult = mockMvc.perform(
-            get("/api/conversations")
-                .header("Authorization", "Bearer $tokenA")
-        ).andExpect(status().isOk).andReturn()
-        val convId = objectMapper.readTree(listResult.response.contentAsString)["conversations"][0]["conversationId"].asText()
-
-        // STOMP send is fire-and-forget over an async outbound channel; disconnecting before every frame is
-        // flushed and persisted can drop a message. Poll WHILE STILL CONNECTED until all 35 are persisted,
-        // so the outbound buffer drains before we tear the session down.
-        for (attempt in 1..60) {
-            val poll = mockMvc.perform(
-                get("/api/conversations/$convId/messages")
-                    .header("Authorization", "Bearer $tokenA")
-            ).andReturn().response.contentAsString
-            val pj = objectMapper.readTree(poll)
-            if (pj["messages"].size() == 30 && pj["hasMore"].asBoolean()) {
-                val cursor = pj["nextCursor"].asText()
-                val p2 = mockMvc.perform(
-                    get("/api/conversations/$convId/messages")
-                        .param("cursor", cursor)
-                        .header("Authorization", "Bearer $tokenA")
-                ).andReturn().response.contentAsString
-                if (objectMapper.readTree(p2)["messages"].size() == 5) break
-            }
-            Thread.sleep(250)
-        }
+        val convId = awaitPersistedMessages(tokenA, 35)
         sessionA.disconnect()
 
         // Page 1: should return 30 messages with hasMore=true

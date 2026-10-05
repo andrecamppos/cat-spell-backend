@@ -173,11 +173,15 @@ class ChatService(
 
     @Transactional
     fun findOrCreateConversation(match: Match): Conversation {
-        conversationRepository.findByMatchId(match.id!!)?.let { return it }
+        val matchId = match.id!!
+        conversationRepository.findByMatchId(matchId)?.let { return it }
 
-        val conversation = conversationRepository.save(
-            Conversation(match = match)
-        )
+        // Concurrent first messages race here. The loser's insert waits for the winner's commit, so the
+        // participants are always written in the same transaction as the conversation row (by whoever inserted it).
+        val inserted = conversationRepository.insertIfAbsent(matchId, Instant.now())
+        val conversation = conversationRepository.findByMatchId(matchId)
+            ?: throw IllegalStateException("Conversation for match $matchId missing after insert")
+        if (inserted == 0) return conversation
 
         conversationParticipantRepository.save(
             ConversationParticipant(

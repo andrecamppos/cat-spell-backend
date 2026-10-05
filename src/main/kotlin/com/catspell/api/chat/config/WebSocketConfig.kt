@@ -22,6 +22,9 @@ class WebSocketConfig(
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws").setAllowedOrigins("*")
+        // Inbound frames otherwise run concurrently on the channel's thread pool, so a client's back-to-back
+        // messages could be persisted (and timestamped) out of order. Sessions still run in parallel.
+        registry.setPreserveReceiveOrder(true)
     }
 
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
