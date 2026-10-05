@@ -397,6 +397,80 @@ class BlockEnforcementIntegrationTest : BaseIntegrationTest() {
         assertTrue(delivered(sent.messageId), "message stays delivered")
     }
 
+    // ---- G-18-1 / D-04: rematch before any reconnect must not resurface stale previews ----
+
+    /**
+     * Drives the no-reconnect-between rematch scenario for one hide path (G-18-1): both users
+     * exchange messages while matched (each left undelivered), [hideThenRestore] hides the
+     * conversation and makes a fresh match possible again, and the pair rematches with no
+     * reconnect in between. Asserts the rematch swept every pre-hide message delivered, that
+     * neither participant's first reconnect pushes a stale preview, and that a message sent
+     * after the rematch is still pushed live once and once more on the next reconnect.
+     */
+    private fun assertNoStalePreviewWhenRematchPrecedesReconnect(
+        a: TestUser,
+        b: TestUser,
+        hiddenBy: String,
+        hideThenRestore: () -> Unit
+    ) {
+        val matchId = matchPair(a, b)
+        val first = chatService.sendMessage(a.id, SendMessageRequest(matchId = matchId, content = "before $hiddenBy 1"))
+        val convId = first.conversationId
+        val second = chatService.sendMessage(a.id, SendMessageRequest(conversationId = convId, content = "before $hiddenBy 2"))
+        val reply = chatService.sendMessage(b.id, SendMessageRequest(conversationId = convId, content = "reply before $hiddenBy"))
+        val preHideIds = listOf(first.messageId, second.messageId, reply.messageId)
+        preHideIds.forEach { assertFalse(delivered(it), "pre-$hiddenBy message starts undelivered") }
+
+        // No deliverUnreadMessages call anywhere between the first send and the rematch.
+        hideThenRestore()
+        val rematchId = matchPair(a, b)
+
+        assertEquals(matchId, rematchId, "rematch reactivates the same match row")
+        assertEquals(null, matchRepository.findByUserPair(a.id, b.id)!!.endedAt, "rematched match is active")
+        val deliveredAtRematch = preHideIds.map { delivered(it) }
+
+        capturedDestinations.clear()
+        val pushedToB = chatService.deliverUnreadMessages(b.id)
+        val pushedToA = chatService.deliverUnreadMessages(a.id)
+
+        assertEquals(0, notificationsTo(b.id), "no stale preview for B when the rematch comes before the reconnect")
+        assertEquals(0, notificationsTo(a.id), "no stale preview for A when the rematch comes before the reconnect")
+        assertEquals(0, pushedToB, "B's first reconnect after the rematch pushes nothing")
+        assertEquals(0, pushedToA, "A's first reconnect after the rematch pushes nothing")
+        assertEquals(listOf(true, true, true), deliveredAtRematch, "rematch swept every pre-$hiddenBy message delivered, both directions")
+
+        // Post-rematch control: normal delivery still works, so only pre-rematch messages were swept.
+        capturedDestinations.clear()
+        val afterRematch = chatService.sendMessage(a.id, SendMessageRequest(conversationId = convId, content = "after rematch"))
+        assertEquals(1, notificationsTo(b.id), "post-rematch message is pushed live exactly once")
+        assertFalse(delivered(afterRematch.messageId), "post-rematch message starts undelivered")
+
+        capturedDestinations.clear()
+        val pushedOnReconnect = chatService.deliverUnreadMessages(b.id)
+        assertEquals(1, pushedOnReconnect, "post-rematch message is pushed on B's next reconnect")
+        assertEquals(1, notificationsTo(b.id), "exactly one reconnect notification for the post-rematch message")
+        assertTrue(delivered(afterRematch.messageId), "post-rematch message is delivered after the reconnect push")
+    }
+
+    @Test
+    fun `pre-block messages do not resurface when the pair rematches before the recipient reconnects`() {
+        val a = setupUser("be-redeliver-h-a@example.com", "RedelHA", "FEMALE", "RedelCatHA")
+        val b = setupUser("be-redeliver-h-b@example.com", "RedelHB", "MALE", "RedelCatHB")
+        assertNoStalePreviewWhenRematchPrecedesReconnect(a, b, "block") {
+            blockService.block(a.id, b.id)
+            blockService.unblock(a.id, b.id)
+        }
+    }
+
+    @Test
+    fun `pre-unmatch messages do not resurface when the pair rematches before the recipient reconnects`() {
+        val a = setupUser("be-redeliver-i-a@example.com", "RedelIA", "FEMALE", "RedelCatIA")
+        val b = setupUser("be-redeliver-i-b@example.com", "RedelIB", "MALE", "RedelCatIB")
+        assertNoStalePreviewWhenRematchPrecedesReconnect(a, b, "unmatch") {
+            matchService.unmatch(a.id, b.id)
+        }
+    }
+
     @Test
     fun `reconnect does not push when the recipient blocked the sender`() {
         val a = setupUser("be-redeliver-f-a@example.com", "RedelFA", "FEMALE", "RedelCatFA")

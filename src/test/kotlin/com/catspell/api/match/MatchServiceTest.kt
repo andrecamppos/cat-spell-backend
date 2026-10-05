@@ -4,6 +4,7 @@ import com.catspell.api.auth.model.User
 import com.catspell.api.auth.model.UserRepository
 import com.catspell.api.cat.model.CatPhotoRepository
 import com.catspell.api.cat.model.CatProfileRepository
+import com.catspell.api.chat.model.MessageRepository
 import com.catspell.api.discovery.model.SwipeRepository
 import com.catspell.api.match.model.Match
 import com.catspell.api.match.model.MatchRepository
@@ -15,10 +16,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import io.mockk.verifyOrder
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
+import java.time.Instant
 import java.util.UUID
 
 /**
@@ -35,6 +39,7 @@ class MatchServiceTest {
     private val catProfileRepository = mockk<CatProfileRepository>()
     private val catPhotoRepository = mockk<CatPhotoRepository>()
     private val swipeRepository = mockk<SwipeRepository>(relaxed = true)
+    private val messageRepository = mockk<MessageRepository>(relaxed = true)
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
     private val service = MatchService(
@@ -45,6 +50,7 @@ class MatchServiceTest {
         catProfileRepository,
         catPhotoRepository,
         swipeRepository,
+        messageRepository,
         eventPublisher
     )
 
@@ -72,6 +78,7 @@ class MatchServiceTest {
         assertEquals(matchId, eventSlot.captured.matchId)
         assertEquals(u1, eventSlot.captured.userId1)
         assertEquals(u2, eventSlot.captured.userId2)
+        verify(exactly = 0) { messageRepository.markAllDeliveredForMatch(any()) }
     }
 
     @Test
@@ -87,6 +94,32 @@ class MatchServiceTest {
 
         verify(exactly = 0) { eventPublisher.publishEvent(any<MatchCreatedEvent>()) }
         verify(exactly = 0) { matchRepository.save(any()) }
+        verify(exactly = 0) { messageRepository.markAllDeliveredForMatch(any()) }
+    }
+
+    @Test
+    fun `createMatch reactivating an ended match marks its undelivered messages delivered before publishing`() {
+        val a = UUID.randomUUID()
+        val b = UUID.randomUUID()
+        val u1 = if (a < b) a else b
+        val u2 = if (a < b) b else a
+        val id = UUID.randomUUID()
+        val existing = savedMatch(id).apply {
+            endedAt = Instant.now()
+            endedReason = "UNMATCH"
+        }
+
+        every { matchRepository.findByUserPair(u1, u2) } returns existing
+        every { matchRepository.save(any()) } returns existing
+
+        service.createMatch(a, b)
+
+        verifyOrder {
+            messageRepository.markAllDeliveredForMatch(id)
+            eventPublisher.publishEvent(any<MatchCreatedEvent>())
+        }
+        verify(exactly = 1) { messageRepository.markAllDeliveredForMatch(any()) }
+        assertNull(existing.endedAt, "reactivated match is active again")
     }
 
     @Test
