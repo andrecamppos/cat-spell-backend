@@ -4,7 +4,7 @@ slug: "address-tech-debt-post-block-redelivery-waitlist-review-warn"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
 status: validated
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-10-03"
 validated: "2026-10-05"
@@ -66,6 +66,10 @@ Seeded from RESEARCH.md `## Validation Architecture`. Task IDs are `<plan>-T<tas
 | 18-10-T2 | 18-10 | 4 | WAIT-01 (IN-06) | T-18-37, T-18-38 | Exact JWT skip list in the Tomcat shape; auth/invite/waitlist suites green | integration | `./gradlew test --tests "com.catspell.api.waitlist.*" --tests "com.catspell.api.invite.*" --tests "com.catspell.api.auth.*"` | ✅ (extend) | ✅ green |
 | 18-11-T1 | 18-11 | 5 | all (current IN-04, D-13/14/15 docs) | T-18-39 | Every key declared and documented | config/docs gate | `ruby -ryaml …` + docs env-row loop (see 18-11-PLAN) | ✅ | ✅ green |
 | 18-11-T2 | 18-11 | 5 | all (D-01, D-02) | T-18-40 | 26 disposition rows, 0 open; full suite green | bookkeeping + full suite | disposition grep gate + `./gradlew test` (background) | ✅ | ✅ green |
+| 18-12-T1 | 18-12 | 6 (gap closure) | MOD-02/MOD-03 (G-18-1, WR-01, D-04) | T-18-41, T-18-42 | Block → unblock → rematch with no reconnect between: no stale preview; post-rematch message still delivered | integration (broker capture) + unit (mockk) | `./gradlew test --tests "com.catspell.api.moderation.BlockEnforcementIntegrationTest" --tests "com.catspell.api.match.MatchServiceTest"` | ✅ (extend) | ✅ green |
+| 18-12-T2 | 18-12 | 6 (gap closure) | MOD-03 (G-18-1) | T-18-41 | Unmatch → rematch with no reconnect between; sweep runs only on reactivation and before `MatchCreatedEvent` | integration + unit (`verifyOrder`) | `./gradlew test --tests "com.catspell.api.moderation.BlockEnforcementIntegrationTest" --tests "com.catspell.api.match.MatchServiceTest"` | ✅ (extend) | ✅ green |
+| 18-12-T3 | 18-12 | 6 (gap closure) | MOD-02/MOD-03 (D-05 amendment) | — | `deliverUnreadMessages` KDoc names both suppression points (KDoc-only diff); dated D-05 amendment present | docs gate | KDoc-only `git diff -U0` + amendment grep (see 18-12-PLAN) | ✅ | ✅ green |
+| WR-02 fix | 18-REVIEW-FIX | post-review | MOD-02/MOD-03 (D-04) | — | Hidden set is read before undelivered rows; hidden messages marked delivered, not pushed; only visible are counted; empty participations → 0 with no reads | unit (mockk `verifyOrder`) | `./gradlew test --tests "com.catspell.api.chat.ChatServiceDeliverUnreadTest"` | created by audit | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -92,9 +96,8 @@ No framework install is needed.
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Production reverse-proxy shape (`RATE_LIMIT_TRUSTED_PROXIES`, `WAITLIST_ALLOWED_ORIGINS`) | WAIT-03 | Deploy-time configuration (deferred) | Checked at deploy; out of scope for this phase |
-| D-04 rematch before reconnect: a message left undelivered before a block or unmatch must not be pushed when the pair rematches before the recipient reconnects (18-REVIEW WR-01, VERIFICATION D1) | MOD-02, MOD-03 | Escalated. The current code pushes in this sequence, and closing it needs the D-04 vs D-05 decision pending in 18-UAT.md test 1 | (a) Accept: record the override and fix the `ChatService.deliverUnreadMessages` KDoc. (b) Gap: amend D-05, mark undelivered messages delivered on the `MatchService.createMatch` reactivation branch, and add a no-reconnect-between test to `BlockEnforcementIntegrationTest` |
 
-*All other in-scope phase behaviors have automated verification. The three existing rematch tests cover only the sequence with a suppressed reconnect in between.*
+*All other in-scope phase behaviors have automated verification. The D-04 rematch-before-reconnect item that used to be listed here is now automated by 18-12 (Tests H and I) and the WR-02 ordering test.*
 
 ---
 
@@ -105,9 +108,9 @@ No framework install is needed.
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 300s
-- [ ] `nyquist_compliant: true` set in frontmatter (blocked on the D-04 manual-only item)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** partial. 22/22 tasks are automated; 1 behavior is manual-only and waits on the 18-UAT.md decision.
+**Approval:** approved 2026-10-05. 25/25 tasks plus the WR-02 review fix are automated; the only manual-only item is deploy-time proxy configuration (out of scope).
 
 ---
 
@@ -135,3 +138,17 @@ No framework install is needed.
 - **State:** A. Source and tests are still unchanged since `a78c9e4`, and 18-UAT.md test 1 is still pending.
 - **Fresh green evidence:** Podman (applehv, arm64) is healthy now. `./gradlew test --rerun-tasks` on the six key classes passed 6 classes / 69 tests with 0 failures (2026-10-05 09:21 to 09:25 Z, BUILD SUCCESSFUL in 7m 13s): BlockEnforcement, RateLimitBypass, TrustedProxyMatcher, WaitlistConfirm, WaitlistAdmin and WaitlistServiceConvert. This replaces the hung re-run noted above.
 - **Escalated:** D-04 stays manual-only. User choice: keep it manual-only until the 18-UAT.md decision.
+
+## Validation Audit 2026-10-05 (post-18-12)
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 2 |
+| Resolved | 2 |
+| Escalated | 0 |
+
+- **State:** A. Since the previous audit, plan 18-12 (G-18-1) and the 18-REVIEW-FIX WR-02 read reorder have landed (`57c6a39`).
+- **Gap 1 (MISSING), WR-02 read ordering:** the fix had only been compile-checked. The new `src/test/kotlin/com/catspell/api/chat/ChatServiceDeliverUnreadTest.kt` has 2 tests. One checks the hidden-before-undelivered order with mockk `verifyOrder`, plus suppression, a visible-only push and the return value. The other covers the empty-participations early return. **Mutation check:** swapping the two reads makes the ordering test fail ("calls are not in verification order"). The source was then restored, and the restore was confirmed with `git diff --quiet`.
+- **Gap 2 (PARTIAL), 18-12 tests on current code:** fresh run of `BlockEnforcementIntegrationTest` + `MatchServiceTest` + `com.catspell.api.chat.*`, 2026-10-05 ~12:42–12:45 Z. Result: 41 tests, 0 failures, 0 errors, no flake. Breakdown: BlockEnforcement 14, MatchServiceTest 5, ChatIntegrationTest 10, ConversationList 10, ChatServiceDeliverUnread 2.
+- **D-04:** removed from Manual-Only, because Tests H and I now automate it. `nyquist_compliant: true`.
+- **Out of scope:** `5cc4776` (concurrent first-message fix) is not part of any phase 18 plan.
