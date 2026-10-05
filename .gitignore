@@ -19,3 +19,7 @@ out/
 
 # Logs
 *.log
+
+# GSD local tool state
+.gsd/
+.planning/state.json
