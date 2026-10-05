@@ -1,8 +1,8 @@
 ---
 phase: 18-address-tech-debt-post-block-redelivery-waitlist-review-warn
-verified: 2026-10-04T17:00:00Z
-status: human_needed
-score: 68/69 must-haves verified
+verified: 2026-10-05T10:39:00Z
+status: passed
+score: 75/75 must-haves verified
 covered_files:
   - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-01-PLAN.md"
   - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-01-SUMMARY.md"
@@ -26,12 +26,16 @@ covered_files:
   - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-10-SUMMARY.md"
   - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-11-PLAN.md"
   - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-11-SUMMARY.md"
+  - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-12-PLAN.md"
+  - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-12-SUMMARY.md"
+  - ".planning/phases/18-address-tech-debt-post-block-redelivery-waitlist-review-warn/18-CONTEXT.md"
   - "build.gradle.kts"
   - "docs/CONFIGURATION.md"
   - "src/main/kotlin/com/catspell/api/auth/service/EmailChangeService.kt"
   - "src/main/kotlin/com/catspell/api/auth/service/EmailVerificationService.kt"
   - "src/main/kotlin/com/catspell/api/auth/service/PasswordResetService.kt"
   - "src/main/kotlin/com/catspell/api/chat/model/ConversationRepository.kt"
+  - "src/main/kotlin/com/catspell/api/chat/model/MessageRepository.kt"
   - "src/main/kotlin/com/catspell/api/chat/service/ChatService.kt"
   - "src/main/kotlin/com/catspell/api/common/config/SecurityConfig.kt"
   - "src/main/kotlin/com/catspell/api/common/config/WaitlistCorsPolicy.kt"
@@ -47,6 +51,7 @@ covered_files:
   - "src/main/kotlin/com/catspell/api/email/service/WaitlistInviteEmailRenderer.kt"
   - "src/main/kotlin/com/catspell/api/invite/controller/InviteAdminController.kt"
   - "src/main/kotlin/com/catspell/api/invite/service/InviteService.kt"
+  - "src/main/kotlin/com/catspell/api/match/service/MatchService.kt"
   - "src/main/kotlin/com/catspell/api/moderation/service/ReportService.kt"
   - "src/main/kotlin/com/catspell/api/waitlist/controller/WaitlistAdminController.kt"
   - "src/main/kotlin/com/catspell/api/waitlist/controller/WaitlistController.kt"
@@ -69,6 +74,7 @@ covered_files:
   - "src/test/kotlin/com/catspell/api/invite/InviteAdminEndpointIntegrationTest.kt"
   - "src/test/kotlin/com/catspell/api/invite/InviteGateIntegrationTest.kt"
   - "src/test/kotlin/com/catspell/api/invite/InviteServiceTest.kt"
+  - "src/test/kotlin/com/catspell/api/match/MatchServiceTest.kt"
   - "src/test/kotlin/com/catspell/api/moderation/BlockEnforcementIntegrationTest.kt"
   - "src/test/kotlin/com/catspell/api/waitlist/WaitlistAdminIntegrationTest.kt"
   - "src/test/kotlin/com/catspell/api/waitlist/WaitlistConfirmIntegrationTest.kt"
@@ -82,211 +88,189 @@ covered_files:
   - "src/test/kotlin/com/catspell/api/waitlist/WaitlistRateLimitIntegrationTest.kt"
   - "src/test/kotlin/com/catspell/api/waitlist/WaitlistServiceConvertTest.kt"
   - "src/test/resources/application.yml"
-covered_digest: "v2:sha256:363b06e1307347f85cfdf45c9e57f92d986cc874836ab25d7642094b4fe81c42"
+covered_digest: "v2:sha256:b312007ef1a0e6877ce7a7c6f33f4bf6c3b031c66812b0c80c432f311877b1ef"
 behavior_unverified: 0
 overrides_applied: 0
-human_verification:
-  - test: "Decide the D-04 rematch residual (18-REVIEW WR-01). Sequence: A sends B messages while matched (live-pushed, so delivered stays false) -> A blocks or unmatches B -> unblock + mutual re-like (same match row reactivated) -> only then B reconnects."
-    expected: "Either (a) accept as within scope: the push happens for a conversation that is active again, whose full history is visible to B, so no hidden content leaks and the roadmap goal's literal wording holds; record an override and correct the ChatService.deliverUnreadMessages KDoc, which claims suppressed messages 'can't resurface'. Or (b) treat it as a gap: amend D-05 to allow one set-based UPDATE on the MatchService.createMatch reactivation branch (mark the match's undelivered messages delivered), add a no-reconnect-between test, and fix the KDoc."
-    why_human: "D-04 promises messages 'can't resurface if the pair later rematches', but D-05 confines the fix to the reconnect path, and with that constraint the no-reconnect-between sequence cannot be closed. The two locked decisions conflict here. RESEARCH Pitfall 6 recorded it as an accepted limitation, but the user's own discussion choice was made for the 'can't resurface after a rematch' guarantee. Only the developer can resolve which decision wins."
+re_verification:
+  previous_status: human_needed
+  previous_score: 68/69
+  gaps_closed:
+    - "G-18-1 / D-04: messages left undelivered when a conversation was hidden (block or unmatch) no longer resurface as /queue/notifications previews after a rematch, whether or not the recipient reconnected in between (plan 18-12; resolves the prior human_verification item by code, not by override)"
+  gaps_remaining: []
+  regressions: []
+advisory:
+  - finding: "18-REVIEW WR-02: a reconnect that overlaps a rematch commit can still push pre-hide previews. deliverUnreadMessages reads the undelivered rows (ChatService.kt:290) before the hidden set (ChatService.kt:295). Under PostgreSQL READ COMMITTED, a rematch (endedAt = null plus the sweep) that commits between those two statements leaves the first read stale (rows still delivered = false) while the second read sees the match as active. The @Async WebSocketSessionListener makes the overlap possible."
+    category: other
+    reason: "Does not undermine the goal. At the moment of that push the match is already reactivated and committed, so no preview is pushed for a blocked or ended conversation (W1 holds), and B can read the full history anyway. G-18-1 as written (the sequential no-reconnect-between sequence) is closed and test-proven. It is a millisecond concurrency window of the kind D-06 already accepts for send-vs-block. It does make D-04's 'can't resurface' promise, and the KDoc sentence 'Only the two together keep...', slightly stronger than the code. Resolve it by giving WR-02 a disposition in 18-REVIEW-DISPOSITION.md before ship: fix it (read the hidden set before the undelivered rows, a two-line reorder; the reviewer shows that every commit ordering is then safe) or mark it deferred with a reason."
+    evidence_status: "none provided (no test reproduces the interleaving; reasoning from code confirmed by me)"
+  - finding: "18-REVIEW IN-07 / IN-08 (info): bare @Modifying leaves managed Message entities stale for any future caller that holds them in the same transaction (no current caller does); the integration helper asserts the sweep result after the symptom assertions, so a regression's first failure message points at the reconnect path."
+    category: other
+    reason: "Code-quality items, no behavior impact today. Still 'open' in 18-REVIEW-DISPOSITION.md, together with IN-01..IN-06. Give them dispositions before ship."
+    evidence_status: "none provided"
 ---
 
 # Phase 18: Address tech debt (post-block redelivery + waitlist review warnings) Verification Report
 
 **Phase Goal:** Close the v2.2 audit tech debt without adding a capability. WebSocket reconnect never pushes previews for blocked or ended conversations (W1). Every open Phase 17 review warning, plus the chosen cheap info items and the stale-Bearer audit item, is fixed. Every finding has a recorded disposition.
-**Verified:** 2026-10-04T17:00:00Z
-**Status:** human_needed
-**Re-verification:** No (initial verification)
+**Verified:** 2026-10-05T10:39:00Z
+**Status:** passed
+**Re-verification:** Yes. This pass follows gap closure for UAT gap G-18-1 (plan 18-12).
 
-Context: stage-only repository. All phase-18 work is staged on `phase/18-address-tech-debt-post-block-redelivery-waitlist-review-warn`, and HEAD is still 605ddb4. I checked the working tree and `git diff --cached`, not commits.
+Context: stage-only repository. HEAD is `add8a2f`. All 18-12 changes are staged and not committed. I read the working tree and `git diff --cached`. Nothing is unstaged under `src/`. The staged source delta is limited to MessageRepository.kt, MatchService.kt, ChatService.kt (KDoc only), MatchServiceTest.kt and BlockEnforcementIntegrationTest.kt.
 
 ## Goal Achievement
 
-ROADMAP Phase 18 has no `success_criteria` array. The truths below are the five goal clauses plus the 63 PLAN `must_haves.truths` (11 plans), and one derived truth for D-04's rematch promise.
+ROADMAP Phase 18 has no `success_criteria` array. The truths are the five goal clauses, the 63 PLAN truths from 18-01..18-11, and the 7 truths from 18-12. The prior derived truth D1 (the D-04 rematch promise) restates 18-12 truths 1-2, so I fold it into them.
 
 ### Goal-level truths
 
 | # | Goal clause | Status | Evidence |
 |---|-------------|--------|----------|
-| G1 | Reconnect never pushes previews for blocked or ended conversations (W1) | VERIFIED | `ChatService.deliverUnreadMessages` (ChatService.kt:272-309) calls `conversationRepository.findHiddenConversationIdsForUser(userId)` once (ended match OR a block row either way, ConversationRepository.kt:19-29). It partitions the undelivered messages, marks the hidden ones `delivered = true` with no push, and pushes only the visible ones. A broker-channel `ChannelInterceptor` test harness proves zero `/user/<id>/queue/notifications` sends for: a block by the sender, a block by the recipient, an unmatch, a block row alone with the match active, and a rematch after a suppressed reconnect. A third-party conversation is still pushed exactly once. My re-run: BlockEnforcementIntegrationTest 12/12 passed. |
-| G2 | Every open Phase 17 review warning fixed | VERIFIED | Current review WR-01/WR-02 (18-03). First review WR-03..WR-08 (18-04..18-10). The dropped warnings were re-added as WR-10 (Caffeine-backed `RateLimitBuckets` used by all 8 bucket stores, with no bucket `ConcurrentHashMap` left in src/main) and WR-11 (cooldown + 3 per 24 h). Details per plan below. |
-| G3 | Chosen cheap info items fixed | VERIFIED | Current IN-01 (`RequestPaths.normalized`), IN-02 (`hasIpLiteralShape` private, `canonicalize` public), IN-04 (docs env table), IN-05 (one-shot `AtomicBoolean` WARN). First review IN-01→IN-08 (rendered TTL), IN-02→IN-09 (central filter, so 401 comes before 400), IN-04→IN-11 (`findByNormalizedEmail` removed, `findStoredEmail` added), IN-05→IN-12 (`UriComponentsBuilder`), IN-06 (exact JWT skip list), IN-07 (`URI.create` at construction). |
-| G4 | Stale-Bearer audit item fixed | VERIFIED | `JwtAuthenticationFilter.shouldNotFilter` skips `/api/admin` and `/api/admin/` on the normalized path. `AdminTokenFilter` is registered on `/api/admin/*` at `HIGHEST_PRECEDENCE + 10`. Test `correct token with a stale Bearer header still lists entries` passed in my re-run (WaitlistAdminIntegrationTest 16/16). |
-| G5 | Every finding has a recorded disposition | VERIFIED | `.planning/phases/17-waitlist-landing-page-api/17-REVIEW-DISPOSITION.md`: 26 rows, `open: 0`, 24 `fixed` (each Phase 18 row cites its plan), 2 `deferred` (current IN-03, first-review IN-03→IN-10) with the reason in the Source cell. I cross-checked against both reviews. First review (`git show aa09317`): CR-01, CR-02, WR-01..WR-09, IN-01..IN-07, all mapped (WR-01→WR-10, WR-02→WR-11, IN-01..IN-05→IN-08..IN-12). Current review: WR-01, WR-02, IN-01..IN-05, all present. The audit item is AUD-01. No finding is missing. |
+| G1 | Reconnect never pushes previews for blocked or ended conversations (W1) | VERIFIED | Reconnect path unchanged since the prior pass. The ChatService staged diff has no non-comment line. It still calls `findHiddenConversationIdsForUser` once, partitions, suppresses and pushes. 18-12 adds a second suppression point: `MatchService.createMatch` reactivation sweep. BlockEnforcementIntegrationTest has 14 tests, 0 failures (12 prior plus H/I). |
+| G2 | Every open Phase 17 review warning fixed | VERIFIED | Regression check: the symbols from 18-02..18-10 are present (RateLimitBuckets `expireAfterAccess`, `canonicalize`, `MIN_ADMIN_TOKEN_LENGTH`, `resendCutoff`, `checkOrigin`, `adminTokenGuard.require`, `saveAndFlush`). No files outside the 18-12 set are in the staged source diff. Full suite is green (below). |
+| G3 | Chosen cheap info items fixed | VERIFIED | Unchanged since the prior pass. Files untouched by 18-12. Full suite green. |
+| G4 | Stale-Bearer audit item fixed | VERIFIED | Unchanged. WaitlistAdminIntegrationTest is in the green 514-test run. |
+| G5 | Every finding has a recorded disposition | VERIFIED | `17-REVIEW-DISPOSITION.md` still has `open: 0` (26 rows). The goal's finding set is the Phase 17 reviews plus the audit item. The Phase 18 review ledger (`18-REVIEW-DISPOSITION.md`) records WR-01 as `fixed`, citing 18-12. Its other 9 rows are recorded as `open`. Those are post-phase findings outside the goal's set (see Advisory). |
 
-### Plan must-have truths
-
-| Plan | Truths | Status | Key evidence (code read + tests) |
-|------|--------|--------|----------------------------------|
-| 18-01 W1 | 6 | 6 VERIFIED | The set-based query plus the partition (above). `MatchService`, `BlockService` and the migrations have an empty staged diff. Tests A-G present and passing. |
-| 18-02 WR-10 helper | 6 | 6 VERIFIED | RateLimitBuckets.kt: Caffeine `maximumSize` + `expireAfterAccess(window)`, no `expireAfterWrite` anywhere in src/main, `require` guards in `init`, atomic `cache.get`. build.gradle.kts:53 has `implementation("com.github.ben-manes.caffeine:caffeine")` with no version and no bucket4j-caffeine. ReportService, PasswordResetService, EmailVerificationService and EmailChangeService use `RateLimitBuckets(...)` with `rate-limit.max-tracked-keys:100000`. RateLimitBucketsTest (fake Ticker) has 6 tests. |
-| 18-03 XFF/CIDR/WARN | 7 | 7 VERIFIED | `TrustedProxyMatcher.canonicalize` strips `[...]` and `:port`, shape-checks the host, then re-renders it from the parsed bytes. `RateLimitFilter.resolveClientIp` canonicalizes every hop and returns `remoteAddr` on null. The WARN is guarded by `AtomicBoolean.compareAndSet` and names the peer and both setting names. TrustedProxyMatcherTest (10 tests, including the `172.16.0.0/12` and `/41` edges) and RateLimitBypassIntegrationTest (13 tests) passed in my re-run. The three shared-context `@TestPropertySource` arrays are byte-identical (same md5). |
-| 18-04 copy/links/URLs | 5 | 5 VERIFIED | The confirm renderer renders the TTL (days/hours) and the cooldown, says "Only the link in the most recent email from us works", and no longer has "still confirmed" text. Both renderers use `UriComponentsBuilder`. `WaitlistController` builds `successUri`/`errorUri` with `URI.create` at construction and picks between them per request. WaitlistConfirmEmailRendererTest, WaitlistControllerUrlTest. |
-| 18-05 admin token length | 4 | 4 VERIFIED | `AdminTokenGuard.init` `check(blank OR length >= 32)` uses a fixed message that never contains the token. `MessageDigest.isEqual` is kept. `TEST_ADMIN_TOKEN` (34 characters) is used in 33 places. AdminTokenGuardStartupTest (`ApplicationContextRunner`) covers blank, 31, 32. |
-| 18-06 cooldown/pin/cap | 7 | 7 VERIFIED | `rotatePendingToken`: `AND (e.confirmTokenHash IS NULL OR e.updatedAt <= :resendCutoff)`, and `email` is never in the SET clause. `findStoredEmail` feeds the event. `per-email-refill-hours:24`. V24 migration not in the diff. WaitlistConfirmIntegrationTest (13 tests, including `INTERVAL '16 minutes'` backdating) passed in my re-run. |
-| 18-07 three families + path | 6 | 6 VERIFIED | `bucketFamilyFor` covers exact `POST /api/waitlist`, admin prefix (any method) and AUTH_PATHS, all on `RequestPaths.normalized`. URL patterns are exactly `/api/auth/*`, `/api/waitlist`, `/api/admin/*`. All three families are `RateLimitBuckets`. The no-arg constructor still works because every parameter has a default. RequestPathsTest covers `/api/auth/./login`. |
-| 18-08 convert I/O | 5 | 5 VERIFIED | `InviteService.create` calls `saveAndFlush`. `convertToInvite` calls `create(null)`, then render, then `sendBounded` (a private `ThreadPoolExecutor`, not a bean). The timeout, rejection, ExecutionException (unwrapped) and interrupt paths each throw `WaitlistInviteDeliveryException(cause = ...)` and log one fixed WARN with no address. The non-SUCCESS branch logs a WARN and throws. WaitlistServiceConvertTest (5 tests: verifyOrder, timeout, cause, non-SUCCESS, renderer passthrough) passed in my re-run. |
-| 18-09 CORS 429 | 4 | 4 VERIFIED | `WaitlistCorsPolicy.configuration` is shared by `SecurityConfig.corsConfigurationSource` and the `RateLimitFilter` 429 branch (`checkOrigin`, no `DefaultCorsProcessor`, `Vary: Origin` always, ACAO and Expose-Headers only for allowed origins, join family only). WaitlistCors429IntegrationTest has 5 tests. |
-| 18-10 admin boundary | 7 | 7 VERIFIED | `AdminTokenFilter` (not a `@Component`; registered only via `FilterRegistrationBean`) calls `adminTokenGuard.require`. The JWT skip list is exact for `/api/waitlist` and `/api/waitlist/confirm`, plus the `/api/admin` prefix. `SecurityConfig` has `/api/admin/**` permitAll. Handler `require` calls are kept as defense in depth. Tests for unmapped path 401/404, `limit=abc` 401 and stale Bearer all passed in my re-run. |
-| 18-11 docs/keys/disposition | 6 | 6 VERIFIED | application.yml declares all 7 keys with the same defaults as `@Value`. docs/CONFIGURATION.md lists every env var (the grep counts are non-zero for each), the Production row names the three settings, line 285 lists Caffeine, and the 32-character rule is documented. Disposition file as in G5. Full-suite gate: 511/511 per orchestrator evidence (Gradle `:test UP-TO-DATE` on an unfiltered re-run). |
-
-### Derived truth (D-04 promise)
+### 18-12 must-have truths (gap closure G-18-1)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| D1 | A message left undelivered before a block or unmatch can never be pushed after a rematch (D-04: "it can't resurface if the pair later rematches") | UNCERTAIN (human decision) | Only conditionally true. `sendMessage` (ChatService.kt:74-110) pushes live but never sets `delivered`. `MatchService.createMatch` reactivation (MatchService.kt:41-46) clears `endedAt` without touching messages. So if B does not reconnect between the block/unmatch and the rematch, `findHiddenConversationIdsForUser` no longer returns the conversation on B's next reconnect, and the pre-block messages are pushed. All three rematch tests put a suppressed reconnect in between, so none of them covers this path. The ChatService KDoc (lines 263-267) states the guarantee without that condition. |
+| 1 | Block path, no reconnect between: every pre-block message (both directions) is delivered at rematch, and B's and A's first reconnects push 0 and return 0 | VERIFIED | `assertNoStalePreviewWhenRematchPrecedesReconnect` (BlockEnforcementIntegrationTest.kt:410-453, tests at :456 and :466). It sends 2 A→B messages and 1 B→A reply, asserts all start `delivered = false`, then runs block + unblock, then `matchPair` (real `POST /api/discovery/swipe` ×2). It asserts the same match row with `endedAt == null`, captures `delivered` via JDBC right after the rematch, then calls `deliverUnreadMessages` for B and A. The broker-captured notifications for each must be 0, both return values must be 0, and the sweep snapshot must be `[true, true, true]`. Test `pre-block messages do not resurface when the pair rematches before the recipient reconnects` passed. Discrimination: without line MatchService.kt:50, B's reconnect would push 2 and A's would push 1. The asserts would fail (the summary records the mutation check, and my code reading agrees). |
+| 2 | Same on the unmatch path | VERIFIED | Same helper with `matchService.unmatch(a.id, b.id)` as the hide step. Test `pre-unmatch messages do not resurface when the pair rematches before the recipient reconnects` passed. |
+| 3 | No over-suppression: a post-rematch message is pushed live once, starts undelivered, and is pushed once on the next reconnect (returns 1) | VERIFIED | Control block in the same helper (lines 442-452), run for both paths. It passed. |
+| 4 | D-05 as amended: one set-based `@Modifying` UPDATE, called only in the reactivation branch and before `MatchCreatedEvent`, never for a new or still-active match. `endMatch` and BlockService unchanged | VERIFIED | MessageRepository.kt:47-49 is `UPDATE Message m SET m.delivered = true WHERE m.conversation.match.id = :matchId AND m.delivered = false`. It is one statement with no entity load. The only call site is MatchService.kt:50, inside `if (existing.endedAt != null)`, after `save` and before `publishEvent`. `grep` shows `endedAt = null` only at MatchService.kt:47, so it is the only reactivation point. Both production callers (`DiscoveryService.swipe` at :249 and :296) are `@Transactional`. MatchServiceTest: the `verifyOrder { markAllDeliveredForMatch(id); publishEvent(...) }` test, plus `exactly = 0` checks on the new-match, already-active and race-fallback tests. 5/5 passed. `endMatch` (MatchService.kt:77-88) and BlockService have no staged diff. |
+| 5 | ChatService: KDoc only, code byte-identical, both suppression points named | VERIFIED | Every added or removed line in `git diff --cached -U0` of ChatService.kt is a KDoc line (my non-comment filter returned nothing). The KDoc names "Suppression point 1 (here)" and "Suppression point 2 (`MatchService.createMatch`, reactivation branch)" and links `[MessageRepository.markAllDeliveredForMatch]`. |
+| 6 | 18-CONTEXT.md D-05 keeps its sentence and gains a dated amendment naming G-18-1 / 18-12 and stating that `endMatch` is unchanged | VERIFIED | The staged diff adds one indented "**Amended 2026-10-05 (UAT G-18-1, plan 18-12):**" bullet under D-05. The original D-05 line is unmodified. The bullet says "Block/unmatch teardown in `MatchService.endMatch` stays unchanged, and there is still no per-message loop." |
+| 7 | No regression: the 12 prior BlockEnforcement tests, the match, chat and moderation packages, and PushTriggerIntegrationTest pass | VERIFIED | `build/test-results/test`: 81 classes, 514 tests, 0 failures, 0 errors, 1 skipped (FcmSmokeTest, a pre-existing opt-in smoke test). The result XMLs (10:22Z) are newer than every 18-12 source mtime (latest 10:12Z), so they reflect this tree. The ChatIntegrationTest flake did not occur. |
 
-**Score:** 68/69 truths verified (0 present-but-behavior-unverified; 1 uncertain, routed to human decision)
+### Plan must-have truths, 18-01..18-11 (regression check)
 
-### WR-01 classification (orchestrator question, answered plainly)
+| Plan | Truths | Status | Regression evidence |
+|------|--------|--------|---------------------|
+| 18-01 W1 | 6 | 6 VERIFIED | The ChatService code path is unchanged (diff is KDoc only). `findHiddenConversationIdsForUser` is unchanged (no diff for ConversationRepository.kt). Tests A-G are among the 14 passing. The prohibition "no change to MatchService.endMatch" still holds: 18-12 touches only `createMatch` and the constructor. |
+| 18-02 WR-10 | 6 | 6 VERIFIED | Files untouched. Tests green. |
+| 18-03 XFF/CIDR/WARN | 7 | 7 VERIFIED | Files untouched. Tests green. |
+| 18-04 copy/links/URLs | 5 | 5 VERIFIED | Files untouched. Tests green. |
+| 18-05 admin token length | 4 | 4 VERIFIED | Files untouched. Tests green. |
+| 18-06 cooldown/pin/cap | 7 | 7 VERIFIED | Files untouched. Tests green. |
+| 18-07 three families + path | 6 | 6 VERIFIED | Files untouched. Tests green. |
+| 18-08 convert I/O | 5 | 5 VERIFIED | Files untouched. Tests green. |
+| 18-09 CORS 429 | 4 | 4 VERIFIED | Files untouched. Tests green. |
+| 18-10 admin boundary | 7 | 7 VERIFIED | Files untouched. Tests green. |
+| 18-11 docs/keys/disposition | 6 | 6 VERIFIED | Files untouched. `17-REVIEW-DISPOSITION.md` `open: 0`. |
 
-- **Against the goal's literal wording: within scope as achieved.** Every reconnect push goes to a conversation that is currently visible: not ended, no block row either way. At the moment WR-01's push happens, the pair has rematched, the conversation is active, and B can read the full history anyway (`getMessages` has no time filter). No preview is ever pushed for a blocked or ended conversation, and no hidden content leaks.
-- **Against D-04: not fully achieved.** D-04's purpose clause ("can't resurface if the pair later rematches") holds only when a reconnect happens while the conversation is hidden. Because live-pushed messages are never marked delivered, this is the common case, not a rare one. The plan's own must-have was written with the intermediate reconnect as a condition, so the plans pass while D-04's promise is weaker than stated.
-- **Not a deferred item.** No later milestone phase exists in ROADMAP.md (Phase 18 is last).
-- **Not a FAILED gap either.** D-05 ("the fix lives only on the reconnect path") rules out the reviewer's fix on the reactivation path. Under the locked decisions as written, this sequence cannot be closed, and RESEARCH Pitfall 6 and 18-01-SUMMARY "Known Limitations" record it openly. The two locked decisions conflict here, so I escalate it to the developer instead of failing the phase. Either outcome needs a follow-up edit: an override plus a KDoc correction, or a D-05 amendment plus a small fix and test.
+The detailed per-truth evidence for 18-01..18-11 is unchanged from the 2026-10-04 pass (git `fcf9dd0`).
 
-If you accept it, add to the frontmatter:
+**Score:** 75/75 truths verified (0 present-but-behavior-unverified, 0 uncertain, 0 overrides).
 
-```yaml
-overrides:
-  - must_have: "A message left undelivered before a block or unmatch can never be pushed after a rematch"
-    reason: "Rematch-before-reconnect pushes only for an active, fully visible conversation (no hidden content); D-05 confines the fix to the reconnect path; recorded as RESEARCH Pitfall 6 / 18-01 Known Limitations. ChatService KDoc to be corrected."
-    accepted_by: "<name>"
-    accepted_at: "<ISO timestamp>"
-```
+### Resolution of the prior human-verification item (D-04 / WR-01)
 
-### Required Artifacts
+The 2026-10-04 pass left D1 UNCERTAIN because D-04 and D-05 conflicted. The user chose (b) at UAT. 18-12 amends D-05 and closes the sequence in code. Pre-hide messages are swept to `delivered = true` in the same transaction that clears `endedAt`, so after the rematch commits, a later reconnect has nothing stale left to push. The no-reconnect-between path, which the old tests missed, now has its own tests for both hide paths. So the item is resolved by code, not by an override.
 
-| Artifact | Status | Details |
-|----------|--------|---------|
-| chat/model/ConversationRepository.kt `findHiddenConversationIdsForUser` | VERIFIED | JPQL with ended-or-EXISTS-block, used by ChatService |
-| chat/service/ChatService.kt | VERIFIED | partition, suppress, push |
-| common/ratelimit/RateLimitBuckets.kt | VERIFIED | 8 call sites |
-| common/security/TrustedProxyMatcher.kt `canonicalize` | VERIFIED | used by RateLimitFilter |
-| common/security/RateLimitFilter.kt | VERIFIED | 3 families, AtomicBoolean, CORS 429 |
-| common/security/RequestPaths.kt | VERIFIED | used by RateLimitFilter and JwtAuthenticationFilter |
-| common/security/AdminTokenFilter.kt | VERIFIED | `FilterRegistrationBean` on `/api/admin/*`, order HIGHEST_PRECEDENCE + 10 |
-| common/security/AdminTokenGuard.kt `MIN_ADMIN_TOKEN_LENGTH` | VERIFIED | startup check |
-| common/config/WaitlistCorsPolicy.kt | VERIFIED | injected into SecurityConfig and RateLimitFilterConfig |
-| email/service/WaitlistConfirmEmailRenderer.kt, WaitlistInviteEmailRenderer.kt | VERIFIED | UriComponentsBuilder, rendered TTL and cooldown |
-| waitlist/controller/WaitlistController.kt | VERIFIED | successUri/errorUri parsed at construction |
-| waitlist/model/WaitlistEntryRepository.kt | VERIFIED | `resendCutoff`, `findStoredEmail` |
-| waitlist/service/WaitlistService.kt | VERIFIED | cooldown, pinned address, bounded send |
-| invite/service/InviteService.kt | VERIFIED | saveAndFlush |
-| common/exception/Exceptions.kt | VERIFIED | `cause: Throwable? = null` |
-| src/main/resources/application.yml, docs/CONFIGURATION.md | VERIFIED | all keys declared and documented |
-| 17-REVIEW-DISPOSITION.md | VERIFIED | 26/26 recorded, 0 open |
-| Tests (17 new or extended classes) | VERIFIED | listed in covered_files |
+### WR-02 judgment (reconnect racing a rematch commit)
+
+I confirmed the race in code. `deliverUnreadMessages` reads undelivered rows (ChatService.kt:290) before the hidden set (:295). `WebSocketSessionListener.handleSessionConnected` is `@Async`, so a reconnect can overlap a rematch transaction. No isolation level is set anywhere in src/main, so PostgreSQL uses READ COMMITTED. My assessment:
+
+- **It does not undermine the goal.** W1 says reconnect never pushes previews for blocked or ended conversations. In the WR-02 interleaving, the hidden-set read sees the match as already reactivated and committed. The push is for an active conversation whose full history B can already read. No hidden content leaks.
+- **G-18-1 as specified is closed.** Its truth covers the sequential case, "whether or not the recipient reconnected between the block/unmatch and the rematch." Both sequential orderings are tested and pass. WR-02 is a third case: a reconnect concurrent with the rematch commit, in a window of milliseconds.
+- **The project has precedent for accepting this kind of window.** D-06 accepts the send-vs-block push race on the same delivery surface.
+- **It is still worth closing.** D-04's wording ("can't resurface") is unconditional, and the user chose (b) to make it so. The fix is cheap: swap the two reads. Under READ COMMITTED every commit ordering is then safe, as the reviewer shows. The KDoc sentence "Only the two together keep..." should then say the read order is load-bearing.
+
+Classification: recorded as an advisory item, not blocking. It needs a disposition (`fixed` or `deferred` with reason) in 18-REVIEW-DISPOSITION.md before ship.
+
+### Required Artifacts (18-12)
+
+| Artifact | Expected | Status | Details |
+|----------|----------|--------|---------|
+| `chat/model/MessageRepository.kt` | `fun markAllDeliveredForMatch` | VERIFIED | `@Modifying @Query` bulk UPDATE, returns Int, KDoc present. Called from MatchService. |
+| `match/service/MatchService.kt` | `messageRepository.markAllDeliveredForMatch(existing.id!!)` | VERIFIED | Line 50, reactivation branch only. Constructor gains `messageRepository` (Spring-injected). |
+| `moderation/BlockEnforcementIntegrationTest.kt` | "rematches before the recipient reconnects" | VERIFIED | Two tests plus a shared helper. Both pass. |
+| `match/MatchServiceTest.kt` | `markAllDeliveredForMatch` | VERIFIED | Ordering test plus 2 negative checks (`exactly = 0`). 5/5 pass. |
+| `chat/service/ChatService.kt` | KDoc contains `markAllDeliveredForMatch` | VERIFIED | Line 273. |
+| `18-CONTEXT.md` | contains `G-18-1` | VERIFIED | D-05 amendment bullet. |
 
 ### Key Link Verification
 
 | From | To | Via | Status |
 |------|----|-----|--------|
-| ChatService.deliverUnreadMessages | ConversationRepository.findHiddenConversationIdsForUser | one call per reconnect | WIRED |
-| BlockEnforcementIntegrationTest | brokerChannel | `addInterceptor(captureInterceptor)` | WIRED |
-| ReportService, PasswordReset, EmailVerification, EmailChange, WaitlistService, RateLimitFilter | RateLimitBuckets | `RateLimitBuckets(` | WIRED |
-| RateLimitFilter.resolveClientIp | TrustedProxyMatcher.canonicalize | each hop; null returns remoteAddr | WIRED |
-| RateLimitFilter.doFilter, JwtAuthenticationFilter.shouldNotFilter | RequestPaths.normalized | path decisions | WIRED |
-| WaitlistConfirmEmailRenderer | `confirm-token-ttl-hours:168` / `resend-cooldown-minutes:15` | `@Value` | WIRED |
-| WaitlistController.confirm | successUri / errorUri | `if (...) successUri else errorUri` | WIRED |
-| WaitlistService.join | rotatePendingToken + findStoredEmail | event with stored email | WIRED |
-| WaitlistService.convertToInvite | InviteService.create(null) → saveAndFlush | before the send | WIRED |
-| WaitlistService | GlobalExceptionHandler (502) | `WaitlistInviteDeliveryException(cause = ...)` | WIRED |
-| SecurityConfig / RateLimitFilterConfig | WaitlistCorsPolicy | `waitlistCorsPolicy.configuration`, `checkOrigin` | WIRED |
-| AdminTokenFilter | AdminTokenGuard.require | single constant-time check | WIRED |
-| TestAdminToken | 4 admin-token test classes | `TEST_ADMIN_TOKEN` | WIRED |
-| application.yml | `@Value` bindings | same keys and defaults (`max-tracked-keys`, etc.) | WIRED |
+| MatchService.createMatch (`endedAt != null`) | MessageRepository.markAllDeliveredForMatch | one call after `save`, before `publishEvent`, same transaction | WIRED (code line 50; verifyOrder test) |
+| DiscoveryService.swipe (`@Transactional`) | MatchService.createMatch | mutual LIKE at :249 and :296; the tests reach it via `matchPair` → `POST /api/discovery/swipe` | WIRED |
+| BlockEnforcementIntegrationTest | brokerChannel | existing `ChannelInterceptor` capture; `notificationsTo(` | WIRED |
+| ChatService.deliverUnreadMessages | ConversationRepository.findHiddenConversationIdsForUser | one call per reconnect (unchanged) | WIRED |
+| (prior links from 18-02..18-11) | - | unchanged files | WIRED (regression: symbols present, suite green) |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data | Source | Real data | Status |
 |----------|------|--------|-----------|--------|
-| deliverUnreadMessages pushes | undelivered messages minus hidden ids | `messageRepository` derived query + JPQL hidden-id query | yes (DB) | FLOWING |
-| Confirmation email recipient | stored email | `findStoredEmail` scalar JPQL | yes (DB) | FLOWING |
-| Rate-limit key | canonical hop or remoteAddr | request headers + socket | yes | FLOWING |
+| Rematch sweep | `messages.delivered` for the match's conversation | JPQL bulk UPDATE on the DB | yes | FLOWING (asserted via JDBC `SELECT delivered`) |
+| Reconnect pushes | undelivered minus hidden | derived query + JPQL hidden-id query | yes | FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| W1 suppression, rematch, block-row-only, visible push still once | `./gradlew test --tests ...BlockEnforcementIntegrationTest` (plus the 5 classes below, one run) | 12 tests, 0 failures | PASS |
-| Stale Bearer, central filter, 401 before 400/404 | WaitlistAdminIntegrationTest | 16 tests, 0 failures | PASS |
-| Cooldown, pinned address | WaitlistConfirmIntegrationTest | 13 tests, 0 failures | PASS |
-| XFF canonicalization, fail-safe, normalized spellings | RateLimitBypassIntegrationTest | 13 tests, 0 failures | PASS |
-| CIDR edges, canonicalize table | TrustedProxyMatcherTest | 10 tests, 0 failures | PASS |
-| Flush-before-send, timeout, cause chain, address-free WARN | WaitlistServiceConvertTest | 5 tests, 0 failures | PASS |
-| Full suite | orchestrator evidence (18-11 run; `:test UP-TO-DATE` re-run) | 80 classes / 511 tests, 0 failures | PASS (not re-run here) |
+| G-18-1 block and unmatch paths, post-rematch control | orchestrator full run on this tree; result XML `TEST-...BlockEnforcementIntegrationTest.xml` | 14 tests, 0 failures (H and I present by name) | PASS |
+| Sweep scoped to reactivation, before publish | `TEST-...match.MatchServiceTest.xml` | 5 tests, 0 failures | PASS |
+| Full suite | orchestrator `./gradlew test` (16m 55s); I summed all 81 result XMLs | 514 tests, 0 failures, 0 errors, 1 skipped | PASS |
 
-My targeted run: `BUILD SUCCESSFUL in 2m 14s`, 69 tests, 0 failures (result XMLs timestamped 2026-10-04T16:52-16:53Z).
+I did not re-run tests. The result XMLs are newer than every changed source file, and there are no unstaged source changes.
 
 ### Probe Execution
 
 No probes declared in the PLANs or SUMMARYs, and no `scripts/*/tests/probe-*.sh` exist. SKIPPED.
 
-### Prohibitions (all `verification: test`)
+### Prohibitions
 
 | Prohibition | Enforcement evidence | Disposition |
 |-------------|----------------------|-------------|
-| 18-01: no change to MatchService.endMatch / BlockService | Staged diff for `match/` and `BlockService.kt` is empty | verified (observed) |
-| 18-01: no deleting or hard-modifying message content | Only `delivered` is set; `messageRepository.existsById` asserted in test A | verified (test) |
-| 18-02: no pinned Caffeine version, no extra artifact | build.gradle.kts has one unversioned line and no bucket4j-caffeine | verified (observed) |
-| 18-02: no expireAfterWrite | No match in src/main; the RateLimitBucketsTest keep-within-window test | verified (test) |
-| 18-03: no DNS lookup from header text | `hasIpLiteralShape` runs before `parseLiteral` in every path | verified (code + TrustedProxyMatcherTest) |
-| 18-03: shared @TestPropertySource arrays identical | md5 is identical across the 3 classes | verified (observed) |
-| 18-05: token never in logs or messages | Fixed `check` message; 31-character startup test asserts the token is absent | verified (test) |
-| 18-06: V24 migration not edited | Not in the staged diff | verified (observed) |
-| 18-06: no logging of email or token | WaitlistService logs contain no address or token | verified (observed) |
-| 18-07: confirm GET and preflight not throttled | Exact `POST` + `/api/waitlist` match | verified (code + tests) |
-| 18-07: no-arg RateLimitFilter() still compiles | All parameters have defaults; RateLimitIntegrationTest in the 511 | verified (test) |
-| 18-08: no Executor/TaskExecutor bean | Private `ThreadPoolExecutor` field; no `@Bean` returns an Executor in src/main | verified (observed) |
-| 18-08: send stays in the convert transaction | `sendBounded` is awaited inside the `@Transactional convertToInvite`; the rollback test is in WaitlistConvertIntegrationTest | verified (test) |
-| 18-09: no CORS processor in the 429 path | No `DefaultCorsProcessor` in src/main; foreign-origin 429 test | verified (test) |
-| 18-09: no wildcard or foreign-origin ACAO | Foreign and no-Origin tests pass. Caveat: an operator-configured `*` would be echoed (18-REVIEW IN-02, pre-existing, open there) | verified (test) |
-| 18-10: AdminTokenFilter not a @Component | The class has no annotation; only a `@Bean FilterRegistrationBean` | verified (observed) |
-| 18-10: no second token comparison | The filter calls `adminTokenGuard.require` | verified (observed) |
-| 18-11: no Kotlin source change in 18-11 | 18-11 SUMMARY staged files are yml, md and the disposition only | verified (observed) |
-
-None are flagged unverified. Each one has deterministic evidence.
+| 18-12: MUST NOT change `endMatch`, BlockService, `sendMessage`, or the code of `deliverUnreadMessages` | Staged diff: MatchService hunks only touch the imports, the constructor and the `createMatch` reactivation branch. BlockService is not in the diff. Every changed ChatService line is a KDoc line. | verified (observed) |
+| 18-12: MUST NOT change message content or delete rows | The UPDATE sets only `delivered`. The tests read the rows back by id after the sweep. | verified (test + code) |
+| 18-12: MUST NOT mark delivered row by row | One `@Modifying` JPQL statement. MatchService loads no `Message` entities. | verified (observed) |
+| 18-01..18-11 prohibitions | Files unchanged since the prior pass | verified (carried forward) |
 
 ### Requirements Coverage
 
 | Requirement | Source Plans | Status | Evidence |
 |-------------|-------------|--------|----------|
-| MOD-02 | 18-01, 18-11 | SATISFIED (hardened) | Bidirectional block predicate now also covers reconnect redelivery |
-| MOD-03 | 18-01, 18-11 | SATISFIED (hardened) | Locked or ended conversation history kept; no reconnect previews while hidden |
-| MOD-06 | 18-02 | SATISFIED (no regression) | Per-reporter cap on the bounded store |
-| INV-02 | 18-05, 18-10, 18-11 | SATISFIED (hardened) | Central admin filter, token length rule, admin throttle |
-| WAIT-01 | 18-06, 18-07, 18-09, 18-10, 18-11 | SATISFIED | Identical 202, separate join bucket, CORS-readable 429, exact JWT skip |
-| WAIT-02 | 18-04, 18-06, 18-11 | SATISFIED | Truthful copy, cooldown, single-use token unchanged |
-| WAIT-03 | 18-02, 18-03, 18-06, 18-07, 18-09, 18-11 | SATISFIED | Bounded buckets, XFF canonicalization, 3 per 24 h |
-| WAIT-04 | 18-04..18-08, 18-10, 18-11 | SATISFIED | Flush/send/rollback, bounded send, central guard |
+| MOD-02 | 18-01, 18-11, 18-12 | SATISFIED (hardened) | Block suppression now holds across a rematch whether or not a reconnect happened while hidden |
+| MOD-03 | 18-01, 18-11, 18-12 | SATISFIED (hardened) | History retained (rows kept). No stale previews after an unmatch or block and a later rematch. |
+| MOD-06 | 18-02 | SATISFIED (no regression) | Unchanged |
+| INV-02 | 18-05, 18-10, 18-11 | SATISFIED | Unchanged |
+| WAIT-01..WAIT-04 | 18-04..18-11 | SATISFIED | Unchanged |
 
-All IDs exist in REQUIREMENTS.md. REQUIREMENTS.md maps no IDs to Phase 18 (no new IDs, by design), so none are orphaned.
+All IDs exist in REQUIREMENTS.md (MOD-02 line 14, MOD-03 line 15). REQUIREMENTS.md maps no IDs to Phase 18 by design, so none are orphaned.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| (all modified files) | - | TBD/FIXME/XXX | none found | - |
-| (all modified files) | - | TODO/HACK/PLACEHOLDER | none found | - |
-| docs/CONFIGURATION.md | 256 | `<!-- VERIFY: production deployment platform ... -->` | Info | Pre-existing at HEAD 605ddb4; not introduced by this phase |
-| chat/service/ChatService.kt | 263-267 | KDoc states the D-04 rematch guarantee without its condition | Warning | Misleading to maintainers; tied to the human decision above |
+| 18-12 files (5 source/test) | - | TBD/FIXME/XXX/TODO/HACK | none found | - |
+| chat/service/ChatService.kt | 290-295 | Undelivered read before the hidden-set read (18-REVIEW WR-02) | Warning (advisory) | Concurrency window only. See WR-02 judgment. |
+| chat/service/ChatService.kt | 276 | KDoc "Only the two together keep..." doesn't mention that the read order matters | Info | Overstates slightly until WR-02 is fixed or deferred |
+| chat/model/MessageRepository.kt | 47-49 | Bare `@Modifying` (IN-07) | Info | No current caller holds managed `Message` entities |
 
-18-REVIEW IN-01..IN-06 (info) are still `open` in 18-REVIEW-DISPOSITION.md. They are code-quality items found after the phase, outside the goal's finding set (which is the Phase 17 findings). I don't count them against the goal, but someone should give them dispositions before ship.
+The prior pass's Warning (ChatService KDoc stating the D-04 guarantee without its condition) is fixed. The KDoc now names both suppression points.
+
+### Advisory (New Scope, Unevidenced)
+
+| # | Finding | Category | Why Advisory |
+|---|---------|----------|--------------|
+| 1 | 18-REVIEW WR-02: reconnect racing a rematch commit | other | No test reproduces it. The goal clause still holds at push time. It is a residual of the kind D-06 accepts. It needs a disposition (a cheap fix is available). |
+| 2 | 18-REVIEW IN-07, IN-08 (and IN-01..IN-06 still `open`) | other | Code-quality info items outside the goal's finding set. They need dispositions before ship. |
 
 ### Human Verification Required
 
-#### 1. D-04 rematch residual (18-REVIEW WR-01)
-
-**Test:** A messages B while matched (B online, receives it live). A blocks B (or unmatches). They unblock and mutually re-like (same match row reactivated). B reconnects only now.
-**Expected:** Decide one: (a) accept, because the push is for an active, fully visible conversation (record the override above and fix the ChatService KDoc); or (b) amend D-05 and add one set-based "mark delivered" UPDATE on the reactivation branch of `MatchService.createMatch`, a no-reconnect-between test, and the KDoc fix.
-**Why human:** D-04 and D-05 conflict for this sequence. The roadmap goal's literal wording is met, and D-04's stated purpose is not fully met.
+None. The prior item (D-04 rematch residual) is resolved by 18-12.
 
 ### Gaps Summary
 
-There are no blocking gaps. Every Phase 17 warning, every chosen info item, and the stale-Bearer audit item are implemented and wired, with passing tests behind them. The Phase 17 disposition record is complete (26/26, 0 open). The one open item is the D-04 rematch residual (18-REVIEW WR-01). It doesn't violate the goal's literal clause, because no preview is ever pushed for a conversation that is blocked or ended at push time. But it leaves D-04's "can't resurface after a rematch" promise conditional, and the ChatService KDoc overstates it. Because closing it needs a change to locked decision D-05, it goes to the developer, not into an automatic gap-closure plan.
+There are no gaps. G-18-1 is closed in code. `MatchService.createMatch`'s reactivation branch runs one set-based UPDATE that marks the conversation's undelivered messages delivered, inside the swipe transaction and before `MatchCreatedEvent`. New integration tests prove the no-reconnect-between sequence for both block and unmatch, and a post-rematch delivery control shows nothing was over-suppressed. The unit tests prove branch scoping and ordering. The KDoc is corrected, and D-05 carries a dated amendment. All 18-01..18-11 work is unchanged, and the full suite is green on this tree (514/0/0, 1 skipped).
+
+Not blocking: 18-REVIEW WR-02. It is a real but narrow concurrency window, and swapping two reads in `deliverUnreadMessages` would close it. Before ship, mark it `fixed` or `deferred` with a reason in 18-REVIEW-DISPOSITION.md, along with the other 8 `open` info rows.
 
 ---
 
-_Verified: 2026-10-04T17:00:00Z_
+_Verified: 2026-10-05T10:39:00Z_
 _Verifier: Claude (gsd-verifier)_

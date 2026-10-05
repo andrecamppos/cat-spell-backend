@@ -1,175 +1,119 @@
 ---
 phase: 18-address-tech-debt-post-block-redelivery-waitlist-review-warn
-reviewed: 2026-10-04T00:00:00Z
+reviewed: 2026-10-05T10:21:58Z
 depth: standard
-files_reviewed: 56
+files_reviewed: 5
 files_reviewed_list:
-  - build.gradle.kts
-  - docs/CONFIGURATION.md
-  - src/main/kotlin/com/catspell/api/auth/service/EmailChangeService.kt
-  - src/main/kotlin/com/catspell/api/auth/service/EmailVerificationService.kt
-  - src/main/kotlin/com/catspell/api/auth/service/PasswordResetService.kt
-  - src/main/kotlin/com/catspell/api/chat/model/ConversationRepository.kt
+  - src/main/kotlin/com/catspell/api/chat/model/MessageRepository.kt
+  - src/main/kotlin/com/catspell/api/match/service/MatchService.kt
   - src/main/kotlin/com/catspell/api/chat/service/ChatService.kt
-  - src/main/kotlin/com/catspell/api/common/config/SecurityConfig.kt
-  - src/main/kotlin/com/catspell/api/common/config/WaitlistCorsPolicy.kt
-  - src/main/kotlin/com/catspell/api/common/exception/Exceptions.kt
-  - src/main/kotlin/com/catspell/api/common/ratelimit/RateLimitBuckets.kt
-  - src/main/kotlin/com/catspell/api/common/security/AdminTokenFilter.kt
-  - src/main/kotlin/com/catspell/api/common/security/AdminTokenGuard.kt
-  - src/main/kotlin/com/catspell/api/common/security/JwtAuthenticationFilter.kt
-  - src/main/kotlin/com/catspell/api/common/security/RateLimitFilter.kt
-  - src/main/kotlin/com/catspell/api/common/security/RequestPaths.kt
-  - src/main/kotlin/com/catspell/api/common/security/TrustedProxyMatcher.kt
-  - src/main/kotlin/com/catspell/api/email/service/WaitlistConfirmEmailRenderer.kt
-  - src/main/kotlin/com/catspell/api/email/service/WaitlistInviteEmailRenderer.kt
-  - src/main/kotlin/com/catspell/api/invite/controller/InviteAdminController.kt
-  - src/main/kotlin/com/catspell/api/invite/service/InviteService.kt
-  - src/main/kotlin/com/catspell/api/moderation/service/ReportService.kt
-  - src/main/kotlin/com/catspell/api/waitlist/controller/WaitlistAdminController.kt
-  - src/main/kotlin/com/catspell/api/waitlist/controller/WaitlistController.kt
-  - src/main/kotlin/com/catspell/api/waitlist/model/WaitlistEntry.kt
-  - src/main/kotlin/com/catspell/api/waitlist/model/WaitlistEntryRepository.kt
-  - src/main/kotlin/com/catspell/api/waitlist/service/WaitlistEmailNormalizer.kt
-  - src/main/kotlin/com/catspell/api/waitlist/service/WaitlistService.kt
-  - src/main/resources/application.yml
-  - src/test/kotlin/com/catspell/api/TestAdminToken.kt
-  - src/test/kotlin/com/catspell/api/common/AdminTokenGuardStartupTest.kt
-  - src/test/kotlin/com/catspell/api/common/RateLimitBucketsTest.kt
-  - src/test/kotlin/com/catspell/api/common/RateLimitBypassIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/common/RateLimitFilterWarnTest.kt
-  - src/test/kotlin/com/catspell/api/common/RateLimitTrustedProxyIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/common/RequestPathsTest.kt
-  - src/test/kotlin/com/catspell/api/common/TrustedProxyMatcherTest.kt
-  - src/test/kotlin/com/catspell/api/common/WaitlistCorsPolicyTest.kt
-  - src/test/kotlin/com/catspell/api/email/WaitlistConfirmEmailRendererTest.kt
-  - src/test/kotlin/com/catspell/api/email/WaitlistInviteEmailRendererTest.kt
-  - src/test/kotlin/com/catspell/api/invite/InviteAdminEndpointIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/invite/InviteGateIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/invite/InviteServiceTest.kt
+  - src/test/kotlin/com/catspell/api/match/MatchServiceTest.kt
   - src/test/kotlin/com/catspell/api/moderation/BlockEnforcementIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistAdminIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistConfirmIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistControllerUrlTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistConvertIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistCors429IntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistEnumerationSafetyIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistJoinIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistPerEmailConcurrencyIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistPerEmailLimitIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistRateLimitIntegrationTest.kt
-  - src/test/kotlin/com/catspell/api/waitlist/WaitlistServiceConvertTest.kt
-  - src/test/resources/application.yml
 findings:
   critical: 0
   warning: 1
-  info: 6
-  total: 7
+  info: 2
+  total: 3
 status: issues_found
 ---
 
-# Phase 18: Code Review Report
+# Phase 18: Code Review Report (incremental, plan 18-12 / UAT gap G-18-1)
 
-**Reviewed:** 2026-10-04T00:00:00Z
+**Reviewed:** 2026-10-05T10:21:58Z
 **Depth:** standard
-**Files Reviewed:** 56
+**Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-I reviewed the staged phase-18 delta (`git diff --cached 605ddb4`) in the context of each whole file, checked it against the locked decisions D-01..D-18 in `18-CONTEXT.md`, and followed the call sites into `MatchService`, `GlobalExceptionHandler`, `LoggingEmailSender` and `WaitlistEmailListener`.
+This is an incremental review of the staged gap-closure change (diff against HEAD `add8a2f`):
+- the new `MessageRepository.markAllDeliveredForMatch` bulk UPDATE
+- its single call site in the reactivation branch of `MatchService.createMatch`
+- the rewritten KDoc on `ChatService.deliverUnreadMessages`
+- integration tests H/I and the new or extended `MatchServiceTest` cases
 
-Most of the security-relevant changes hold up when traced:
+It replaces the earlier phase-18 review, which is kept in git at `fcf9dd0`. New finding IDs start at CR-01 / WR-02 / IN-07, so they don't collide with the WR-01 and IN-01..IN-06 rows already in `18-REVIEW-DISPOSITION.md`.
 
-- **Admin boundary.** The central `AdminTokenFilter` is registered on `/api/admin/*`, which also matches bare `/api/admin`. It runs after `RateLimitFilter` and before Spring Security. The JWT skip list, the Spring Security `permitAll`, and the throttle all cover the same path set, so a stale Bearer header can't 401 an operator. Where the path checks disagree, they fail closed.
-- **Admin token.** The startup minimum-length check never echoes the token. `MessageDigest.isEqual` takes time that depends only on the length of the provided token.
-- **XFF canonicalization.** Only shape-checked text ever reaches `InetAddress`, so no DNS lookup is possible. A hop that isn't a literal falls back to the peer's bucket. A hop the client controls can never become the key, because the proxy-appended rightmost hop is read first.
-- **Bucket store.** The Caffeine-backed bucket store's expire-after-access window really is lossless with interval refill.
-- **Waitlist join.** The cooldown UPDATE is race-safe under the row lock. The pinned address is read with a scalar query after the bulk UPDATE.
-- **Convert.** The invite row is flushed before the send. Every failure branch rolls back and logs no address or code, and the chained cause is never logged by `GlobalExceptionHandler`.
+**Supersedes earlier WR-01 (the D-04 rematch residual): resolved for the sequential case.** The sweep runs in the same transaction that clears `endedAt`, before `MatchCreatedEvent` is published, and covers both directions. Once the rematch commits, no message from before the hide is still `delivered = false`. So a later reconnect can't push a stale preview, whether or not the recipient reconnected while the conversation was hidden.
 
-I found no blocker. One warning: the W1 guarantee in D-04, that a suppressed message "can't resurface after a rematch", only holds if the recipient happened to reconnect while the conversation was hidden. Since nothing ever sets `delivered = true` at send time, this gap affects almost every message.
+I confirmed this from the code:
+- the JPQL implicit-path bulk UPDATE is valid on Hibernate 7 (context startup and runtime pass, per 18-12-SUMMARY)
+- `createMatch` is the only place `endedAt` is reset to null
+- both production callers (`DiscoveryService.swipe`, lines 249 and 296) reach it through the reactivation branch
+
+Tests H/I fail without the line (mutation check recorded in the summary) and pass with it.
+
+One residual remains: a narrow concurrency window between a reconnect and a rematch committing (WR-02). It comes from the order of the two reads in `deliverUnreadMessages`, now that the fix depends on two separate suppression points. No critical issues.
 
 ## Narrative Findings (AI reviewer)
 
 ## Warnings
 
-### WR-01: Undelivered pre-block or pre-unmatch messages still resurface if the rematch comes before the recipient's next reconnect
+### WR-02: Reconnect racing a rematch commit can still push stale pre-hide previews (the two suppression points read in the wrong order)
 
-**File:** `src/main/kotlin/com/catspell/api/chat/service/ChatService.kt:262-309` (with `src/main/kotlin/com/catspell/api/match/service/MatchService.kt:37-46`, `src/main/kotlin/com/catspell/api/chat/service/ChatService.kt:74-110`)
+**File:** `src/main/kotlin/com/catspell/api/chat/service/ChatService.kt:290-295` (interacting with `src/main/kotlin/com/catspell/api/match/service/MatchService.kt:46-51`; KDoc claim at `ChatService.kt:276`)
 
-**Issue:** Hidden messages are suppressed (and marked `delivered = true`) only inside `deliverUnreadMessages`. That means only when the recipient reconnects *while* the conversation is hidden. Take this sequence: A and B chat, A blocks B (or unmatches), then they unblock and rematch (`createMatch` reactivates the same match row by clearing `endedAt`), and only after that does B reconnect. On that reconnect, `findHiddenConversationIdsForUser` no longer returns the conversation. Every pre-block message to B that is still `delivered = false` is then pushed as a `/queue/notifications` preview.
+**Issue:** `deliverUnreadMessages` runs two separate statements under PostgreSQL READ COMMITTED:
+1. It loads the undelivered messages (line 290).
+2. It then resolves hidden conversations (line 295).
 
-This is the normal case, not an edge case. `sendMessage` pushes live but never sets `delivered = true`; the only writes to the flag are in `deliverUnreadMessages` (lines 286 and 304). So every message B received live before the block is still undelivered and comes back as a stale preview after the rematch.
+`WebSocketSessionListener.handleSessionConnected` is `@Async` and runs this on every STOMP connect, so it can overlap a rematch transaction (T1) started from another user's swipe. Take this interleaving:
+- The reconnect transaction (T2) runs statement (1) before T1 commits. It still sees the pre-hide rows as `delivered = false`, because T1's sweep is uncommitted.
+- T1 commits (`endedAt = null` plus the sweep).
+- T2 runs statement (2), which now sees the match as active, so the conversation is not hidden.
 
-D-04's stated purpose, and the KDoc at lines 264-267 ("so they can't resurface if the pair later rematches"), is therefore only met conditionally. The new tests (`message suppressed after ... does not resurface after ... rematch`) always put a reconnect between the block and the rematch, so they don't cover this path.
+T2 then pushes every pre-hide message as a `/queue/notifications` preview: exactly the stale resurfacing G-18-1 / D-04 are meant to prevent. The new KDoc says "Only the two together keep messages … from resurfacing", but the two points only compose if the hidden-set read is not later than the undelivered read. The window is milliseconds, but the trigger (a reconnect around the time of a rematch) is normal app behavior. A user who unblocks and re-likes is likely to have the app open.
 
-**Fix:** Close the gap on the rematch path. D-05 only freezes the block/unmatch *teardown*, not reactivation. In the reactivation branch of `MatchService.createMatch`, mark that conversation's undelivered messages as delivered with one set-based UPDATE before publishing `MatchCreatedEvent`:
+**Fix:** Read the hidden set first, then the undelivered messages. Under READ COMMITTED, every ordering of T1's commit is then safe:
+- T1 commits before the hidden read: the undelivered read already sees the swept rows.
+- T1 commits between the two reads: the conversation counts as hidden, and the undelivered read sees the swept rows.
+- T1 commits after both reads: the rows are suppressed rather than pushed.
 
 ```kotlin
-// MessageRepository
-@Modifying
-@Query("UPDATE Message m SET m.delivered = true WHERE m.conversation.match.id = :matchId AND m.delivered = false")
-fun markAllDeliveredForMatch(@Param("matchId") matchId: UUID): Int
+@Transactional
+fun deliverUnreadMessages(userId: UUID): Int {
+    val participations = conversationParticipantRepository.findByUserId(userId)
+    val conversationIds = participations.mapNotNull { it.conversation.id }
+    if (conversationIds.isEmpty()) return 0
 
-// MatchService.createMatch, inside `if (existing.endedAt != null) { ... }`
-messageRepository.markAllDeliveredForMatch(existing.id!!)
+    // Resolve hidden BEFORE reading undelivered rows: a rematch that commits between the two
+    // reads then sees its sweep reflected in the second read (G-18-1 / D-04 race).
+    val hidden = conversationRepository.findHiddenConversationIdsForUser(userId).toSet()
+
+    val undelivered = messageRepository.findByConversationIdInAndDeliveredFalseAndSenderIdNotOrderByCreatedAtAsc(
+        conversationIds, userId
+    )
+    if (undelivered.isEmpty()) return 0
+
+    val (suppressed, visible) = undelivered.partition { it.conversation.id in hidden }
+    // ... unchanged
+}
 ```
 
-(If the JPQL path through `conversation.match` won't compile as a bulk UPDATE, use `m.conversation.id IN (SELECT c.id FROM Conversation c WHERE c.match.id = :matchId)`.) Then add a test with no reconnect between the unmatch and the rematch, and correct the KDoc.
+Trade-off: a message sent live right after the rematch, within the same window, gets marked delivered without the reconnect duplicate push. It was already pushed live by `sendMessage`, so nothing is lost. The stronger alternative is to fold the hidden predicate into the undelivered query, so both are read from one statement snapshot.
+
+Also soften the KDoc at line 276, or add a sentence saying the ordering is load-bearing.
 
 ## Info
 
-### IN-01: Per-IP limits (including the D-13 admin throttle) key on the full IPv6 address
+### IN-07: Bare `@Modifying` bulk UPDATE leaves already-managed `Message` entities stale in the persistence context
 
-**File:** `src/main/kotlin/com/catspell/api/common/security/RateLimitFilter.kt:152-177`, `src/main/kotlin/com/catspell/api/common/ratelimit/RateLimitBuckets.kt:16-20`
+**File:** `src/main/kotlin/com/catspell/api/chat/model/MessageRepository.kt:47-49`
 
-**Issue:** An attacker who holds an IPv6 /64 gets about 2^64 independent buckets per family. The Caffeine size bound limits memory (WR-10). But heavy key churn evicts and resets the buckets of low-frequency legitimate keys (the residual T-18-05 already names this). For the admin family this is mitigated by the ≥32-character token, so it is not a practical brute force.
+**Issue:** The UPDATE bypasses the persistence context. Any `Message` already loaded in the same transaction keeps `delivered = false` in memory, and `Message` has no `@DynamicUpdate`. A later dirty write of that entity would rewrite the full row, including `delivered = false`. Today this can't happen: the only caller is `createMatch`, and its enclosing `DiscoveryService.swipe` transaction loads no `Message` rows. Leaving out `clearAutomatically` also matches the project's other `@Modifying` methods (see the WaitlistEntryRepository note). The risk is to future callers.
 
-**Fix:** Out of this phase's scope. Consider keying IPv6 clients on their /64 prefix in a later phase, and record it alongside the deferred distributed-bucket item.
+**Fix:** Add one line to the KDoc: "Callers must not hold managed `Message` entities in the same transaction (no `clearAutomatically`)". Alternatively use `@Modifying(flushAutomatically = true, clearAutomatically = true)`, but note that clearing would detach the `existing` match that `createMatch` returns.
 
-### IN-02: The "never a wildcard" CORS claim isn't enforced, and the 429 grant echoes `*`
+### IN-08: Integration helper asserts the sweep result after the symptom assertions, which weakens failure diagnostics
 
-**File:** `src/main/kotlin/com/catspell/api/common/config/WaitlistCorsPolicy.kt:22-31`, `src/main/kotlin/com/catspell/api/common/security/RateLimitFilter.kt:118-128`
+**File:** `src/test/kotlin/com/catspell/api/moderation/BlockEnforcementIntegrationTest.kt:430-440`
 
-**Issue:** If `WAITLIST_ALLOWED_ORIGINS=*`, `CorsConfiguration.checkOrigin` returns `"*"`. Both Spring's `CorsFilter` and the limiter's 429 then emit `Access-Control-Allow-Origin: *`, even though the KDoc and `docs/CONFIGURATION.md` say wildcards are never allowed. This requires operator misconfiguration, and the wildcard behavior itself predates the phase.
+**Issue:** `deliveredAtRematch` is captured at line 430, straight after the rematch, but asserted only at line 440. A regression in the sweep therefore first fails at line 436 ("no stale preview for B…, expected 0 but was 2"), which looks like a reconnect-path problem, not at the direct "rematch swept every pre-hide message" check. The test still discriminates correctly; only the first failure message points the wrong way.
 
-**Fix:** In `buildConfiguration`, reject `*` (or any origin containing `*`) with `require(...)` so a bad value fails startup.
-
-### IN-03: The confirmation email copy doesn't mention the daily cap
-
-**File:** `src/main/kotlin/com/catspell/api/email/service/WaitlistConfirmEmailRenderer.kt:66-70`
-
-**Issue:** The email tells the user to "join the waitlist again; we send at most one new link every 15 minutes". After 3 joins in the refill window (every join counts, including no-ops inside the cooldown), further joins silently send nothing for up to 24 h. A user who follows the copy can end up with no link and no explanation.
-
-**Fix:** Mention the cap ("at most N new links a day"), rendered from `app.waitlist.per-email-capacity` and `per-email-refill-hours` in the same way the TTL is rendered.
-
-### IN-04: An interrupt-ignoring provider can permanently exhaust the 2-thread invite send pool
-
-**File:** `src/main/kotlin/com/catspell/api/waitlist/service/WaitlistService.kt:69-80, 223-246`
-
-**Issue:** After a timeout, `cancel(true)` interrupts the worker. A sender blocked in I/O with no timeout of its own keeps the thread anyway. Two such sends occupy both workers for good. Every later convert then waits in the queue until its own timeout and fails with 502, and that lasts until a restart, not just for one request. The timeout also counts time spent waiting in the queue. The docs cover late delivery, but not this pool exhaustion.
-
-**Fix:** Add a sentence to the "Known residual" paragraph in `docs/CONFIGURATION.md` and to the KDoc. Optionally, log at WARN when a timeout leaves `activeCount == maximumPoolSize`.
-
-### IN-05: The first inserted address wins, so a variant can squat a slot
-
-**File:** `src/main/kotlin/com/catspell/api/waitlist/service/WaitlistEmailNormalizer.kt:3-11`, `src/main/kotlin/com/catspell/api/waitlist/model/WaitlistEntryRepository.kt:36-46`
-
-**Issue:** D-08 stops a *later* variant from redirecting mail. But on providers where `+` is literal or local parts are case-sensitive, whoever inserts first owns the normalized key. An attacker who registers `alice+x@host` first will receive Alice's later confirmation links and her invite. The KDoc wording ("can never redirect") reads as absolute. The impact is low because these providers are rare and the invite is a bearer code anyway (W3).
-
-**Fix:** Change the KDoc to "a later variant can never redirect…; the first-inserted address owns the entry", and leave the behavior as is.
-
-### IN-06: The confirm and invite URLs are still parsed only when an email is rendered
-
-**File:** `src/main/kotlin/com/catspell/api/email/service/WaitlistConfirmEmailRenderer.kt:25-28`, `src/main/kotlin/com/catspell/api/email/service/WaitlistInviteEmailRenderer.kt:17-20`
-
-**Issue:** IN-07 moved the redirect URLs to startup parsing, but `confirm-url` and `invite-url` are still parsed by `UriComponentsBuilder.fromUriString` on every render. A malformed value surfaces only at send time. For the join, that happens inside the async AFTER_COMMIT listener, after the token has already been rotated, so the user gets no email. For the convert, it surfaces as a 500.
-
-**Fix:** Parse each base URL once in its constructor (`UriComponentsBuilder.fromUriString(url).build()`, which throws during bean creation), and clone it per render.
+**Fix:** Move the `assertEquals(listOf(true, true, true), deliveredAtRematch, …)` line up to just after line 430, before the reconnect calls.
 
 ---
 
-_Reviewed: 2026-10-04T00:00:00Z_
+_Reviewed: 2026-10-05T10:21:58Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

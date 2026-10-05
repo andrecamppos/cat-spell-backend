@@ -58,7 +58,7 @@ _Full phase details: `.planning/milestones/v2.1-ROADMAP.md`_
 - [x] **Phase 15: Age Verification** — server-side 18+ hard gate at signup (completed 2026-09-29)
 - [x] **Phase 16: Invite-Only Access & Referral** — gated signup via operator codes + referral attribution (completed 2026-10-01)
 - [x] **Phase 17: Waitlist / Landing-Page API** — public waitlist with double opt-in → operator invites (completed 2026-10-02)
-- [ ] **Phase 18: Address tech debt: post-block redelivery + waitlist review warnings** — v2.2 audit tech debt
+- [x] **Phase 18: Address tech debt: post-block redelivery + waitlist review warnings** — v2.2 audit tech debt (completed 2026-10-05)
 
 ### Phase 13: Blocking & Unmatch
 
@@ -199,7 +199,7 @@ Plans:
 **Goal:** Close the v2.2 audit tech debt without adding a capability. WebSocket reconnect never pushes previews for blocked or ended conversations (W1). Every open Phase 17 review warning, plus the chosen cheap info items and the stale-Bearer audit item, is fixed. Every finding has a recorded disposition.
 **Requirements**: TBD (hardens MOD-02, MOD-03, INV-02, WAIT-01..WAIT-04; no new IDs)
 **Depends on:** Phase 17
-**Plans:** 12 plans
+**Plans:** 12/12 plans complete
 
 Plans:
 **Wave 1**
@@ -224,7 +224,7 @@ Plans:
 - [x] 18-11-PLAN.md — Declare keys in application.yml, operator docs, 17-REVIEW-DISPOSITION record (WR-10..IN-12, AUD-01), full-suite gate
 
 **Gap Closure** *(from 18-UAT.md G-18-1: D-04 rematch residual, 18-REVIEW WR-01)*
-- [ ] 18-12-PLAN.md — Rematch sweeps the match's undelivered messages (one set-based UPDATE in the createMatch reactivation branch) so no stale preview resurfaces without a reconnect in between; corrected KDoc, D-05 amended
+- [x] 18-12-PLAN.md — Rematch sweeps the match's undelivered messages (one set-based UPDATE in the createMatch reactivation branch) so no stale preview resurfaces without a reconnect in between; corrected KDoc, D-05 amended
 
 </details>
 
@@ -249,7 +249,7 @@ Plans:
 | 15. Age Verification | v2.2 | 2/2 | Complete    | 2026-09-29 |
 | 16. Invite-Only Access & Referral | v2.2 | 4/4 | Complete    | 2026-10-01 |
 | 17. Waitlist / Landing-Page API | v2.2 | 9/9 | Complete    | 2026-10-02 |
-| 18. Address tech debt: post-block redelivery + waitlist review warnings | v2.2 | 11/11 | In Progress|  |
+| 18. Address tech debt: post-block redelivery + waitlist review warnings | v2.2 | 12/12 | Complete    | 2026-10-05 |
 
 ---
 *Roadmap created: 2025-06-09*

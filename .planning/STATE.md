@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v2.2
 current_phase: 18
 current_phase_name: "Address tech debt: post-block redelivery + waitlist review warnings"
-status: executing
-stopped_at: Completed 18-11-PLAN.md
-last_updated: "2026-10-04T16:38:19.232Z"
-last_activity: 2026-10-03
-last_activity_desc: Phase 18 execution started
-state_head: 605ddb4d49266e805436c16b18bfc78746c46e40
+status: completed
+stopped_at: Phase 18 complete — all phases complete
+last_updated: "2026-10-05T10:41:20.139Z"
+last_activity: 2026-10-05
+last_activity_desc: "Phase 18 complete — gap G-18-1 closed by 18-12, re-verified 75/75"
+state_head: add8a2f1bf5a5ea3d693310c9bd5492308b7c74c
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 34
-  completed_plans: 34
+  completed_phases: 6
+  total_plans: 35
+  completed_plans: 35
 milestone_name: Safety, Moderation & Gated Access
 ---
 
@@ -21,10 +21,10 @@ milestone_name: Safety, Moderation & Gated Access
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-02)
+See: .planning/PROJECT.md (updated 2026-10-05)
 
 **Core value:** Cat-preferred discovery — cat cards for cat owners, human cards for cat lovers without cats.
-**Current focus:** Phase 18 — Address tech debt: post-block redelivery + waitlist review warnings
+**Current focus:** Phase 18 complete — milestone v2.2 (Safety, Moderation & Gated Access) ready to close
 
 ## Milestone v1.0 — MVP Backend
 
@@ -54,19 +54,19 @@ See `.planning/milestones/v2.1-ROADMAP.md` for archived phase details.
 
 ## Session Continuity
 
-Last session: 2026-10-04T16:38:09.805Z
-Stopped at: Completed 18-11-PLAN.md
+Last session: 2026-10-05T10:45:00Z
+Stopped at: Phase 18 complete (gap closure 18-12 verified) — all v2.2 phases complete, ready to close milestone
 Resume file: None
 
 ---
-*Last updated: 2026-10-02 after Phase 17 (Waitlist / Landing-Page API)*
+*Last updated: 2026-10-05 after Phase 18 (Address tech debt: post-block redelivery + waitlist review warnings)*
 
 ## Current Position
 
-Phase: 18 (Address tech debt: post-block redelivery + waitlist review warnings) — EXECUTING
-Plan: 11 of 11
-Status: Phase complete — ready for verification
-Last activity: 2026-10-03 — Phase 18 execution started
+Phase: 18 (Address tech debt: post-block redelivery + waitlist review warnings) — COMPLETE
+Plan: 12 of 12
+Status: Phase complete — verified (75/75, G-18-1 closed by 18-12)
+Last activity: 2026-10-05 — Phase 18 complete (gap closure 18-12 executed and re-verified)
 
 ## Operator Next Steps
 
@@ -104,6 +104,7 @@ Last activity: 2026-10-03 — Phase 18 execution started
 | Phase 18 P09 | 18 min | 2 tasks | 5 files |
 | Phase 18 P10 | 19 min | 2 tasks | 8 files |
 | Phase 18 P11 | 16 min | 2 tasks | 3 files |
+| Phase 18 P12 | 18 min | 3 tasks | 6 files |
 
 ## Decisions
 
@@ -159,6 +160,7 @@ Last activity: 2026-10-03 — Phase 18 execution started
 - [Phase 18]: Phase 18-11: application.yml declares rate-limit.capacity / waitlist-capacity / admin-capacity / max-tracked-keys and app.waitlist.resend-cooldown-minutes / invite-send-timeout-ms with @Value-identical defaults; WAITLIST_PER_EMAIL_REFILL_HOURS default is now 24 (matches 18-06)
 - [Phase 18]: Phase 18-11: CONFIGURATION.md tells operators to rotate any non-blank INVITE_ADMIN_TOKEN under 32 characters before deploying, and that batch convert scripts must honor Retry-After on the 5/min admin throttle (or raise RATE_LIMIT_ADMIN_CAPACITY)
 - [Phase 18]: Phase 18-11: the Phase 17 disposition record closes at 26 findings (24 fixed, IN-03 and IN-10 deferred per D-02, 0 open); first-review findings lost to ID reuse are re-added as WR-10, WR-11, IN-08..IN-12, and the audit stale-Bearer item is AUD-01
+- [Phase 18]: G-18-1: MatchService.createMatch reactivation branch sweeps the conversation's undelivered messages via one MessageRepository.markAllDeliveredForMatch UPDATE before MatchCreatedEvent (D-05 amended; endMatch unchanged; JPQL path form shipped)
 
 ### Blockers/Concerns
 

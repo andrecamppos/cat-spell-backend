@@ -68,6 +68,18 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 - ✓ Age verification — self-attested DOB collected at signup, server-side hard-block under-18 (422 `UNDER_MINIMUM_AGE`) evaluated before the account row is created, behind a swappable `AgeVerifier` seam; DOB relocated to `users` (single source of truth, immutable after signup) via V22 with backfill + grandfathering of existing accounts; vendor age-check deferred — v2.2 (Phase 15) [AGE-01, AGE-02, AGE-03]
 - ✓ Invite-only access — global on/off gate (`app.invite.enabled`, deny-by-default) enforcing invite-required signup: public mode ignores any code and consumes nothing; gated mode requires a valid unconsumed code or returns an enumeration-safe `403 INVITE_REQUIRED` (identical response for null/blank/unknown/consumed) and creates no orphan account. Operator-issued codes via `POST /api/admin/invites` (shared-secret `X-Admin-Token`, constant-time compare, deny-by-default on blank token); codes are high-entropy and hashed-at-rest (SHA-256, raw returned once). Single-use is atomic (conditional UPDATE); referral attribution recorded only for a real distinct referrer (bootstrap + self-referral write none). V23 adds `invites` + `referrals` — v2.2 (Phase 16) [INV-01, INV-02, INV-03, INV-04, INV-05]
 - ✓ Waitlist / landing-page API — public `POST /api/waitlist` with an identical enumeration-safe `202` for every outcome; double opt-in via hashed single-use 7-day confirm token, `GET /api/waitlist/confirm` 302-redirects to configurable web success/error URLs; per-IP (Bucket4j `RateLimitFilter`, trusted-proxy-aware `X-Forwarded-For`) + per-email throttling on a normalized key (trim + lowercase + strip `+suffix`); narrow CORS for the landing origin only; operator lists confirmed entries and converts one into an emailed invite behind `X-Admin-Token` — v2.2 (Phase 17) [WAIT-01, WAIT-02, WAIT-03, WAIT-04]
+- ✓ v2.2 audit tech-debt hardening (no new capability):
+  - Reconnect redelivery never pushes previews for blocked or ended conversations, and a rematch sweeps the conversation's pre-block/pre-unmatch undelivered messages, so stale previews never resurface (G-18-1).
+  - Every Phase 17 review warning plus the chosen info items is fixed:
+    - bounded Caffeine-backed rate-limit buckets
+    - canonicalized `X-Forwarded-For` hops
+    - waitlist resend cooldown and pinned email
+    - separate waitlist and admin per-IP throttles
+    - bounded invite-send timeout
+    - a single `AdminTokenFilter` operator boundary with a 32-character minimum token
+    - the JWT filter skips admin and waitlist paths (stale-Bearer audit item)
+  - Every finding has a recorded disposition.
+  - v2.2 (Phase 18) [hardens MOD-02, MOD-03, INV-02, WAIT-01..WAIT-04]
 
 ### Active
 - [ ] Cat compatibility scoring (temperament, energy, indoor/outdoor)
@@ -145,6 +157,8 @@ Cat-preferred discovery — users with cats show cat-first (fall for the cat, th
 | Waitlist confirm link 302-redirects to web landing-page URLs (not JSON, not `catspell://`) | Waitlist clicks happen in a browser before the user has the app; success and error URLs come only from config (open-redirect guard) | ✓ Good — v2.2 (Phase 17) |
 | Waitlist double opt-in with one identical `202` for new / pending / confirmed / throttled joins | Response is not a membership oracle; bots that can't confirm never count; 7-day TTL maximizes launch-list confirmation | ✓ Good — v2.2 (Phase 17); disposable-domain filtering and optional join fields deferred |
 | Per-IP limiter keys on `X-Forwarded-For` only from configured trusted proxies | Untrusted peers can never borrow another IP's bucket by forging the header; preflights and confirm links are never throttled | ✓ Good — v2.2 (Phase 17); production proxy shape still to confirm at deployment |
+| Rematch (`createMatch` reactivation) sweeps the match's undelivered messages with one set-based UPDATE before `MatchCreatedEvent` (D-05 amended) | The reconnect-path suppression alone could not stop stale previews when the pair rematched before the recipient reconnected; one bulk UPDATE on the rare ended→active transition closes it without touching teardown | ✓ Good — v2.2 (Phase 18, G-18-1); residual reconnect-vs-rematch read-order race recorded as review WR-02 |
+| One servlet-level operator boundary (`AdminTokenFilter` on `/api/admin/*`) plus a strict per-IP admin throttle; non-blank admin tokens under 32 chars fail startup | Unmapped or malformed admin paths answer 401 before MVC, and short shared secrets cannot ship | ✓ Good — v2.2 (Phase 18) |
 
 ## Evolution
 
@@ -164,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-02 — Phase 17 (Waitlist / Landing-Page API) complete*
+*Last updated: 2026-10-05 — Phase 18 (Address tech debt: post-block redelivery + waitlist review warnings) complete*
