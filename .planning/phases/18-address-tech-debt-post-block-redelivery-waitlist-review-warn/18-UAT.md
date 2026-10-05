@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 18-address-tech-debt-post-block-redelivery-waitlist-review-warn
-source: [18-VERIFICATION.md]
+source: [18-VERIFICATION.md, 18-12-SUMMARY.md]
 started: 2026-10-04T17:30:00Z
-updated: 2026-10-05T12:00:00Z
+updated: 2026-10-05T14:20:00Z
 ---
 
 ## Current Test
@@ -14,15 +14,49 @@ updated: 2026-10-05T12:00:00Z
 
 ### 1. Decide the D-04 rematch residual (18-REVIEW WR-01)
 expected: Either (a) accept as within scope (no hidden content leaks, the goal's literal wording holds), record an override and correct the deliverUnreadMessages KDoc; or (b) treat it as a gap: amend D-05, add a set-based mark-delivered UPDATE on the MatchService.createMatch reactivation branch, add a no-reconnect-between test, and fix the KDoc.
-result: issue
+result: pass
 reported: "b"
-severity: major
+resolution: "Decision (b) recorded 2026-10-04 and implemented by 18-12-PLAN (gap G-18-1 resolved 2026-10-05). The fix is re-tested in tests 2-7."
+
+### 2. Block → unblock → rematch with no reconnect between: no stale previews (18-12 D1)
+expected: Block, unblock and rematch with no reconnect in between: every pre-block message (both directions) is delivered at rematch time, and neither participant's first reconnect pushes a stale preview
+result: pass
+source: automated
+coverage_id: D1
+
+### 3. Unmatch → rematch with no reconnect between: no stale previews (18-12 D2)
+expected: Unmatch and rematch with no reconnect in between: the same guarantee on the unmatch hide path
+result: pass
+source: automated
+coverage_id: D2
+
+### 4. Post-rematch messages still deliver normally (18-12 D3)
+expected: No over-suppression: a message sent after the rematch is pushed live once, starts undelivered, and is pushed once more on the next reconnect (returns 1)
+result: pass
+source: automated
+coverage_id: D3
+
+### 5. Sweep is one set-based UPDATE, only on reactivation, before MatchCreatedEvent (18-12 D4)
+expected: The sweep is one set-based UPDATE that runs only on the reactivation branch and before MatchCreatedEvent, never for a new or still-active match
+result: pass
+source: automated
+coverage_id: D4
+
+### 6. No regression across moderation, match, chat and push-trigger tests (18-12 D5)
+expected: No regression across the moderation, match, chat and push-trigger tests
+result: pass
+source: automated
+coverage_id: D5
+
+### 7. Rematch-sweep documentation reads accurately (18-12 D6)
+expected: The deliverUnreadMessages KDoc names both suppression points accurately (code changed only by the WR-02 hidden-first read reorder, 57c6a39), and the 18-CONTEXT.md D-05 amendment correctly records the reactivation-branch exception with endMatch teardown unchanged.
+result: pass
 
 ## Summary
 
-total: 1
-passed: 0
-issues: 1
+total: 7
+passed: 7
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -31,7 +65,9 @@ blocked: 0
 
 - gap_id: G-18-1
   truth: "Messages to a recipient that were left undelivered when a conversation was hidden (block/unmatch) never resurface as /queue/notifications previews after the pair rematches, whether or not the recipient reconnected between the block/unmatch and the rematch (D-04)."
-  status: failed
+  status: resolved
+  resolved_by: 18-12-PLAN.md
+  resolved_at: 2026-10-05
   reason: "User reported: b (treat the D-04 rematch residual as a gap rather than accept it as within scope)"
   severity: major
   test: 1
