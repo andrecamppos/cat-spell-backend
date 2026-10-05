@@ -199,7 +199,7 @@ Plans:
 **Goal:** Close the v2.2 audit tech debt without adding a capability. WebSocket reconnect never pushes previews for blocked or ended conversations (W1). Every open Phase 17 review warning, plus the chosen cheap info items and the stale-Bearer audit item, is fixed. Every finding has a recorded disposition.
 **Requirements**: TBD (hardens MOD-02, MOD-03, INV-02, WAIT-01..WAIT-04; no new IDs)
 **Depends on:** Phase 17
-**Plans:** 11 plans
+**Plans:** 12 plans
 
 Plans:
 **Wave 1**
@@ -222,6 +222,9 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [x] 18-11-PLAN.md — Declare keys in application.yml, operator docs, 17-REVIEW-DISPOSITION record (WR-10..IN-12, AUD-01), full-suite gate
+
+**Gap Closure** *(from 18-UAT.md G-18-1: D-04 rematch residual, 18-REVIEW WR-01)*
+- [ ] 18-12-PLAN.md — Rematch sweeps the match's undelivered messages (one set-based UPDATE in the createMatch reactivation branch) so no stale preview resurfaces without a reconnect in between; corrected KDoc, D-05 amended
 
 </details>
 
