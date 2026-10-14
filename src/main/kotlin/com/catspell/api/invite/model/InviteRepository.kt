@@ -14,9 +14,11 @@ interface InviteRepository : JpaRepository<Invite, UUID> {
      * Atomically claim an unconsumed invite in a single conditional UPDATE. The `consumedAt IS NULL`
      * guard is evaluated under a row lock by the database, so exactly one of any concurrent callers
      * observes a matching row and receives a non-zero result — closing the read-check-write single-use
-     * race (INV-04, D-07). Returns the number of rows updated (1 = claimed, 0 = already consumed).
+     * race (INV-04, D-07). `flushAutomatically` is required: the invitee's INSERT is still pending (client-generated
+     * UUID id), and Hibernate would otherwise only flush `invites` before this bulk UPDATE, so `consumed_by`
+     * would reference a user row that does not exist yet (FK violation). Returns the number of rows updated (1 = claimed, 0 = already consumed).
      */
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("UPDATE Invite i SET i.consumedAt = :now, i.consumedBy = :inviteeId WHERE i.id = :id AND i.consumedAt IS NULL")
     fun markConsumed(@Param("id") id: UUID, @Param("inviteeId") inviteeId: UUID, @Param("now") now: Instant): Int
 }
