@@ -67,12 +67,15 @@ tasks.withType<Test> {
     useJUnitPlatform()
     environment("TESTCONTAINERS_RYUK_DISABLED", "true")
     if (System.getenv("DOCKER_HOST") == null) {
+        // Windows exposes the Podman machine as a named pipe; macOS/Linux as a unix socket.
+        val windows = System.getProperty("os.name").startsWith("Windows")
+        val field = if (windows) "PodmanPipe" else "PodmanSocket"
         try {
-            val process = ProcessBuilder("podman", "machine", "inspect", "--format", "{{.ConnectionInfo.PodmanSocket.Path}}")
+            val process = ProcessBuilder("podman", "machine", "inspect", "--format", "{{.ConnectionInfo.$field.Path}}")
                 .redirectErrorStream(true).start()
-            val socket = process.inputStream.bufferedReader().readText().trim()
-            if (process.waitFor() == 0 && socket.isNotEmpty()) {
-                environment("DOCKER_HOST", "unix://$socket")
+            val path = process.inputStream.bufferedReader().readText().trim()
+            if (process.waitFor() == 0 && path.isNotEmpty()) {
+                environment("DOCKER_HOST", if (windows) "npipe://" + path.replace('\\', '/') else "unix://$path")
             }
         } catch (_: Exception) { }
     }

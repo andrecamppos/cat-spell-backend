@@ -43,7 +43,7 @@ abstract class BaseIntegrationTest {
     companion object {
         @JvmStatic
         val postgres: PostgreSQLContainer<*> = PostgreSQLContainer(
-            DockerImageName.parse("postgis/postgis:16-3.4-alpine")
+            DockerImageName.parse("imresamu/postgis:16-3.4-alpine")
                 .asCompatibleSubstituteFor("postgres")
         ).withDatabaseName("catspell")
             .withUrlParam("currentSchema", "public")

@@ -27,7 +27,7 @@ Tests require a container runtime (Docker or Podman). No external infrastructure
 
 Tests use **Testcontainers** to spin up real PostgreSQL (PostGIS) and MinIO containers. The base class `BaseIntegrationTest` handles container lifecycle:
 
-- **PostgreSQL** — `postgis/postgis:16-3.4-alpine` with database `catspell`
+- **PostgreSQL** — `imresamu/postgis:16-3.4-alpine` with database `catspell`
 - **MinIO** — `minio/minio:latest` on a random port, health-checked via `/minio/health/live`
 
 Both containers are started once and shared across all test classes (static companion object). Connection properties are injected via `@DynamicPropertySource`:

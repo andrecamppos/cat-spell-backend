@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgis/postgis:16-3.4-alpine
+    image: docker.io/imresamu/postgis:16-3.4-alpine
     environment:
       POSTGRES_DB: catspell
       POSTGRES_USER: catspell

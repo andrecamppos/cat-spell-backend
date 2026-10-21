@@ -13,7 +13,7 @@ podman compose up -d          # or: docker compose up -d
 
 | Service | Image | Host Ports | Purpose |
 |---------|-------|------------|---------|
-| `postgres` | `postgis/postgis:16-3.4-alpine` | `5432` | PostgreSQL with PostGIS |
+| `postgres` | `imresamu/postgis:16-3.4-alpine` | `5432` | PostgreSQL with PostGIS |
 | `minio` | `chainguard/minio:latest` | `9002` (API), `9001` (console) | S3-compatible object storage |
 
 ### Volumes
