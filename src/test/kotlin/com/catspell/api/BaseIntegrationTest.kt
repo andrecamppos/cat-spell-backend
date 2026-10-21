@@ -50,7 +50,7 @@ abstract class BaseIntegrationTest {
             .apply { start() }
 
         @JvmStatic
-        val minio: GenericContainer<*> = GenericContainer(DockerImageName.parse("minio/minio:latest"))
+        val minio: GenericContainer<*> = GenericContainer(DockerImageName.parse("chainguard/minio:latest"))
             .withExposedPorts(9000)
             .withEnv("MINIO_ROOT_USER", "catspell")
             .withEnv("MINIO_ROOT_PASSWORD", "catspell123")
